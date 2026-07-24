@@ -20,7 +20,7 @@ from telegram.ext import (
 from condor.persistence import SafePicklePersistence
 from handlers import clear_all_input_states
 from utils.auth import restricted
-from utils.config import TELEGRAM_TOKEN, WEB_PORT, WEB_URL
+from utils.config import TELEGRAM_TOKEN, WEB_PORT, WEB_URL, WEB_BIND_HOST
 
 # Enable logging
 logging.basicConfig(
@@ -716,7 +716,7 @@ async def _run_dual(application: Application) -> None:
     web_app = create_app()
     config = uvicorn.Config(
         web_app,
-        host="0.0.0.0",
+        host=WEB_BIND_HOST,
         port=WEB_PORT,
         log_level="info",
         access_log=False,

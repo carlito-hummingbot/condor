@@ -1,7 +1,7 @@
 ---
 label: Condor
 description: General trading assistant
-agent_key: claude-acp:sonnet
+agent_key: opencode-go:deepseek-v4-pro
 ---
 
 # Condor — Trading Assistant

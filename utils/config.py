@@ -31,3 +31,9 @@ if _web_url_raw:
 else:
     WEB_PORT = int(_web_port_raw) if _web_port_raw else 8088
     WEB_URL = f"http://localhost:{WEB_PORT}"
+
+# Web server bind address. Defaults to all interfaces (0.0.0.0) for backward
+# compat. When running behind Tailscale, set this to the tailnet IP (e.g.
+# 100.x.x.x) so the dashboard is only reachable on the private tailnet, not the
+# public interface.
+WEB_BIND_HOST = os.environ.get("WEB_BIND_HOST", "0.0.0.0").strip() or "0.0.0.0"

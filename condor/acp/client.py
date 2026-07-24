@@ -104,10 +104,10 @@ def reap_stale_acp_trees(token: str, *, wait_s: float = 2.0) -> int:
     """Kill leaked ACP/MCP subprocess trees from a prior crashed run.
 
     A hard kill (``kill -9``, OOM, power loss) bypasses the graceful shutdown
-    path, orphaning the ``claude-agent-acp → claude → MCP`` tree. Call this at
+    path, orphaning the ``claude-code-acp → claude → MCP`` tree. Call this at
     startup, BEFORE spawning any of our own subprocesses: at that point anything
     whose cmdline carries this bot's ``token`` is necessarily a stale leak. We
-    seed on those, climb to the owning ``claude-agent-acp`` root, and kill the
+    seed on those, climb to the owning ``claude-code-acp`` root, and kill the
     whole tree. Interactive Claude Code sessions are never touched (their MCP
     servers carry no token, and we explicitly exclude their signatures).
 
@@ -131,7 +131,7 @@ def reap_stale_acp_trees(token: str, *, wait_s: float = 2.0) -> int:
 
     def _acp_ish(a: str) -> bool:
         return (
-            "claude-agent-acp" in a
+            "claude-code-acp" in a
             or a.strip() == "claude"
             or "mcp_servers" in a
             or "uv run" in a
@@ -166,8 +166,8 @@ def reap_stale_acp_trees(token: str, *, wait_s: float = 2.0) -> int:
 
 
 ACP_COMMANDS: dict[str, str] = {
-    "claude-code": "claude-agent-acp",
-    "claude-acp": "claude-agent-acp",  # model-configurable form: claude-acp:<model>
+    "claude-code": "npx @zed-industries/claude-code-acp",
+    "claude-acp": "npx @zed-industries/claude-code-acp",  # model-configurable form: claude-acp:<model>
     "gemini": "npx @google/gemini-cli --acp",
     "copilot": "npx @github/copilot --acp --stdio",
     "codex": "npx @agentclientprotocol/codex-acp",
@@ -177,7 +177,7 @@ ACP_COMMANDS: dict[str, str] = {
 # The suffix is selected at runtime via session/set_model against the agent's
 # advertised models (see ACPClient._select_model), which resolves aliases
 # ("opus", "sonnet", "haiku") and full ids alike — so no hardcoded ids age here.
-# NOTE: claude-agent-acp ignores ANTHROPIC_MODEL; the protocol is the real lever.
+# NOTE: claude-code-acp ignores ANTHROPIC_MODEL; the protocol is the real lever.
 _CLAUDE_ACP_BASES = {"claude-code", "claude-acp"}
 
 
@@ -190,7 +190,7 @@ def resolve_acp(agent_key: str) -> tuple[str, dict[str, str], str]:
     suffix.
 
     The suffix is returned as ``model-pref`` so the caller can select it over the
-    ACP protocol (``session/set_model``) — the ``claude-agent-acp`` bridge does NOT
+    ACP protocol (``session/set_model``) — the ``claude-code-acp`` bridge does NOT
     read ``ANTHROPIC_MODEL`` (it picks from Claude Code ``settings.model`` or the
     first advertised model), so env is not a reliable channel. We still set
     ``ANTHROPIC_MODEL`` for any non-bridge consumer, but ACPClient drives the model
@@ -403,7 +403,7 @@ class ACPClient:
         self._session_id = result["sessionId"]
         log.info("ACP session started: %s (cmd=%s)", self._session_id, self.command)
 
-        # Select the requested model over the ACP protocol. The claude-agent-acp
+        # Select the requested model over the ACP protocol. The claude-code-acp
         # bridge does NOT honor ANTHROPIC_MODEL — it defaults to Claude Code's
         # settings.model or the first advertised model — so the only reliable way
         # to pin (e.g.) Sonnet is session/set_model with an exact advertised id.

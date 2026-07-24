@@ -108,7 +108,7 @@ async def agent_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             await update.message.reply_text(
                 "No agent CLI found.\n\n"
                 "Install one of:\n"
-                "• claude-agent-acp (Claude Agent)\n"
+                "• npx @zed-industries/claude-code-acp (Claude Agent)\n"
                 "• gemini (Gemini CLI)\n"
                 "• npx @agentclientprotocol/codex-acp (ChatGPT Codex ACP bridge)\n\n"
                 "Then restart the bot."

@@ -533,7 +533,7 @@ def test_resolve_acp_model_suffix():
     # Returns (command, env, model_pref). The suffix is surfaced as model_pref so
     # ACPClient can select it via session/set_model (the bridge ignores env).
     cmd, env, pref = resolve_acp("claude-acp:opus")
-    assert cmd == "claude-agent-acp"
+    assert cmd == "npx @zed-industries/claude-code-acp"
     assert env == {"ANTHROPIC_MODEL": "opus"}
     assert pref == "opus"
 
@@ -541,8 +541,8 @@ def test_resolve_acp_model_suffix():
     assert env == {"ANTHROPIC_MODEL": "claude-opus-4-8"}
     assert pref == "claude-opus-4-8"
 
-    assert resolve_acp("claude-code") == ("claude-agent-acp", {}, "")
-    assert resolve_acp("claude-acp") == ("claude-agent-acp", {}, "")
+    assert resolve_acp("claude-code") == ("npx @zed-industries/claude-code-acp", {}, "")
+    assert resolve_acp("claude-acp") == ("npx @zed-industries/claude-code-acp", {}, "")
 
     cmd, env, pref = resolve_acp("gemini")
     assert "gemini" in cmd and env == {} and pref == ""
