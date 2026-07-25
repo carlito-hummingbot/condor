@@ -121,9 +121,64 @@ spams the logs forever. The bot wastes resources and never trades.
 | 7 | 0.10 (default) | $0.35 | ❌ Fails — 14× below min |
 | any | < 0.20 | < $5 | ❌ Too small |
 
-**Formula to compute a safe allocation:**
-`portfolio_allocation = (desired_per_order × 2) / total_amount_quote`  
-Example: for $10/order with $51 capital: `(10 × 2) / 51 = 0.39`
+### 🔢 CRITICAL: How to compute `portfolio_allocation` — follow this exactly
+
+The single most common mistake is setting `portfolio_allocation = desired_order / total_amount_quote`.
+That gives **half the intended order size** because it forgets the `0.5` factor from the single-level
+formula. **Do NOT make this mistake.** Follow the steps below:
+
+**Formula:**
+```
+portfolio_allocation = (desired_per_order × 2) / total_amount_quote
+```
+
+**WORKED EXAMPLE:**
+
+User says: *"$7 per order, I have $51"*
+
+```
+Step 1: Identify the values
+  desired_per_order  = 7   (the user's "$7 per order")
+  total_amount_quote = 51  (the available capital)
+
+Step 2: Apply the formula
+  portfolio_allocation = (7 × 2) / 51   ← NOTE: multiply desired by 2 FIRST
+                       = 14 / 51
+                       = 0.2745
+
+Step 3: Set in config
+  "portfolio_allocation": 0.2745
+  "total_amount_quote": 51
+
+Step 4: Verify
+  per_order = 0.5 × 51 × 0.2745 = 7.00 ✅
+```
+
+**Why the ×2?** Because the single-level formula divides by `(buy_total + sell_total) = 2`.
+The ×2 cancels this denominator so your desired order size is what actually gets placed.
+
+**Wrong (what most agents do):** ❌
+```
+portfolio_allocation = 7 / 51 = 0.137     ← WRONG! Produces $3.49/order
+```
+
+**Right:** ✅
+```
+portfolio_allocation = (7 × 2) / 51 = 0.2745   ← Correct! Produces $7.00/order
+```
+
+**Quick reference — common values:**
+
+| Capital | Desired/order | Formula | allocation |
+|---------|--------------|---------|------------|
+| $51 | $7 | `(7×2)/51` | **0.2745** |
+| $51 | $10 | `(10×2)/51` | **0.3922** |
+| $51 | $5 | `(5×2)/51` | **0.1961** |
+| $100 | $10 | `(10×2)/100` | **0.20** |
+| $100 | $15 | `(15×2)/100` | **0.30** |
+
+**Rule of thumb:** If your config has `portfolio_allocation` < 0.20 and capital ≥ $50,
+your orders will likely fail the $5 minimum check — double-check your math.
 
 Also validate:
 - **Spreads vs fees**: `take_profit` must exceed round-trip maker fee.
