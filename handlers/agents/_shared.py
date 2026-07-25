@@ -547,6 +547,50 @@ def build_initial_context(
 
         sections.append("\n".join(server_info))
 
+        # Authoritative live health check — prevents the agent from misdiagnosing
+        # a transient deploy/tool error as "the core/engine is offline". The bot
+        # backend binds to a Tailscale IP (not localhost), so a naive localhost
+        # probe would wrongly report the server down. We ask the server itself via
+        # a short blocking HTTP call (this function is sync; keep it non-async).
+        try:
+            import base64
+            import urllib.request
+
+            from config_manager import get_config_manager
+
+            cm = get_config_manager()
+            srv = cm.get_server(active_name) or {}
+            host = srv.get("host") or "localhost"
+            port = srv.get("port") or 8000
+            user = srv.get("username") or "admin"
+            pw = srv.get("password") or "admin"
+            url = f"http://{host}:{port}/accounts/"
+            req = urllib.request.Request(url, method="GET")
+            token = base64.b64encode(f"{user}:{pw}".encode()).decode()
+            req.add_header("Authorization", f"Basic {token}")
+            with urllib.request.urlopen(req, timeout=4) as resp:
+                code = resp.status
+            if code == 200:
+                health_line = (
+                    f"LIVE STATUS: server '{active_name}' ({host}:{port}) is ONLINE "
+                    f"and reachable right now. If a deploy or tool call fails, treat it "
+                    f"as a transient/config issue — NOT a server outage. Do not tell the "
+                    f"user the core/engine is down unless this live check says offline."
+                )
+            else:
+                health_line = (
+                    f"LIVE STATUS: server '{active_name}' responded with HTTP {code}. "
+                    f"Treat as degraded, not necessarily down."
+                )
+            sections.append(health_line)
+        except Exception as e:
+            # If we can't reach it, say so honestly — but don't block session start.
+            sections.append(
+                f"LIVE STATUS: could not verify server '{active_name}' "
+                f"({type(e).__name__}). If a deploy fails, check connectivity before "
+                f"declaring an outage."
+            )
+
     # User memory index — what the chat assistant remembers about this user. This
     # store is the chat's own (FEAT-003), not shared with the user's trading
     # agents. Inject only the index; bodies are read on demand via
