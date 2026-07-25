@@ -82,9 +82,53 @@ Take the JSON block from the template and substitute the actual values:
 - `total_amount_quote` — from the task context (user-specified or strategy risk limit)
 - `leverage` — from task context; if not specified use the template default; always 1 for spot
 
+### ⚠️ SINGLE LEVEL RULE — only 1 buy + 1 sell order at a time
+
+The templates already use single-level configs (`buy_amounts_pct: "1"`, `buy_spreads: "0.0012"`).
+**Do NOT add more levels.** Do NOT change `buy_amounts_pct`/`sell_amounts_pct` to comma-separated
+lists. The user wants exactly 1 buy order and 1 sell order on the book at any time. Multiple
+levels means multiple concurrent orders at different prices — that is explicitly NOT desired
+unless the user says otherwise.
+
+### ⚠️ MINIMUM ORDER SIZE — must pass Binance $5 notional floor
+
+PMM Mister computes per-order quote as:
+
+```
+per_order = (buy_pct / (buy_total + sell_total)) × total_amount_quote × portfolio_allocation
+```
+
+For a single-level config (1 buy + 1 sell at weight 1 each):
+
+```
+per_order = 1/(1+1) × total_amount_quote × portfolio_allocation
+          = 0.5 × total_amount_quote × portfolio_allocation
+```
+
+**This must exceed the exchange minimum notional = $5 on Binance spot.**
+
+If not, the bot will stay "running" in Docker but every single order fails with `ValueError:
+order notional X is lower than minimum notional size 5.0` — then retries 10×, fails again,
+spams the logs forever. The bot wastes resources and never trades.
+
+**Viable combinations (single level, Binance spot XRP-USDT):**
+
+| total_amount_quote | portfolio_allocation | per-order | Status |
+|---|---|---|---|
+| 51 | 0.20 | $5.10 | ✅ Minimum viable |
+| 51 | 0.40 | $10.20 | ✅ Good |
+| 100 | 0.20 | $10.00 | ✅ Comfortable |
+| 7 | 0.10 (default) | $0.35 | ❌ Fails — 14× below min |
+| any | < 0.20 | < $5 | ❌ Too small |
+
+**Formula to compute a safe allocation:**
+`portfolio_allocation = (desired_per_order × 2) / total_amount_quote`  
+Example: for $10/order with $51 capital: `(10 × 2) / 51 = 0.39`
+
 Also validate:
-- **Min order size**: `total_amount_quote × portfolio_allocation ÷ number_of_levels` must exceed the exchange's minimum notional (typically $5–10 on Binance spot, $20 on perps). If not, increase `total_amount_quote` or reduce levels.
-- **Spreads vs fees**: `take_profit` must exceed round-trip maker fee (e.g. if fee is 0.02%, take_profit ≥ 0.04%).
+- **Spreads vs fees**: `take_profit` must exceed round-trip maker fee.
+  - Binance spot: 0.075% maker → round-trip 0.15% → take_profit ≥ 0.0015.
+  - Binance perp: 0.02% maker → round-trip 0.04% → take_profit ≥ 0.0004.
 
 ### Key parameter notes
 
