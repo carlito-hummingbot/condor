@@ -2,7 +2,7 @@
 name: Market Making Expert
 description: Market making specialist — regime detection, spread calibration, and
   inventory management for PMM strategies
-agent_key: opencode-go:deepseek-v4-flash
+agent_key: deepseek:deepseek-v4-pro
 tools:
 - get_market_data
 - get_portfolio_overview

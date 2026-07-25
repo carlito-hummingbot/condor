@@ -2,7 +2,7 @@
 name: Routine Builder
 description: Specialist agent that creates, edits, tests, and debugs Python routines
   — both global (routines/) and agent-local (agents/{slug}/routines/).
-agent_key: opencode-go:deepseek-v4-flash
+agent_key: deepseek:deepseek-v4-pro
 tools: []
 when_to_consult: When the user wants to create, modify, fix, or debug a routine (market
   analysis, monitoring, charts, reports) — or delegate routine creation to the background.
