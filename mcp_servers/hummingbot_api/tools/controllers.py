@@ -443,14 +443,30 @@ async def deploy_bot(
     Returns:
         Dictionary containing deployment results
     """
-    result = await client.bot_orchestration.deploy_v2_controllers(
-        instance_name=bot_name,
-        controllers_config=controllers_config,
-        credentials_profile=account_name,
-        max_global_drawdown_quote=max_global_drawdown_quote,
-        max_controller_drawdown_quote=max_controller_drawdown_quote,
-        image=image,
+    # The vendored hummingbot_api_client library predates the `headless` field,
+    # so we POST the deployment directly with headless=True. Without headless, the
+    # hummingbot-api launches the container with a TUI entrypoint that crashes
+    # inside Docker (no TTY) → instant exit code 1 and a "stopped" bot. headless
+    # makes the bot run as a long-lived MQTT-controlled process.
+    deployment = {
+        "instance_name": bot_name,
+        "credentials_profile": account_name,
+        "controllers_config": controllers_config,
+        "image": image,
+        "headless": True,
+    }
+    if max_global_drawdown_quote is not None:
+        deployment["max_global_drawdown_quote"] = max_global_drawdown_quote
+    if max_controller_drawdown_quote is not None:
+        deployment["max_controller_drawdown_quote"] = max_controller_drawdown_quote
+    result = await client._session.post(
+        f"{client.base_url}/bot-orchestration/deploy-v2-controllers",
+        json=deployment,
     )
+    try:
+        result = await result.json()
+    except Exception:
+        result = {"message": str(result.status)}
 
     return {
         "bot_name": bot_name,
