@@ -403,7 +403,7 @@ class PydanticAIClient:
             if not model_id:
                 raise RuntimeError(
                     "DeepSeek requires an explicit model id, e.g. "
-                    "'deepseek:deepseek-chat' or 'deepseek:deepseek-reasoner'."
+                    "'deepseek:deepseek-v4-pro' or 'deepseek:deepseek-v4-flash'."
                 )
             api_key = os.environ.get("DEEPSEEK_API_KEY")
             if not api_key:
