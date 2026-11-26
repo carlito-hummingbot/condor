@@ -43,18 +43,8 @@
 <h2 id="after">After</h2>
 <p>A frosted wizard that starts with a readiness summary and then shows only the steps this install still needs (five to seven dots). Name is required; everything else can be skipped. An install that already has keys, a wallet, a conversation or a bot is marked complete and never sees it. Run setup again lives in the avatar menu and in Settings, Appearance.</p>
 
-<h3>Before step 1: the server check</h3>
-<p>What a fresh install actually has (from <code>setup-environment.sh</code> and the Condor code at <code>97d9261</code>; read, not yet run on a clean machine):</p>
-<ul>
-  <li><strong>A server named <code>local</code> almost always exists.</strong> The config template ships <code>local</code> at <code>localhost:8000</code> as the default server, owned by the admin. The name stays <code>local</code> even when the API is remote or on Tailscale.</li>
-  <li><strong>No default username.</strong> Nothing is <code>admin</code>/<code>admin</code>. The template leaves username and password empty on purpose.</li>
-  <li><strong>The user types the API username and password during <code>make setup</code></strong> (nothing is generated), and setup writes the same values into <code>config.yml</code> and into the Hummingbot API's own <code>.env</code>. If a Hummingbot API is already installed beside Condor, setup reads its credentials and asks nothing.</li>
-  <li><strong>Local and Telegram mode behave the same</strong> for the server; the mode only changes how the dashboard logs in.</li>
-  <li><strong>No server at all</strong> only happens with a hand-edited or deleted config. A skipped or failed API step leaves <code>local</code> in place with empty credentials, so the dashboard sees an offline or rejected server, not a missing one.</li>
-  <li><strong>The add-server call does not test the connection.</strong> It only rejects a duplicate name and saves. Offline servers stay in the list.</li>
-</ul>
-<p>So the wizard's current first screen, the full "Connect a server" form below, is the rare case. It appeared in the review because the preview was set up by hand, not with <code>make setup</code>. A normal install would not see it.</p>
-<figure><img src="assets/onboarding-0-server-gate.png" alt="Connect a server form"><figcaption>Current behaviour (PR #2): the full form, shown only when the server list is empty. Rare on a real install. It asks for name, host, port, username and password and does not offer to use <code>local</code>.</figcaption></figure>
+<h3>Server fallback (only when setup leaves no server)</h3>
+<p>Setup normally creates a server named <code>local</code> (<code>localhost:8000</code>) and asks for its API username and password, so most installs go straight to the readiness check. The saved server is not tested on save, so the wizard checks its status after.</p>
 
 <h4>Proposed behaviour</h4>
 <table>
@@ -155,7 +145,7 @@
 <h2 id="open">Open points from review</h2>
 <ol>
   <li><strong>Model step (#11).</strong> When no agent tool is installed, the list is a wall of "not installed &mdash; npm install ..." lines. Consider showing the ready or recommended option first and folding the rest.</li>
-  <li><strong>Server check (before step 1).</strong> The current screen is a full form for the rare no-server case and ignores the <code>local</code> server that setup creates. Replace it with a readiness check that shows only what is missing (see "Better: a readiness check"), with the four server states as the fallback. Open: whether a test-connection call is added on the backend, how the wizard shows "starting" for a container that is still coming up, and whether the readiness check replaces steps 2 and 3 or sits in front of them.</li>
+  <li><strong>Server fallback.</strong> The current screen is a full form for the no-server case and ignores the <code>local</code> server that setup creates. Replace it with a readiness check that shows only what is missing (see "Better: a readiness check"), with the four server states as the fallback. Open: whether a test-connection call is added on the backend, how the wizard shows "starting" for a container that is still coming up, and whether the readiness check replaces steps 2 and 3 or sits in front of them.</li>
   <li><strong>Header noise.</strong> A red "Gateway" pill sits in the top bar behind the wizard on a fresh install. It is not actionable at that moment.</li>
   <li><strong>Resume behaviour.</strong> After a reload the wizard reopens at the last step (6 of 6), which is useful, but the only way back to step 1 is Back five times.</li>
 </ol>
