@@ -69,6 +69,9 @@ class FakeSDS:
     def get(self, name, data_type, **params):
         return None
 
+    def get_entry(self, name, data_type, **params):
+        return None
+
     async def get_or_fetch(self, name, data_type, **params):
         assert data_type is ServerDataType.SERVER_STATUS
         self.concurrent += 1
