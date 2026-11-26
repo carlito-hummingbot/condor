@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
-import { useSetTelemetryLevel } from "@/hooks/useTelemetry";
+import { useSetTelemetryLevel, useTelemetry } from "@/hooks/useTelemetry";
 import { api } from "@/lib/api";
 import { canContinueAlerts, type PreferencePatch } from "@/lib/onboarding";
 import { PermissionDeniedError, pushSupport, subscribe } from "@/lib/push";
@@ -25,7 +25,18 @@ export function AlertsStep({
   const [choice, setChoice] = useState<"yes" | "no" | null>(null);
   const [pushNote, setPushNote] = useState<string | null>(null);
   const [pushBusy, setPushBusy] = useState(false);
+  const settings = useTelemetry();
   const telemetry = useSetTelemetryLevel();
+  const locked = !!settings.data && (settings.data.env_overridden || !settings.data.can_change);
+  const gate = settings.isError
+    ? { status: "error" as const, canChange: false, envOverridden: false }
+    : settings.isSuccess
+      ? {
+          status: "ready" as const,
+          canChange: settings.data.can_change,
+          envOverridden: settings.data.env_overridden,
+        }
+      : { status: "loading" as const, canChange: false, envOverridden: false };
   const mode = useQuery({
     queryKey: ["auth-mode"],
     queryFn: () => api.getAuthMode(),
@@ -37,7 +48,7 @@ export function AlertsStep({
   }, [onContinue]);
 
   const support = pushSupport();
-  const ready = canContinueAlerts(choice);
+  const ready = canContinueAlerts(choice, gate);
   const saveRef = useRef(telemetry.mutateAsync);
   useEffect(() => {
     saveRef.current = telemetry.mutateAsync;
@@ -48,6 +59,10 @@ export function AlertsStep({
       label: "Next",
       disabled: busy || telemetry.isPending || !ready,
       run: () => {
+        if (locked || settings.isError) {
+          continueRef.current({});
+          return;
+        }
         if (!choice) return;
         void saveRef
           .current(choice === "yes" ? "usage" : "off")
@@ -56,7 +71,7 @@ export function AlertsStep({
       },
     });
     return () => onBind(null);
-  }, [busy, choice, onBind, ready, telemetry.isPending]);
+  }, [busy, choice, locked, onBind, ready, settings.isError, telemetry.isPending]);
 
   const enablePush = async () => {
     setPushBusy(true);
@@ -109,25 +124,35 @@ export function AlertsStep({
         </section>
         <section className="border-t border-[var(--color-border)] pt-4">
           <h3 className="text-sm font-medium text-[var(--color-text)]">Usage summaries</h3>
-          <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
-            Anonymous counts of how the dashboard is used. Nothing is selected until you choose.
-          </p>
-          <div className="mt-3 flex gap-2" role="group" aria-label="Telemetry consent">
-            <Button
-              variant={choice === "yes" ? "primary" : "secondary"}
-              aria-pressed={choice === "yes"}
-              onClick={() => setChoice("yes")}
-            >
-              Yes
-            </Button>
-            <Button
-              variant={choice === "no" ? "primary" : "secondary"}
-              aria-pressed={choice === "no"}
-              onClick={() => setChoice("no")}
-            >
-              No
-            </Button>
-          </div>
+          {locked && settings.data ? (
+            <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+              {settings.data.env_overridden
+                ? `CONDOR_TELEMETRY is set for this install and overrides a choice here. Effective level: ${settings.data.level}.`
+                : `Telemetry is install-wide, so only an admin can change it. Effective level: ${settings.data.level}.`}
+            </p>
+          ) : (
+            <>
+              <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                Anonymous counts of how the dashboard is used. Nothing is selected until you choose.
+              </p>
+              <div className="mt-3 flex gap-2" role="group" aria-label="Telemetry consent">
+                <Button
+                  variant={choice === "yes" ? "primary" : "secondary"}
+                  aria-pressed={choice === "yes"}
+                  onClick={() => setChoice("yes")}
+                >
+                  Yes
+                </Button>
+                <Button
+                  variant={choice === "no" ? "primary" : "secondary"}
+                  aria-pressed={choice === "no"}
+                  onClick={() => setChoice("no")}
+                >
+                  No
+                </Button>
+              </div>
+            </>
+          )}
           {telemetry.isError && (
             <p className="mt-2 text-xs text-[var(--color-red)]">
               {telemetry.error instanceof Error ? telemetry.error.message : "Could not save that choice."}

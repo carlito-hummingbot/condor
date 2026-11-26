@@ -9,10 +9,12 @@ import {
   buildPreferenceUpdates,
   dashboardTitleFrom,
   displayNameFrom,
+  savedAppearanceToApply,
   withActiveAgentKey,
   type PreferencePatch,
   type UserPreferences,
 } from "@/lib/onboarding";
+import { COLORBLIND_KEY, DISPLAY_CURRENCY_KEY, THEME_KEY } from "@/lib/sessionState";
 import { preferencesQuery } from "@/lib/queryClient";
 
 export function useUserPreferences() {
@@ -68,7 +70,11 @@ export function useDashboardTitle(): string {
   return title;
 }
 
-/** Apply a saved theme, colour-blind flag and currency once, when preferences arrive. */
+/**
+ * Fill theme, colour-blind mode and currency from preferences only where this
+ * browser has not stored its own choice. A later Settings or top-bar change
+ * stays in localStorage and is written back to preferences by the setters.
+ */
 export function useApplySavedAppearance() {
   const { data, isFetched } = useUserPreferences();
   const { setTheme, setColorblind } = useTheme();
@@ -77,12 +83,18 @@ export function useApplySavedAppearance() {
   useEffect(() => {
     if (!isFetched || applied.current) return;
     applied.current = true;
-    const ui = data?.ui;
-    if (!ui) return;
-    if (ui.theme === "dark" || ui.theme === "light") setTheme(ui.theme);
-    if (typeof ui.colorblind === "boolean") setColorblind(ui.colorblind);
-    if (ui.currency && (CURRENCY_OPTIONS as readonly string[]).includes(ui.currency)) {
-      setCurrency(ui.currency as DisplayCurrency);
+    const next = savedAppearanceToApply({
+      storedTheme: localStorage.getItem(THEME_KEY),
+      storedColorblind: localStorage.getItem(COLORBLIND_KEY),
+      storedCurrency: localStorage.getItem(DISPLAY_CURRENCY_KEY),
+      theme: data?.ui?.theme,
+      colorblind: data?.ui?.colorblind,
+      currency: data?.ui?.currency,
+    });
+    if (next.theme) setTheme(next.theme);
+    if (next.colorblind) setColorblind(true);
+    if (next.currency && (CURRENCY_OPTIONS as readonly string[]).includes(next.currency)) {
+      setCurrency(next.currency as DisplayCurrency);
     }
   }, [isFetched, data, setTheme, setColorblind, setCurrency]);
 }

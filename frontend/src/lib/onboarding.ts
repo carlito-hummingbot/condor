@@ -104,9 +104,41 @@ export interface StepDef {
  */
 export const INSTALLED_STEP_IDS = ["profile", "model", "connect", "look", "alerts", "done"] as const;
 
-/** Telemetry has no default. Next on Stay in the loop waits for an explicit answer. */
-export function canContinueAlerts(choice: "yes" | "no" | null): boolean {
+/**
+ * Telemetry has no default when this seat can change it. A seat that cannot
+ * (not the admin, or `CONDOR_TELEMETRY` pinned) may continue without a write
+ * the API would refuse. A failed read must not trap the step either.
+ */
+export function canContinueAlerts(
+  choice: "yes" | "no" | null,
+  gate?: { status: "loading" | "error" | "ready"; canChange: boolean; envOverridden: boolean },
+): boolean {
+  if (!gate) return choice === "yes" || choice === "no";
+  if (gate.status === "loading") return false;
+  if (gate.status === "error" || !gate.canChange || gate.envOverridden) return true;
   return choice === "yes" || choice === "no";
+}
+
+/**
+ * Apply a saved appearance only where this browser has not chosen one.
+ * A later change in Settings or the top bar lives in localStorage and must
+ * survive the next reload.
+ */
+export function savedAppearanceToApply(input: {
+  storedTheme: string | null;
+  storedColorblind: string | null;
+  storedCurrency: string | null;
+  theme?: "dark" | "light";
+  colorblind?: boolean;
+  currency?: string;
+}): { theme?: "dark" | "light"; colorblind?: boolean; currency?: string } {
+  const out: { theme?: "dark" | "light"; colorblind?: boolean; currency?: string } = {};
+  const themeUnset =
+    input.storedTheme !== "dark" && input.storedTheme !== "light" && input.storedTheme !== "colorblind";
+  if (themeUnset && (input.theme === "dark" || input.theme === "light")) out.theme = input.theme;
+  if (input.storedColorblind === null && input.colorblind === true) out.colorblind = true;
+  if (!input.storedCurrency && input.currency) out.currency = input.currency;
+  return out;
 }
 
 export function installedStepDefs(): StepDef[] {
