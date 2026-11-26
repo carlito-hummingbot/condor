@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 
 import { AnchoredMenu } from "@/components/ui/AnchoredMenu";
 import { MORE_ITEMS, isRailEntryActive } from "@/lib/nav";
+import { BottomSheet } from "./BottomSheet";
 
 /**
  * The rail's ⋯ menu: the pages that left the top bar and still need a door.
@@ -12,28 +13,23 @@ import { MORE_ITEMS, isRailEntryActive } from "@/lib/nav";
  * than navigating.
  */
 export function MoreMenu({
-  anchor,
+  anchor = null,
   open,
   onClose,
   onReport,
+  variant = "popover",
 }: {
-  anchor: HTMLElement | null;
+  anchor?: HTMLElement | null;
   open: boolean;
   onClose: () => void;
   onReport: () => void;
+  /** Side popover on the rail; a bottom sheet from the phone tab bar. */
+  variant?: "popover" | "sheet";
 }) {
   const { pathname, search } = useLocation();
   const current = MORE_ITEMS.find((item) => isRailEntryActive(item.id, pathname, search));
-
-  return (
-    <AnchoredMenu
-      anchor={anchor}
-      open={open}
-      onClose={onClose}
-      align="left"
-      role="menu"
-      className="min-w-[220px] py-1"
-    >
+  const body = (
+    <>
       {current && (
         <div className="px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider text-[var(--color-text-muted)]">
           {current.label}
@@ -70,6 +66,27 @@ export function MoreMenu({
         <Bug className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" />
         Report an issue
       </button>
+    </>
+  );
+
+  if (variant === "sheet") {
+    return (
+      <BottomSheet open={open} onClose={onClose} label="More">
+        <div className="py-1">{body}</div>
+      </BottomSheet>
+    );
+  }
+
+  return (
+    <AnchoredMenu
+      anchor={anchor}
+      open={open}
+      onClose={onClose}
+      align="left"
+      role="menu"
+      className="min-w-[220px] py-1"
+    >
+      {body}
     </AnchoredMenu>
   );
 }

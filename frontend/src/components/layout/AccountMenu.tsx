@@ -1,12 +1,14 @@
-import { LogOut, RotateCcw } from "lucide-react";
+import { LogOut, RotateCcw, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { AnchoredMenu } from "@/components/ui/AnchoredMenu";
 import { useDisplayName } from "@/hooks/useDisplayName";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/lib/auth";
+import { BottomSheet } from "./BottomSheet";
 import { CurrencyChoices } from "./CurrencySelector";
 import { GatewayStatusRow } from "./GatewayIndicator";
+import { NotificationBell } from "./NotificationBell";
 import { ServerList } from "./ServerSelector";
 
 /**
@@ -18,28 +20,24 @@ import { ServerList } from "./ServerSelector";
  * not-found page.
  */
 export function AccountMenu({
-  anchor,
+  anchor = null,
   open,
   onClose,
+  variant = "popover",
 }: {
-  anchor: HTMLElement | null;
+  anchor?: HTMLElement | null;
   open: boolean;
   onClose: () => void;
+  /** Side popover on the rail; a bottom sheet from the phone tab bar. */
+  variant?: "popover" | "sheet";
 }) {
   const name = useDisplayName();
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const role = user?.role === "admin" ? "Admin" : user?.role === "user" ? "User" : user?.role;
 
-  return (
-    <AnchoredMenu
-      anchor={anchor}
-      open={open}
-      onClose={onClose}
-      align="left"
-      role="menu"
-      className="min-w-[240px] py-1"
-    >
+  const body = (
+    <>
       <div className="px-3 py-2">
         <div className="truncate text-sm font-medium text-[var(--color-text)]">{name}</div>
         {role && (
@@ -74,6 +72,23 @@ export function AccountMenu({
         </div>
       </div>
       <div className="mx-3 my-1 border-t border-[var(--color-border)]" />
+      {variant === "sheet" && (
+        <>
+          <div className="flex items-center justify-between px-3 py-2">
+            <span className="text-sm text-[var(--color-text)]">Notifications</span>
+            <NotificationBell align="left" />
+          </div>
+          <Link
+            to="/settings"
+            role="menuitem"
+            onClick={onClose}
+            className="flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)]"
+          >
+            <Settings className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" />
+            Settings
+          </Link>
+        </>
+      )}
       <Link
         to="/welcome"
         role="menuitem"
@@ -95,6 +110,27 @@ export function AccountMenu({
         <LogOut className="h-4 w-4 shrink-0" />
         Logout
       </button>
+    </>
+  );
+
+  if (variant === "sheet") {
+    return (
+      <BottomSheet open={open} onClose={onClose} label={name}>
+        <div className="py-1">{body}</div>
+      </BottomSheet>
+    );
+  }
+
+  return (
+    <AnchoredMenu
+      anchor={anchor}
+      open={open}
+      onClose={onClose}
+      align="left"
+      role="menu"
+      className="min-w-[240px] py-1"
+    >
+      {body}
     </AnchoredMenu>
   );
 }
