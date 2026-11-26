@@ -2,12 +2,15 @@ import {
   Bot,
   Brain,
   Droplets,
+  LayoutDashboard,
+  MoreHorizontal,
   Settings,
   Swords,
   Wallet,
+  Workflow,
   Zap,
+  type LucideIcon,
 } from "lucide-react";
-
 
 /**
  * The main nav.
@@ -37,20 +40,96 @@ import {
  *
  * Hub joined it in FEAT-153 and left it again. `/hub` mounts the Agents
  * workspace with its transcript column swapped for the catalogue, so a tab of
- * its own sat beside Agents saying the same thing twice. Its door is the card
- * at the foot of the Agents rail, below the agents it installs — which is
- * where you are when you want it. It is the one full-bleed route with no nav
- * entry.
+ * its own sat beside Agents saying the same thing twice. Its door was the card
+ * at the foot of the Agents rail.
+ *
+ * The top bar is a left icon rail now. Dashboard is the chat home (lit on
+ * `/hub` and `/agents/*` as Agents used to be). Portfolio, Trade, DEX and
+ * Routines sit under More until those pages are redesigned. Agent Hub is
+ * under More too: a second door, which overrides the FEAT-153 one-door rule
+ * on purpose. Strategies points at the cross-agent loops panel
+ * (`/?panel=loops`) until `/strategies` is its own page.
  */
-export const NAV_ITEMS = [
-  { to: "/", icon: Brain, label: "Agents" },
-  { to: "/portfolio", icon: Wallet, label: "Portfolio" },
-  { to: "/trade", icon: Swords, label: "Trade" },
-  { to: "/dex", icon: Droplets, label: "DEX" },
-  { to: "/bots", icon: Bot, label: "Bots" },
-  { to: "/routines", icon: Zap, label: "Routines" },
-  { to: "/settings", icon: Settings, label: "Settings" },
-] as const;
+export interface NavEntry {
+  id: string;
+  to: string;
+  icon: LucideIcon;
+  label: string;
+}
+
+/** Rail, top group. The logo is not an entry: it is the brand, and it never lights. */
+export const RAIL_TOP: readonly NavEntry[] = [
+  { id: "dashboard", to: "/", icon: LayoutDashboard, label: "Dashboard" },
+  { id: "bots", to: "/bots", icon: Bot, label: "Bots" },
+  { id: "strategies", to: "/?panel=loops", icon: Workflow, label: "Strategies" },
+];
+
+/** The ⋯ menu. No route of its own; it lights when the page is one of these. */
+export const MORE_ITEMS: readonly NavEntry[] = [
+  { id: "portfolio", to: "/portfolio", icon: Wallet, label: "Portfolio" },
+  { id: "trade", to: "/trade", icon: Swords, label: "Trade" },
+  { id: "dex", to: "/dex", icon: Droplets, label: "DEX" },
+  { id: "routines", to: "/routines", icon: Zap, label: "Routines" },
+  { id: "hub", to: "/hub", icon: Brain, label: "Agent Hub" },
+];
+
+export const MORE_ICON = MoreHorizontal;
+
+/** Rail, bottom group, besides the bell and the avatar (those are controls, not routes). */
+export const RAIL_BOTTOM: readonly NavEntry[] = [
+  { id: "settings", to: "/settings", icon: Settings, label: "Settings" },
+];
+
+/** The chat home, and the two pages that are still that home with a different column. */
+export function isDashboardActive(pathname: string): boolean {
+  return pathname === "/" || pathname === "/hub" || pathname.startsWith("/agents/");
+}
+
+export function isBotsActive(pathname: string): boolean {
+  return pathname === "/bots" || pathname.startsWith("/bots/");
+}
+
+/**
+ * The strategies door. `/strategies` once that page exists; until then the
+ * bookmarked loops panel on the home (`?panel=loops`).
+ */
+export function isStrategiesActive(pathname: string, search: string): boolean {
+  if (pathname === "/strategies" || pathname.startsWith("/strategies/")) return true;
+  return pathname === "/" && new URLSearchParams(search).get("panel") === "loops";
+}
+
+export function isSettingsActive(pathname: string): boolean {
+  return pathname === "/settings" || pathname.startsWith("/settings/");
+}
+
+function matchesEntry(pathname: string, to: string): boolean {
+  if (to === "/dex") return pathname === "/dex" || pathname.startsWith("/dex/");
+  return pathname === to || pathname.startsWith(`${to}/`);
+}
+
+/** True when the page is one of the More menu's routes, so the ⋯ stays lit. */
+export function isMoreActive(pathname: string): boolean {
+  return MORE_ITEMS.some((item) => matchesEntry(pathname, item.to));
+}
+
+export function isRailEntryActive(id: string, pathname: string, search: string): boolean {
+  switch (id) {
+    case "dashboard":
+      return isDashboardActive(pathname);
+    case "bots":
+      return isBotsActive(pathname);
+    case "strategies":
+      return isStrategiesActive(pathname, search);
+    case "settings":
+      return isSettingsActive(pathname);
+    case "more":
+      return isMoreActive(pathname);
+    default: {
+      const parked = MORE_ITEMS.find((entry) => entry.id === id);
+      return parked ? matchesEntry(pathname, parked.to) : false;
+    }
+  }
+}
 
 /**
  * Routes that lay themselves out edge to edge and scroll inside their own panes,
