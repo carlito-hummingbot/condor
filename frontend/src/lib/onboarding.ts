@@ -14,6 +14,12 @@ export const DEFAULT_DASHBOARD_TITLE = "Condor";
 /** Hard cap so a pasted paragraph cannot become the top-bar label. */
 export const DISPLAY_NAME_MAX = 80;
 
+/**
+ * Name field default when this user has not saved one. Valid on its own, so
+ * Next works without typing. Not the Local-mode first name, which is "Local".
+ */
+export const DEFAULT_DISPLAY_NAME = "Algo Trader";
+
 export interface OnboardingDetected {
   server?: string;
   server_online?: boolean;
@@ -249,15 +255,18 @@ export function forceOnboarding(search: string): boolean {
 }
 
 /**
- * Local mode signs in as `first_name: "Local"`, which is not a name anyone
- * chose. Telegram's first name is a real prefill. Anything else stays blank
- * so the field is answered on purpose.
+ * What the name field shows before a profile name is saved.
+ *
+ * A saved `profile.display_name` is applied by the caller and wins. Telegram's
+ * first name is a real prefill. Local mode signs in as `first_name: "Local"`,
+ * which nobody chose, so that falls through to "Algo Trader" — a name the
+ * field will accept, so Next is available without typing.
  */
 export function prefillName(
   user: { first_name?: string | null; username?: string | null } | null | undefined,
 ): string {
   const first = user?.first_name?.trim() ?? "";
-  if (!first || first.toLowerCase() === "local") return "";
+  if (!first || first.toLowerCase() === "local") return DEFAULT_DISPLAY_NAME;
   return first;
 }
 

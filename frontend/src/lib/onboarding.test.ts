@@ -7,6 +7,7 @@ import {
   canJumpTo,
   dashboardTitleFrom,
   describeModel,
+  DEFAULT_DISPLAY_NAME,
   displayNameFrom,
   forceOnboarding,
   installedStepDefs,
@@ -214,22 +215,27 @@ describe("step flow", () => {
 });
 
 describe("name, title and the hidden server check", () => {
-  it("prefills a Telegram first name and leaves Local mode blank", () => {
+  it("prefills a Telegram first name, and Algo Trader when the account has none", () => {
     expect(prefillName({ first_name: "Carlito", username: "carlito" })).toBe("Carlito");
-    expect(prefillName({ first_name: "Local", username: "local" })).toBe("");
-    expect(prefillName({ first_name: "  ", username: "local" })).toBe("");
-    expect(prefillName(null)).toBe("");
+    expect(prefillName({ first_name: "Local", username: "local" })).toBe(DEFAULT_DISPLAY_NAME);
+    expect(prefillName({ first_name: "local", username: "local" })).toBe(DEFAULT_DISPLAY_NAME);
+    expect(prefillName({ first_name: "  ", username: "local" })).toBe(DEFAULT_DISPLAY_NAME);
+    expect(prefillName(null)).toBe("Algo Trader");
   });
 
   it("uses the saved name, then the prefill", () => {
     const prefs: UserPreferences = { profile: { display_name: "Ada" } };
+    expect(displayNameFrom(prefs, { first_name: "Local" })).toBe("Ada");
     expect(displayNameFrom(prefs, { first_name: "Carlito" })).toBe("Ada");
     expect(displayNameFrom({}, { first_name: "Carlito" })).toBe("Carlito");
-    expect(displayNameFrom({ profile: { display_name: "  " } }, { first_name: "Local" })).toBe("");
+    expect(displayNameFrom({ profile: { display_name: "  " } }, { first_name: "Local" })).toBe(
+      "Algo Trader",
+    );
   });
 
   it("requires a name and caps its length", () => {
     expect(validateDisplayName("  ")).toMatch(/call you/);
+    expect(validateDisplayName("Algo Trader")).toBeNull();
     expect(validateDisplayName("Ada")).toBeNull();
     expect(validateDisplayName("a".repeat(81))).toMatch(/80/);
   });

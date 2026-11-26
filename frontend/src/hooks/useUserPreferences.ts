@@ -42,7 +42,7 @@ export function usePatchPreferences() {
   });
 }
 
-/** Saved name, else the Telegram first name. Empty in Local mode until they type one. */
+/** Saved name, else the Telegram first name, else "Algo Trader". Never "Local". */
 export function useDisplayName(): string {
   const { data } = useUserPreferences();
   const { user } = useAuth();
