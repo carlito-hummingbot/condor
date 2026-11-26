@@ -15,14 +15,14 @@
 <nav class="top"><a href="index.html">All proposals</a></nav>
 
 <h1>Guided first-run onboarding</h1>
-<p class="meta">Status: <strong>in review</strong> &middot; PRs #2, #9, #11, #12 into <code>ui-redesign</code> &middot; Last updated: 2026-11-26 &middot; Branches reviewed on rn5 against an empty preview Condor</p>
+<p class="meta">Status: <strong>in review</strong> &middot; PRs #2, #9, #11, #12, #14 into <code>ui-redesign</code> &middot; Last updated: 2026-11-26 &middot; Branches reviewed on rn5 against an empty preview Condor</p>
 <p class="lede">Replace the blocking "Connect an Exchange or Wallet" overlay with a short, skippable setup that greets traders by name, confirms what <code>make setup</code> already configured, and leaves a gentle reminder instead of a wall. The look stays the same. Only the workflow changes.</p>
 
 <h2 id="why">Why</h2>
 <p>A new Condor install opens on a wall: a modal that blocks Portfolio, Trade, DEX and Bots until an API key exists. The first thing a trader learns is what they cannot do yet. A short guided setup flips that. It confirms what setup already did, asks only for what Condor needs, lets people skip what they are not ready for, and lands them in a dashboard that already feels like theirs.</p>
 <ul>
   <li><strong>Setup, not a tour.</strong> The wizard collects settings (name, model, keys, look, alerts) and never explains the interface. This follows the Nielsen Norman Group guidance that onboarding fits apps that need user information to start, and that push tutorials interrupt people.</li>
-  <li><strong>Short and visible.</strong> Six steps with progress dots, every step except the name skippable.</li>
+  <li><strong>Short and visible.</strong> A readiness summary first, then five to seven steps with progress dots; every step except the name is skippable.</li>
   <li><strong>No dead end.</strong> Skipping leaves a one-line reminder on trading pages, not a modal.</li>
 </ul>
 <p class="sources">Sources carried over from the first version of this proposal (not re-checked in this revision):
@@ -59,7 +59,7 @@
 <p>Because saving never tests the connection, the wizard should save, then poll the server status and show the result. Telling "wrong password" from "unreachable" may need a small backend change (a test-connection call); that is not confirmed yet.</p>
 
 <h4>Wording per connection result</h4>
-<p>Backend calls (built by another lane, final names): <code>POST /api/v1/settings/servers/{name}/test-connection</code> checks the saved server with its stored credentials; <code>POST /api/v1/settings/servers/test-connection</code> with host, port, username and password checks values before saving. Both return <code>{ok, status, message}</code> and save nothing. <code>GET /api/v1/servers/{name}/status</code> now also returns <code>checked_at</code>, and a dead API reads as not online within about 15 seconds. Wording, one line each, never the server's own text:</p>
+<p>Backend calls (built by another lane in PRs #16 and #17, final names): <code>POST /api/v1/settings/servers/{name}/test-connection</code> checks the saved server with its stored credentials; <code>POST /api/v1/settings/servers/test-connection</code> with host, port, username and password checks values before saving. Both return <code>{ok, status, message}</code> and save nothing. <code>GET /api/v1/servers/{name}/status</code> now also returns <code>checked_at</code>, and a dead API reads as not online within about 15 seconds. Wording, one line each, never the server's own text:</p>
 <table>
   <thead><tr><th>Status</th><th>Row detail</th><th>What the user can do</th></tr></thead>
   <tbody>
@@ -94,7 +94,7 @@
 </ul>
 
 <h3>Your setup (new first step, always shown)</h3>
-<p>The wizard opens with a summary of what setup already did, read from the install, so nothing is asked twice. Only the items marked <em>Needs you</em> lead to a step. Prototype built on branch <code>ui/onboarding-readiness</code> (stacked on #12, not pushed yet), seen on the rn5 preview with a stand-in Hummingbot API.</p>
+<p>The wizard opens with a summary of what setup already did, read from the install, so nothing is asked twice. Only the items marked <em>Needs you</em> lead to a step. Prototype built on branch <code>ui/onboarding-readiness</code> (PR #14, stacked on #12), seen on the rn5 preview with a stand-in Hummingbot API.</p>
 <div class="pair">
   <figure><img src="assets/readiness-1-needs-model-and-key.png" alt="Here is your setup: server ready, AI model needs you, exchange or wallet needs you, DEX gateway optional"><figcaption>Matches the clean install described above: server ready, no usable model, no exchange key. Seven steps follow.</figcaption></figure>
   <figure><img src="assets/readiness-2-key-present.png" alt="Same summary with the exchange row Ready"><figcaption>An exchange key is already present, so the "Connect where you trade" step drops out (six steps).</figcaption></figure>
@@ -109,8 +109,10 @@
 </ul>
 <p class="sources">Checked: types, lint, 43 unit tests (the logic that picks the steps), and the screens above. Not captured: the "everything ready" summary, because the preview machine has no usable AI model to show as ready; that case is covered by a unit test only.</p>
 
+<p class="sources">The screenshots for the steps below, except the name step, were taken before the summary step existed, so their dots read "of 6". The real wizard now counts the summary and shows five to seven dots. They will be retaken on the next preview.</p>
+
 <h3>Make it yours (always)</h3>
-<figure><img src="assets/onboarding-1-make-it-yours.png" alt="Make it yours step with the name field prefilled Algo Trader"><figcaption>Name (required, prefilled "Algo Trader" when nothing is saved) and dashboard title (optional, per user). PR #2.</figcaption></figure>
+<figure><img src="assets/readiness-4-name-step.png" alt="Make it yours step, step 2 of 7, with the name field prefilled Algo Trader and no status line"><figcaption>Name (required, prefilled "Algo Trader" when nothing is saved) and dashboard title (optional, per user, up to 40 characters; longer titles are shortened in the top bar). Step 2 of 7 because the summary is step 1, and the status line is gone. PRs #2 and #14.</figcaption></figure>
 
 <h3>AI model (only if no model is ready)</h3>
 <figure><img src="assets/onboarding-2-ai-model.png" alt="AI model step listing agent CLIs, all not installed"><figcaption>Confirms the model setup chose, or lets you pick one. On this test machine every row reads "not installed". PR #11.</figcaption></figure>
@@ -138,6 +140,7 @@
     <tr><td>#9</td><td><code>ui/onboarding-connect</code></td><td>Connect where you trade step</td><td class="s ok">Built, works</td></tr>
     <tr><td>#11</td><td><code>ui/onboarding-model</code></td><td>AI model step</td><td class="s tweak">Works, tweak below</td></tr>
     <tr><td>#12</td><td><code>ui/onboarding-look</code></td><td>Look and units, Stay in the loop</td><td class="s ok">Built, works</td></tr>
+    <tr><td>#14</td><td><code>ui/onboarding-readiness</code></td><td>"Your setup" readiness summary first; only missing steps follow; name step drops the status line</td><td class="s ok">Built, works</td></tr>
   </tbody>
 </table>
 <p>Stacked PRs, merge in order. Frontend only; the API and routes are unchanged. This proposal and the <a href="side-rail.html">side-rail proposal</a> both touch <code>AppShell.tsx</code>: merge the rail first, then rebase onboarding.</p>
@@ -147,19 +150,20 @@
   <li><strong>Model step (#11).</strong> When no agent tool is installed, the list is a wall of "not installed &mdash; npm install ..." lines. Consider showing the ready or recommended option first and folding the rest.</li>
   <li><strong>Server fallback.</strong> The current screen is a full form for the no-server case and ignores the <code>local</code> server that setup creates. Replace it with a readiness check that shows only what is missing (see "Better: a readiness check"), with the four server states as the fallback. Open: whether a test-connection call is added on the backend, how the wizard shows "starting" for a container that is still coming up, and whether the readiness check replaces steps 2 and 3 or sits in front of them.</li>
   <li><strong>Header noise.</strong> A red "Gateway" pill sits in the top bar behind the wizard on a fresh install. It is not actionable at that moment.</li>
-  <li><strong>Resume behaviour.</strong> After a reload the wizard reopens at the last step (6 of 6), which is useful, but the only way back to step 1 is Back five times.</li>
+  <li><strong>Resume behaviour.</strong> Fixed in #14: reopening the wizard starts at the summary, which re-reads the install, instead of the last step.</li>
 </ol>
 <p>Not checked yet: light theme and colour-blind mode inside the wizard, a real phone, and the wizard on an install that already has keys.</p>
 
 <h2 id="decision">Decision requested</h2>
-<div class="callout"><p>Approve the six-step wizard and the non-blocking reminder, shipped as PRs #2, #9, #11 and #12 into <code>ui-redesign</code>, subject to the open points above.</p></div>
+<div class="callout"><p>Approve the wizard (readiness summary, then five to seven steps) and the non-blocking reminder, shipped as PRs #2, #9, #11, #12 and #14 into <code>ui-redesign</code>, subject to the open points above.</p></div>
 
 <h2 id="log">Refinement log</h2>
 <p>Newest first. Add a row for every change that comes out of review.</p>
 <table>
   <thead><tr><th>Date</th><th>Change</th><th>Reason / source</th><th>PR</th></tr></thead>
   <tbody>
-    <tr><td>2026-11-26</td><td>Decision: summary first, then only the missing steps. Built "Your setup" check (<code>ui/onboarding-readiness</code>), 43 unit tests, screenshots of three states; name step no longer repeats status; 6 s read deadline</td><td>Refinement session. Finding: Condor caches a server's online flag, so a server that just went down can read "Connected" until its cache refreshes (backend behaviour, not changed)</td><td>not pushed</td></tr>
+    <tr><td>2026-11-26</td><td>Synced with the open PRs: added #14 to the rollout, refreshed the name-step screenshot and caption (summary first, title capped at 40 characters), marked resume as fixed, and noted that the other step screenshots predate the summary</td><td>Standing rule: the doc follows the real UI in the same step</td><td>#13</td></tr>
+    <tr><td>2026-11-26</td><td>Decision: summary first, then only the missing steps. Built "Your setup" check (<code>ui/onboarding-readiness</code>), 43 unit tests, screenshots of three states; name step no longer repeats status; 6 s read deadline</td><td>Refinement session. Finding: Condor caches a server's online flag, so a server that just went down can read "Connected" until its cache refreshes (backend behaviour, not changed)</td><td>#14</td></tr>
     <tr><td>2026-11-26</td><td>Server check reworked: documented what a fresh <code>make setup</code> creates (<code>local</code> server, empty credentials the user fills in during setup) and proposed four states instead of one form</td><td>Refinement session; findings from <code>setup-environment.sh</code> and the Condor agent's read of the code. Not yet tested on a clean install</td><td>&mdash;</td></tr>
     <tr><td>2026-11-26</td><td>Page rebuilt as editable HTML in <code>docs/proposals/</code>; screenshots retaken from the PR branches</td><td>Previous version was a generated page that could not be edited by every agent</td><td>docs</td></tr>
     <tr><td>2026-11-26</td><td>Review notes added: model step list, server gate, header pill, resume behaviour</td><td>Review of PRs #2, #9, #11, #12 built on rn5</td><td>&mdash;</td></tr>
