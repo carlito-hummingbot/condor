@@ -87,7 +87,6 @@ export function MakeItYoursStep({
       <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-muted)]">
         This is the name the dashboard greets you with. The assistant stays Condor.
       </p>
-      <SetupFound gate={gate} model={model} />
       <div className="mt-4 space-y-3">
         <Field
           label="What should we call you?"
@@ -119,28 +118,5 @@ export function MakeItYoursStep({
         </Field>
       </div>
     </div>
-  );
-}
-
-function SetupFound({
-  gate,
-  model,
-}: {
-  gate: Extract<ServerGateState, { phase: "ready" }>;
-  model: DetectedModel | null;
-}) {
-  const serverLine = gate.online
-    ? `Connected to ${gate.server}`
-    : `${gate.server} is configured, currently offline`;
-  let modelLine: string | null = null;
-  if (model?.ready === true) modelLine = `${model.label} is ready`;
-  else if (model?.ready === false) modelLine = `${model.label} still needs a login on this machine`;
-  else if (model) modelLine = model.label;
-
-  return (
-    <p className="mt-3 text-xs leading-relaxed text-[var(--color-text-muted)]">
-      {serverLine}
-      {modelLine ? ` · ${modelLine}` : ""}
-    </p>
   );
 }

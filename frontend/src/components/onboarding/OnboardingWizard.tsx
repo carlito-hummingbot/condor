@@ -1,8 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { Button } from "@/components/ui/Button";
+import { useCredentials } from "@/hooks/useCredentials";
 import { useServer } from "@/hooks/useServer";
 import { usePatchPreferences, useUserPreferences } from "@/hooks/useUserPreferences";
 import { useAuth } from "@/lib/auth";
@@ -10,20 +11,26 @@ import { api } from "@/lib/api";
 import {
   advance,
   describeModel,
-  installedStepDefs,
   jumpTo,
   markAnswered,
   markSkipped,
+  planStepIds,
   readActiveAgentKey,
+  readinessLoading,
+  readinessRows,
   resolveServerGate,
   retreat,
   startFlow,
+  stepsForPlan,
   type FlowState,
   type PreferencePatch,
+  type Readiness,
   type ServerGate as ServerGateState,
+  type StepDef,
 } from "@/lib/onboarding";
 
 import { AlertsStep } from "./AlertsStep";
+import { CheckStep } from "./CheckStep";
 import { ConnectTradeStep } from "./ConnectTradeStep";
 import { DoneStep } from "./DoneStep";
 import { LookStep } from "./LookStep";
@@ -32,7 +39,8 @@ import { MakeItYoursStep, type WizardAction } from "./MakeItYoursStep";
 import { ServerGate } from "./ServerGate";
 import { StepDots } from "./StepDots";
 
-const STEPS = installedStepDefs();
+/** How long the summary waits for a read before it shows that item as not checked. */
+const READ_DEADLINE_MS = 6000;
 
 /**
  * First-run setup, in the same frosted card the keys overlay used.
@@ -47,10 +55,8 @@ export function OnboardingWizard() {
   const { data: prefs } = useUserPreferences();
   const patch = usePatchPreferences();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [params, setParams] = useSearchParams();
-  const [flow, setFlow] = useState<FlowState>(() =>
-    startFlow(STEPS, prefs?.onboarding?.last_step, prefs?.onboarding?.skipped),
-  );
   const [action, setAction] = useState<WizardAction | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +70,14 @@ export function OnboardingWizard() {
     queryFn: api.getSessionOptions,
     retry: false,
   });
+  const credentials = useCredentials();
+  const gatewayQuery = useQuery({
+    queryKey: ["onboarding-gateway", server],
+    queryFn: () => api.getGatewayStatus(server!),
+    enabled: !!server,
+    retry: false,
+    staleTime: 30_000,
+  });
 
   const gate: ServerGateState | { phase: "error" } = serversQuery.isError
     ? { phase: "error" }
@@ -75,7 +89,74 @@ export function OnboardingWizard() {
   }, [adopt, server, setServer]);
 
   const model = describeModel(readActiveAgentKey(prefs), options.data);
+
+  // What setup already did, read from the install. A read that has not
+  // finished or has failed is never reported as "missing".
+  const serverName = gate.phase === "ready" ? gate.server : null;
+  const serverOnline = gate.phase === "ready" ? gate.online : false;
+  // A read that is still out after a few seconds (the queries retry before they
+  // give up) is shown as "not checked" so Continue never waits on a hung call.
+  const [waited, setWaited] = useState(false);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setWaited(true), READ_DEADLINE_MS);
+    return () => window.clearTimeout(timer);
+  }, []);
+  const keysState: Readiness["keys"] =
+    !server || credentials.isLoading
+      ? waited
+        ? "error"
+        : "loading"
+      : credentials.isError
+        ? "error"
+        : credentials.hasKeys
+          ? "some"
+          : "none";
+  const modelStatus: Readiness["modelStatus"] = options.isPending
+    ? waited
+      ? "error"
+      : "loading"
+    : options.isError
+      ? "error"
+      : "loaded";
+  const gatewayState: Readiness["gateway"] = !server || gatewayQuery.isPending
+    ? waited
+      ? "unknown"
+      : "loading"
+    : gatewayQuery.isError
+      ? "unknown"
+      : gatewayQuery.data?.running
+        ? "running"
+        : "off";
+  const readiness = useMemo<Readiness>(
+    () => ({
+      server: serverName ? { name: serverName, online: serverOnline } : null,
+      model,
+      modelStatus,
+      keys: keysState,
+      gateway: gatewayState,
+    }),
+    // `model` is rebuilt each render; its key and readiness are what matter.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [serverName, serverOnline, model?.key, model?.ready, modelStatus, keysState, gatewayState],
+  );
+
+  // The steps for this run. They follow the install until the user leaves the
+  // summary, then freeze, so adding a key mid-run cannot remove a step under them.
+  const planned = useMemo(() => stepsForPlan(planStepIds(readiness)), [readiness]);
+  const [frozen, setFrozen] = useState<StepDef[] | null>(null);
+  const STEPS = frozen ?? planned;
+  const [flow, setFlow] = useState<FlowState>(() =>
+    startFlow(planned, undefined, prefs?.onboarding?.skipped),
+  );
   const step = STEPS[flow.index] ?? STEPS[0];
+
+  const recheck = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: ["servers"] });
+    void queryClient.invalidateQueries({ queryKey: ["session-options"] });
+    void queryClient.invalidateQueries({ queryKey: ["settings-credentials"] });
+    void queryClient.invalidateQueries({ queryKey: ["gateway-wallets"] });
+    void queryClient.invalidateQueries({ queryKey: ["onboarding-gateway"] });
+  }, [queryClient]);
   const onBind = useCallback((next: WizardAction | null) => {
     setAction(next);
   }, []);
@@ -121,7 +202,7 @@ export function OnboardingWizard() {
       });
       if (saved) setFlow(next);
     },
-    [flow, save, step.id, step.skippable],
+    [STEPS, flow, save, step.id, step.skippable],
   );
 
   const finish = useCallback(
@@ -175,6 +256,20 @@ export function OnboardingWizard() {
               }}
             />
             <div className="min-h-0 flex-1 overflow-y-auto">
+              {step.id === "check" && (
+                <CheckStep
+                  rows={readinessRows(readiness)}
+                  loading={readinessLoading(readiness)}
+                  upNext={STEPS.slice(1, -1)}
+                  busy={busy}
+                  onRetry={recheck}
+                  onContinue={() => {
+                    setFrozen((current) => current ?? planned);
+                    void continueStep({}, false);
+                  }}
+                  onBind={onBind}
+                />
+              )}
               {step.id === "model" && (
                 <ModelStep
                   model={model}

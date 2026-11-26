@@ -13,6 +13,11 @@ import {
   forceOnboarding,
   DONE_ACTIONS,
   installedStepDefs,
+  planStepIds,
+  readinessLoading,
+  readinessRows,
+  stepsForPlan,
+  type Readiness,
   isTradingSurface,
   jumpTo,
   markAnswered,
@@ -163,8 +168,8 @@ describe("step flow", () => {
 
   it("starts on the first step, or on the step that was saved", () => {
     expect(startFlow(steps).index).toBe(0);
-    expect(resumeIndex(steps, "connect")).toBe(2);
-    expect(startFlow(steps, "connect").furthest).toBe(2);
+    expect(resumeIndex(steps, "connect")).toBe(3);
+    expect(startFlow(steps, "connect").furthest).toBe(3);
     expect(startFlow(steps, "not-a-step").index).toBe(0);
   });
 
@@ -203,13 +208,14 @@ describe("step flow", () => {
 
   it("keeps the saved skip list when a run is resumed", () => {
     const state = startFlow(steps, "look", ["model", "gone"]);
-    expect(state.index).toBe(3);
+    expect(state.index).toBe(4);
     expect(state.skipped).toEqual(["model"]);
   });
 
   it("ships the steps this build renders, with done last in the full list", () => {
     expect(installedStepDefs().map((step) => step.id)).toEqual(STEP_DEFS.map((step) => step.id));
     expect(STEP_DEFS.map((step) => step.id)).toEqual([
+      "check",
       "profile",
       "model",
       "connect",
@@ -420,7 +426,7 @@ describe("preference patches", () => {
     const onboarding = updates.onboarding as { completed_at?: string; auto?: boolean; last_step?: string };
     expect(onboarding.completed_at).toBeUndefined();
     expect(onboarding.auto).toBeUndefined();
-    expect(onboarding.last_step).toBe("profile");
+    expect(onboarding.last_step).toBe("check");
     expect(onboarding).not.toHaveProperty("agent");
   });
 
@@ -437,5 +443,72 @@ describe("preference patches", () => {
   it("drops a blank display name instead of storing it", () => {
     const updates = buildPreferenceUpdates(current, { profile: { display_name: " " } });
     expect(updates.profile).toEqual({});
+  });
+});
+
+describe("readiness check", () => {
+  const ready: Readiness = {
+    server: { name: "local", online: true },
+    model: { key: "claude-acp:sonnet", label: "Claude (ACP) - Sonnet", ready: true },
+    modelStatus: "loaded",
+    keys: "some",
+    gateway: "off",
+  };
+  const ids = (r: Readiness) => planStepIds(r);
+  const status = (r: Readiness, id: string) => readinessRows(r).find((row) => row.id === id)?.status;
+
+  it("asks only for the name and preferences when setup did everything", () => {
+    expect(ids(ready)).toEqual(["check", "profile", "look", "alerts", "done"]);
+  });
+
+  it("adds the model step only when the model is not ready", () => {
+    const notReady = { ...ready, model: { ...ready.model!, ready: false } };
+    expect(ids(notReady)).toContain("model");
+    expect(ids({ ...ready, model: null })).toContain("model");
+    expect(ids({ ...ready, model: { ...ready.model!, ready: null } })).toContain("model");
+    expect(ids(ready)).not.toContain("model");
+  });
+
+  it("adds the exchange step only when there is no key or wallet", () => {
+    expect(ids({ ...ready, keys: "none" })).toContain("connect");
+    expect(ids({ ...ready, keys: "some" })).not.toContain("connect");
+  });
+
+  it("never treats a failed or unfinished read as missing", () => {
+    expect(ids({ ...ready, keys: "error" })).not.toContain("connect");
+    expect(ids({ ...ready, keys: "loading" })).not.toContain("connect");
+    expect(ids({ ...ready, modelStatus: "error", model: null })).not.toContain("model");
+    expect(ids({ ...ready, modelStatus: "loading", model: null })).not.toContain("model");
+    expect(status({ ...ready, keys: "error" }, "keys")).toBe("unknown");
+    expect(status({ ...ready, modelStatus: "error" }, "model")).toBe("unknown");
+    expect(status({ ...ready, keys: "loading" }, "keys")).toBe("pending");
+    expect(status({ ...ready, modelStatus: "loading" }, "model")).toBe("pending");
+  });
+
+  it("keeps the order of the full flow whatever is missing", () => {
+    const everything: Readiness = { ...ready, model: null, keys: "none" };
+    expect(ids(everything)).toEqual(["check", "profile", "model", "connect", "look", "alerts", "done"]);
+    expect(stepsForPlan(ids(everything)).map((step) => step.id)).toEqual(ids(everything));
+    expect(stepsForPlan(["check", "nope", "done"]).map((step) => step.id)).toEqual(["check", "done"]);
+  });
+
+  it("marks each row ready, needs you, or optional", () => {
+    expect(readinessRows(ready).map((row) => row.status)).toEqual(["ok", "ok", "ok", "optional"]);
+    const bare: Readiness = {
+      server: { name: "local", online: false },
+      model: null,
+      modelStatus: "loaded",
+      keys: "none",
+      gateway: "running",
+    };
+    expect(readinessRows(bare).map((row) => row.status)).toEqual(["todo", "todo", "todo", "ok"]);
+    expect(status({ ...ready, server: null }, "server")).toBe("todo");
+  });
+
+  it("waits for the model list and the key check before it lets the user continue", () => {
+    expect(readinessLoading(ready)).toBe(false);
+    expect(readinessLoading({ ...ready, keys: "loading" })).toBe(true);
+    expect(readinessLoading({ ...ready, modelStatus: "loading" })).toBe(true);
+    expect(readinessLoading({ ...ready, keys: "error", modelStatus: "error" })).toBe(false);
   });
 });
