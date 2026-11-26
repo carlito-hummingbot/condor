@@ -109,25 +109,25 @@
 </ul>
 <p class="sources">Checked: types, lint, 43 unit tests (the logic that picks the steps), and the screens above. Not captured: the "everything ready" summary, because the preview machine has no usable AI model to show as ready; that case is covered by a unit test only.</p>
 
-<p class="sources">The screenshots for the steps below, except the name step, were taken before the summary step existed, so their dots read "of 6". The real wizard now counts the summary and shows five to seven dots. They will be retaken on the next preview.</p>
+<p class="sources">All step screenshots below were retaken from the PR #14 build (summary first, so a full run is 7 steps; steps 3 to 7 shown). A real run shows fewer dots when the install already has a model or a key.</p>
 
 <h3>Make it yours (always)</h3>
 <figure><img src="assets/readiness-4-name-step.png" alt="Make it yours step, step 2 of 7, with the name field prefilled Algo Trader and no status line"><figcaption>Name (required, prefilled "Algo Trader" when nothing is saved) and dashboard title (optional, per user, up to 40 characters; longer titles are shortened in the top bar). Step 2 of 7 because the summary is step 1, and the status line is gone. PRs #2 and #14.</figcaption></figure>
 
 <h3>AI model (only if no model is ready)</h3>
-<figure><img src="assets/onboarding-2-ai-model.png" alt="AI model step listing agent CLIs, all not installed"><figcaption>Confirms the model setup chose, or lets you pick one. On this test machine every row reads "not installed". PR #11.</figcaption></figure>
+<figure><img src="assets/onboarding-2-ai-model.png" alt="AI model step, step 3 of 7, listing agent CLIs, all not installed"><figcaption>Confirms the model setup chose, or lets you pick one. On this test machine every row reads "not installed". PR #11.</figcaption></figure>
 
 <h3>Connect where you trade (only if nothing is connected)</h3>
-<figure><img src="assets/onboarding-3-connect.png" alt="Connect where you trade step with exchange key, Hyperliquid and DEX wallet options"><figcaption>Exchange API key, Hyperliquid wallet or DEX wallet. Skippable. PR #9.</figcaption></figure>
+<figure><img src="assets/onboarding-3-connect.png" alt="Connect where you trade step, step 4 of 7, with exchange key, Hyperliquid and DEX wallet options"><figcaption>Exchange API key, Hyperliquid wallet or DEX wallet. Skippable. PR #9.</figcaption></figure>
 
 <h3>Look and units</h3>
-<figure><img src="assets/onboarding-4-look.png" alt="Look and units step with theme, colour-blind mode and display currency"><figcaption>Theme, colour-blind mode, display currency. Applied live. PR #12.</figcaption></figure>
+<figure><img src="assets/onboarding-4-look.png" alt="Look and units step, step 5 of 7, with theme, colour-blind mode and display currency"><figcaption>Theme, colour-blind mode, display currency. Applied live. PR #12.</figcaption></figure>
 
 <h3>Stay in the loop</h3>
-<figure><img src="assets/onboarding-5-alerts.png" alt="Stay in the loop step with push alerts, Telegram status and usage summaries"><figcaption>Push alerts, Telegram status (read-only) and the usage-summaries choice. PR #12.</figcaption></figure>
+<figure><img src="assets/onboarding-5-alerts.png" alt="Stay in the loop step, step 6 of 7, with push alerts, Telegram status and usage summaries"><figcaption>Push alerts, Telegram status (read-only) and the usage-summaries choice. PR #12.</figcaption></figure>
 
 <h3>You're set</h3>
-<figure><img src="assets/onboarding-6-youre-set.png" alt="You're set summary with Deploy a bot and Browse agents shortcuts"><figcaption>What was set or skipped, plus two shortcuts. PR #2.</figcaption></figure>
+<figure><img src="assets/onboarding-6-youre-set.png" alt="You're set summary, step 7 of 7, with Deploy a bot and Browse agents shortcuts"><figcaption>What was set or skipped, plus two shortcuts. PR #2.</figcaption></figure>
 
 <h3>After skipping: a reminder, not a wall</h3>
 <figure><img src="assets/onboarding-keys-reminder.png" alt="Portfolio page with a one-line Connect an exchange or wallet banner at the top"><figcaption>The page stays usable; a banner offers "Connect keys". PR #2.</figcaption></figure>
@@ -162,6 +162,7 @@
 <table>
   <thead><tr><th>Date</th><th>Change</th><th>Reason / source</th><th>PR</th></tr></thead>
   <tbody>
+    <tr><td>2026-11-26</td><td>Retook the AI model, connect, look, alerts and You're set screenshots from the PR #14 build so the dots count the summary step (steps 3 to 7 of 7)</td><td>Preview on rn5 on the readiness branch; the old shots read "of 6"</td><td>#13</td></tr>
     <tr><td>2026-11-26</td><td>Synced with the open PRs: added #14 to the rollout, refreshed the name-step screenshot and caption (summary first, title capped at 40 characters), marked resume as fixed, and noted that the other step screenshots predate the summary</td><td>Standing rule: the doc follows the real UI in the same step</td><td>#13</td></tr>
     <tr><td>2026-11-26</td><td>Decision: summary first, then only the missing steps. Built "Your setup" check (<code>ui/onboarding-readiness</code>), 43 unit tests, screenshots of three states; name step no longer repeats status; 6 s read deadline</td><td>Refinement session. Finding: Condor caches a server's online flag, so a server that just went down can read "Connected" until its cache refreshes (backend behaviour, not changed)</td><td>#14</td></tr>
     <tr><td>2026-11-26</td><td>Server check reworked: documented what a fresh <code>make setup</code> creates (<code>local</code> server, empty credentials the user fills in during setup) and proposed four states instead of one form</td><td>Refinement session; findings from <code>setup-environment.sh</code> and the Condor agent's read of the code. Not yet tested on a clean install</td><td>&mdash;</td></tr>
