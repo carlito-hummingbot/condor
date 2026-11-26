@@ -68,6 +68,27 @@
 </table>
 <p>Because saving never tests the connection, the wizard should save, then poll the server status and show the result. Telling "wrong password" from "unreachable" may need a small backend change (a test-connection call); that is not confirmed yet.</p>
 
+<h4>Better: a readiness check, not a form</h4>
+<p>On a real install, the server step should not appear at all when the server is fine. Instead the wizard opens with a short checklist built from the actual state, and asks only for what is missing. Signals the dashboard can already read:</p>
+<table>
+  <thead><tr><th>Item</th><th>Detected from</th><th>If fine</th><th>If missing</th></tr></thead>
+  <tbody>
+    <tr><td>Server</td><td><code>GET /servers</code> and <code>/servers/{name}/status</code></td><td>"Connected to local" (confirm)</td><td>The four states in the table above</td></tr>
+    <tr><td>Exchange keys</td><td><code>GET /settings/credentials?server=</code> (empty list)</td><td>Show the connectors found</td><td>"Add an exchange key" &rarr; Settings, API Keys. Skippable</td></tr>
+    <tr><td>AI model</td><td><code>GET /sessions/options</code> (ready, unverified or missing)</td><td>Name the ready model</td><td>"Chat needs a model" with the command or picker. Skippable</td></tr>
+    <tr><td>Gateway (DEX)</td><td><code>GET /settings/gateway/status</code></td><td>Hidden</td><td>Optional; only shown if the user opts into DEX</td></tr>
+    <tr><td>Telegram</td><td>Local mode has no token</td><td>Hidden in local mode</td><td>Read-only note in Telegram mode</td></tr>
+  </tbody>
+</table>
+<p>Evidence from a clean install on the rn5 test machine (read-only inspection, no secrets): the install ended with server <code>local</code> online and accepted, no first-run preferences saved, no exchange key added by the user, Gateway not installed, and a model that was skipped in setup but still set as the default, so chat failed until a model was logged in. A wizard built on the signals above would have shown: server connected, keys to add, model needs setup.</p>
+<p><strong>Caveat:</strong> that install was driven by an agent, not typed by a person, so the credential prompts of a human first run were not observed. They are known only from reading <code>setup-environment.sh</code>.</p>
+
+<h4>Two nearby bugs found while checking</h4>
+<ul>
+  <li><strong>"No server" flash.</strong> The top bar prints "No server" whenever the server list has not loaded yet, or the browser has no stored selection, and a fresh browser only picks the default after the first 10-second refresh. It should show a loading state until the list has loaded.</li>
+  <li><strong>Noisy Gateway poll.</strong> The dashboard asks for Gateway wallets about every 20 seconds and the server logs a full error each time when Gateway is not installed. It should check Gateway status first.</li>
+</ul>
+
 <h3>1. Make it yours</h3>
 <figure><img src="assets/onboarding-1-make-it-yours.png" alt="Make it yours step with the name field prefilled Algo Trader"><figcaption>Name (required, prefilled "Algo Trader" when nothing is saved) and dashboard title (optional, per user). PR #2.</figcaption></figure>
 
@@ -104,7 +125,7 @@
 <h2 id="open">Open points from review</h2>
 <ol>
   <li><strong>Model step (#11).</strong> When no agent tool is installed, the list is a wall of "not installed &mdash; npm install ..." lines. Consider showing the ready or recommended option first and folding the rest.</li>
-  <li><strong>Server check (before step 1).</strong> The current screen is a full form for the rare no-server case and ignores the <code>local</code> server that setup creates. Replace it with the four states in the table above. Open: whether a test-connection call is added on the backend, and how the wizard shows "starting" for a container that is still coming up.</li>
+  <li><strong>Server check (before step 1).</strong> The current screen is a full form for the rare no-server case and ignores the <code>local</code> server that setup creates. Replace it with a readiness check that shows only what is missing (see "Better: a readiness check"), with the four server states as the fallback. Open: whether a test-connection call is added on the backend, how the wizard shows "starting" for a container that is still coming up, and whether the readiness check replaces steps 2 and 3 or sits in front of them.</li>
   <li><strong>Header noise.</strong> A red "Gateway" pill sits in the top bar behind the wizard on a fresh install. It is not actionable at that moment.</li>
   <li><strong>Resume behaviour.</strong> After a reload the wizard reopens at the last step (6 of 6), which is useful, but the only way back to step 1 is Back five times.</li>
 </ol>
