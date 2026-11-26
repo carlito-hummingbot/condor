@@ -15,18 +15,34 @@ import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ServerContext } from "@/hooks/useServer";
+
 vi.mock("@/lib/api", () => ({
   api: {
     getPreferences: async () => ({ profile: { display_name: "Algo Trader" } }),
+    getServers: async () => [
+      { name: "local", host: "h", port: 8000, online: true, permission: "owner", is_default: true },
+    ],
+    getNotifications: async () => ({ items: [], unread: 0 }),
+    getGatewayStatus: async () => ({ running: true, info: {} }),
+    markNotificationsRead: async () => ({ unread: 0 }),
+    clearNotifications: async () => ({ unread: 0 }),
   },
 }));
+
+const { logout } = vi.hoisted(() => ({ logout: vi.fn() }));
 
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({
     token: "t",
     user: { id: 1, username: "local", first_name: "Local", role: "admin" },
+    logout,
   }),
 }));
+
+vi.mock("@/lib/appBadge", () => ({ setAppBadge: () => {} }));
+vi.mock("@/lib/push", () => ({ onPushNavigate: () => () => {} }));
+vi.mock("@/hooks/useChatSocket", () => ({ NOTIFICATIONS_KEY: ["notifications"] }));
 
 const { SideRail } = await import("./SideRail");
 
@@ -48,9 +64,11 @@ function renderAt(path: string) {
   act(() => {
     root.render(
       <QueryClientProvider client={client}>
-        <MemoryRouter initialEntries={[path]}>
-          <SideRail onReport={() => {}} />
-        </MemoryRouter>
+        <ServerContext.Provider value={{ server: "local", setServer: () => {} }}>
+          <MemoryRouter initialEntries={[path]}>
+            <SideRail onReport={() => {}} />
+          </MemoryRouter>
+        </ServerContext.Provider>
       </QueryClientProvider>,
     );
   });
@@ -129,14 +147,35 @@ describe("SideRail", () => {
     await flush();
     const nav = container.querySelector('nav[aria-label="Primary"]')!;
     const labels = [...nav.querySelectorAll("a span, button span")].map((el) => el.textContent);
-    expect(labels).toEqual(["Dashboard", "Bots", "Strategies", "More", "Settings"]);
+    expect(labels).toEqual(["Dashboard", "Bots", "Strategies", "More", "Alerts", "Settings"]);
   });
 
-  it("shows Algo Trader's initials and sends the avatar to Settings", async () => {
+  it("shows Algo Trader's initials and opens the account menu", async () => {
     renderAt("/");
     await flush();
-    const avatar = container.querySelector('a[aria-label="Algo Trader"]');
+    const avatar = container.querySelector('button[aria-label="Algo Trader"]') as HTMLButtonElement;
     expect(avatar?.textContent).toBe("AT");
-    expect(avatar?.getAttribute("href")).toBe("/settings");
+
+    await act(async () => {
+      avatar.click();
+    });
+    await flush();
+
+    const text = document.body.textContent || "";
+    expect(text).toContain("Algo Trader");
+    expect(text).toContain("Admin");
+    expect(text).toContain("local");
+    expect(text).toContain("Gateway: running");
+    expect(text).toContain("USDT");
+    expect(text).toContain("Run setup again");
+    expect(text).toContain("Logout");
+
+    const setup = [...document.body.querySelectorAll("a")].find((a) =>
+      a.textContent?.includes("Run setup again"),
+    );
+    expect(setup?.getAttribute("href")).toBe("/welcome");
+
+    const bell = container.querySelector('button[aria-label="Notifications"]');
+    expect(bell).not.toBeNull();
   });
 });

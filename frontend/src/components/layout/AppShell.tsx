@@ -15,7 +15,6 @@ import { useServer } from "@/hooks/useServer";
 import { FULL_BLEED_ROUTES } from "@/lib/nav";
 import { routeFacts } from "@/lib/pageFacts";
 import { useViewFacts } from "@/lib/viewFacts";
-import { ShellControls } from "./ShellControls";
 import { SideRail } from "./SideRail";
 
 /**
@@ -108,12 +107,6 @@ function AppShellBody() {
           currently mounts it inside `main`; expect that conflict. */}
       <SideRail onReport={() => setReportOpen(true)} />
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Server, Gateway, currency, bell and theme, until the avatar menu
-            takes them. Inside the ChatProvider on purpose: the bell reads the
-            same react-query cache the chat socket pushes live notifications
-            into (FEAT-048). */}
-        <ShellControls />
-
         {/* An update landed but this process is still the old one, so the bundle
             in the browser is ahead of the API answering it. Above `main` for the
             same reason the consent strip is: every page needs it, and the chat

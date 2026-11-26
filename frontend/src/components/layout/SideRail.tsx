@@ -3,6 +3,8 @@ import { Link, useLocation } from "react-router-dom";
 
 import { Tooltip } from "@/components/ui/Tooltip";
 import { initialsFrom, useDashboardTitle, useDisplayName } from "@/hooks/useDisplayName";
+import { useGatewayStatus } from "@/hooks/useGatewayStatus";
+import { useServer } from "@/hooks/useServer";
 import {
   MORE_ICON,
   RAIL_BOTTOM,
@@ -10,16 +12,19 @@ import {
   isRailEntryActive,
   type NavEntry,
 } from "@/lib/nav";
+import { AccountMenu } from "./AccountMenu";
 import { MoreMenu } from "./MoreMenu";
+import { NotificationBell } from "./NotificationBell";
+import { useServerRoster } from "@/hooks/useServerRoster";
 
 /**
  * The 64px rail that replaces the top bar.
  *
  * Every door shows its name under the icon (10px, like the panel rail on the
- * right), so nothing depends on a hover. The logo and the avatar are the two
- * items without a text label and keep a tooltip. The avatar has no menu yet:
- * it goes to Settings, and the account menu lands in the next change. The
- * bell still lives in the temporary strip above the page.
+ * right), so nothing depends on a hover. The logo and the avatar have no text
+ * label and keep a tooltip. The avatar opens the account menu; a red dot on it
+ * means the selected server is offline, and a red dot on Settings means
+ * Gateway is down.
  */
 function itemClass(active: boolean): string {
   return `flex h-12 w-14 flex-col items-center justify-center gap-0.5 rounded-md transition-colors ${
@@ -50,8 +55,16 @@ export function SideRail({ onReport }: { onReport: () => void }) {
   const name = useDisplayName();
   const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [accountAnchor, setAccountAnchor] = useState<HTMLElement | null>(null);
+  const [accountOpen, setAccountOpen] = useState(false);
   const moreActive = isRailEntryActive("more", pathname, search);
   const MoreIcon = MORE_ICON;
+  // Keeps a deleted server from staying selected while the menu is closed.
+  const { current } = useServerRoster();
+  const { server } = useServer();
+  const gateway = useGatewayStatus(server);
+  const gatewayDown = gateway.known && !gateway.running;
+  const serverOffline = !!current && !current.online;
 
   return (
     <nav
@@ -83,18 +96,40 @@ export function SideRail({ onReport }: { onReport: () => void }) {
 
       <div className="flex-1" />
 
+      <NotificationBell rail align="left" />
+
       {RAIL_BOTTOM.map((item) => (
-        <RailLink key={item.id} item={item} />
+        <span key={item.id} className="relative inline-flex">
+          <RailLink item={item} />
+          {item.id === "settings" && gatewayDown && (
+            <span
+              className="pointer-events-none absolute right-1 top-1 h-2 w-2 rounded-full bg-[var(--color-red)]"
+              aria-hidden
+            />
+          )}
+        </span>
       ))}
 
       <Tooltip label={name}>
-        <Link
-          to="/settings"
+        <button
+          ref={setAccountAnchor}
+          type="button"
           aria-label={name}
-          className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-primary-fill)] text-[11px] font-bold text-[var(--on-primary)]"
+          aria-expanded={accountOpen}
+          aria-haspopup="menu"
+          onClick={() => setAccountOpen((open) => !open)}
+          className={`relative mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-primary-fill)] text-[11px] font-bold text-[var(--on-primary)] ${
+            accountOpen ? "ring-2 ring-[var(--color-primary)] ring-offset-2 ring-offset-[var(--color-surface)]" : ""
+          }`}
         >
           {initialsFrom(name)}
-        </Link>
+          {serverOffline && (
+            <span
+              className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border border-[var(--color-surface)] bg-[var(--color-red)]"
+              aria-label="Server offline"
+            />
+          )}
+        </button>
       </Tooltip>
 
       <MoreMenu
@@ -102,6 +137,11 @@ export function SideRail({ onReport }: { onReport: () => void }) {
         open={moreOpen}
         onClose={() => setMoreOpen(false)}
         onReport={onReport}
+      />
+      <AccountMenu
+        anchor={accountAnchor}
+        open={accountOpen}
+        onClose={() => setAccountOpen(false)}
       />
     </nav>
   );

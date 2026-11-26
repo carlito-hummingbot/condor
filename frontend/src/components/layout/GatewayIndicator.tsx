@@ -14,6 +14,37 @@ import { useServer } from "@/hooks/useServer";
  * Reads `useGatewayStatus`, the cache entry Settings and the DEX pages share,
  * so this adds no request of its own.
  */
+/** A row for the avatar menu: where Gateway is, and a link to start it. */
+export function GatewayStatusRow() {
+  const { server } = useServer();
+  const { known, running, unreachable } = useGatewayStatus(server);
+  const label = !known
+    ? "Gateway"
+    : unreachable
+      ? "Gateway: status unknown"
+      : running
+        ? "Gateway: running"
+        : "Gateway: not running";
+
+  return (
+    <Link
+      to="/settings?tab=gateway"
+      className="flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)]"
+    >
+      <span
+        className={`h-2 w-2 shrink-0 rounded-full ${
+          !known
+            ? "bg-[var(--color-text-muted)]"
+            : running
+              ? "bg-[var(--color-green)]"
+              : "bg-[var(--color-red)]"
+        }`}
+      />
+      {label}
+    </Link>
+  );
+}
+
 export function GatewayIndicator() {
   const { server } = useServer();
   const { known, running, unreachable: isError } = useGatewayStatus(server);
