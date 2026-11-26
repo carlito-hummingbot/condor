@@ -25,6 +25,7 @@ import {
 
 import { ConnectTradeStep } from "./ConnectTradeStep";
 import { DoneStep } from "./DoneStep";
+import { ModelStep } from "./ModelStep";
 import { MakeItYoursStep, type WizardAction } from "./MakeItYoursStep";
 import { ServerGate } from "./ServerGate";
 import { StepDots } from "./StepDots";
@@ -172,6 +173,16 @@ export function OnboardingWizard() {
               }}
             />
             <div className="min-h-0 flex-1 overflow-y-auto">
+              {step.id === "model" && (
+                <ModelStep
+                  model={model}
+                  agents={options.data?.agents ?? []}
+                  customProviders={options.data?.custom_providers ?? []}
+                  busy={busy}
+                  onContinue={(partial) => void continueStep(partial, false)}
+                  onBind={onBind}
+                />
+              )}
               {step.id === "connect" && (
                 <ConnectTradeStep
                   busy={busy}

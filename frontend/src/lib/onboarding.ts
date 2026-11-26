@@ -102,7 +102,7 @@ export interface StepDef {
  * Steps this build actually renders. `done` stays last. Insert a new id here
  * when its screen ships; the order always follows `STEP_DEFS`.
  */
-export const INSTALLED_STEP_IDS = ["profile", "connect", "done"] as const;
+export const INSTALLED_STEP_IDS = ["profile", "model", "connect", "done"] as const;
 
 export function installedStepDefs(): StepDef[] {
   const installed = new Set<string>(INSTALLED_STEP_IDS);
@@ -402,6 +402,26 @@ export function resolveServerGate(
  * (Run setup again). Otherwise the stored record is spread first so a single
  * field write cannot erase `detected` or `skipped`.
  */
+/**
+ * The full `agent` object with one key changed. A partial `agent` PATCH would
+ * wipe `chat_binding` and custom providers, so callers send this whole value.
+ */
+export function withActiveAgentKey(
+  current: UserPreferences,
+  agentKey: string,
+): { agent: Record<string, unknown> } {
+  const existing =
+    current.agent && typeof current.agent === "object"
+      ? { ...(current.agent as Record<string, unknown>) }
+      : {};
+  return { agent: { ...existing, active_agent_key: agentKey } };
+}
+
+/** A ready model is confirmed. Anything else is a choice. */
+export function modelStepMode(ready: boolean | null | undefined): "confirm" | "choose" {
+  return ready === true ? "confirm" : "choose";
+}
+
 export function buildPreferenceUpdates(
   current: UserPreferences,
   patch: PreferencePatch,
