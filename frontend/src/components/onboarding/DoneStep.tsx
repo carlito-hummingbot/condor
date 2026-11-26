@@ -1,40 +1,19 @@
-import { Bot, Compass, LineChart, MessageSquare } from "lucide-react";
+import { Bot, Compass, type LucideIcon } from "lucide-react";
 import { useEffect, useRef } from "react";
 
-import { dashboardTitleFrom, type UserPreferences } from "@/lib/onboarding";
+import { DONE_ACTIONS, dashboardTitleFrom, type UserPreferences } from "@/lib/onboarding";
 
 import type { WizardAction } from "./MakeItYoursStep";
 
-const NEXT = [
-  {
-    to: "/",
-    title: "Ask Condor",
-    body: "Start a conversation",
-    icon: MessageSquare,
-  },
-  {
-    to: "/trade",
-    title: "Open Trade",
-    body: "Place an order",
-    icon: LineChart,
-  },
-  {
-    to: "/bots",
-    title: "Deploy a bot",
-    body: "Run a strategy",
-    icon: Bot,
-  },
-  {
-    to: "/hub",
-    title: "Browse agents",
-    body: "See the Hub",
-    icon: Compass,
-  },
-] as const;
+const ACTION_ICONS: Record<(typeof DONE_ACTIONS)[number]["to"], LucideIcon> = {
+  "/bots": Bot,
+  "/hub": Compass,
+};
 
 /**
- * Recap of what this run saved, then the four ways out of setup. Each card
- * finishes the wizard and opens that page.
+ * Recap of what this run saved, then the two ways forward. Each card finishes
+ * the wizard and opens that page. Full-width rows, so two cards fill the
+ * space a four-card grid used to.
  */
 export function DoneStep({
   prefs,
@@ -94,16 +73,16 @@ export function DoneStep({
           />
         )}
       </ul>
-      <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2">
-        {NEXT.map((action) => {
-          const Icon = action.icon;
+      <div className="mt-5 grid grid-cols-1 gap-2">
+        {DONE_ACTIONS.map((action) => {
+          const Icon = ACTION_ICONS[action.to];
           return (
             <button
               key={action.to}
               type="button"
               disabled={busy}
               onClick={() => onFinish(action.to)}
-              className="flex items-center gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2.5 text-left transition-colors hover:bg-[var(--color-surface-hover)] disabled:opacity-50"
+              className="flex items-center gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3.5 py-3 text-left transition-colors hover:bg-[var(--color-surface-hover)] disabled:opacity-50"
             >
               <Icon className="h-4 w-4 shrink-0 text-[var(--color-primary)]" />
               <span className="min-w-0">
