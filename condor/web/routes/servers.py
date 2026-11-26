@@ -19,6 +19,38 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["servers"])
 
 
+NOT_RESPONDING = "Server not responding"
+
+
+async def resolve_status(sds: ServerDataService, name: str) -> dict:
+    """One server's status for the dashboard: ``{status, message?, checked_at}``.
+
+    ``get_or_fetch`` hands back the *last good* value when a refresh fails, at
+    whatever age (see its docstring), and a failure that happens before the probe
+    even starts (the client cannot connect) never overwrites the cached
+    ``online``. Read alone, that kept "Connected" on screen after the API died.
+    The cache entry's error count is the truth: a refresh that failed means the
+    server is not answering, whatever the old value says.
+
+    ``checked_at`` is when the answer was taken (unix seconds): the last good
+    probe, or the last failed one. ``None`` when nothing has been probed.
+    """
+    status = sds.get(name, ServerDataType.SERVER_STATUS)
+    if status is None:
+        status = await sds.get_or_fetch(name, ServerDataType.SERVER_STATUS)
+    entry = sds.get_entry(name, ServerDataType.SERVER_STATUS)
+    if entry is not None and entry.consecutive_errors > 0:
+        return {
+            "status": "error",
+            "message": NOT_RESPONDING,
+            "checked_at": entry.last_error_at or None,
+        }
+    if not isinstance(status, dict):
+        return {"status": "unknown", "checked_at": None}
+    checked_at = entry.fetched_at if entry is not None and entry.fetched_at else None
+    return {**status, "checked_at": checked_at}
+
+
 async def _resolve_online(sds: ServerDataService, name: str) -> bool:
     """Resolve one server's online flag, never raising.
 
@@ -27,13 +59,11 @@ async def _resolve_online(sds: ServerDataService, name: str) -> bool:
     run these concurrently, so a single failure must not sink the whole batch.
     """
     try:
-        status = sds.get(name, ServerDataType.SERVER_STATUS)
-        if status is None:
-            status = await sds.get_or_fetch(name, ServerDataType.SERVER_STATUS)
+        status = await resolve_status(sds, name)
     except Exception as e:  # noqa: BLE001 - a broken server is offline, not a 500
         logger.debug("servers: status fetch failed for %s: %s", name, e)
         return False
-    return status.get("status") == "online" if isinstance(status, dict) else False
+    return status.get("status") == "online"
 
 
 async def server_rows(user: WebUser) -> list[ServerInfo]:
@@ -95,9 +125,6 @@ async def server_status(name: str, user: WebUser = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="Server not found")
     sds = get_server_data_service()
     try:
-        status = await sds.get_or_fetch(name, ServerDataType.SERVER_STATUS)
+        return await resolve_status(sds, name)
     except ValueError:
         raise HTTPException(status_code=404, detail="Server not found")
-    if isinstance(status, dict):
-        return status
-    return {"status": "unknown"}
