@@ -203,8 +203,8 @@ describe("step flow", () => {
     expect(state.skipped).toEqual(["model"]);
   });
 
-  it("ships profile and done in this build, with done last in the full list", () => {
-    expect(installedStepDefs().map((step) => step.id)).toEqual(["profile", "done"]);
+  it("ships the steps this build renders, with done last in the full list", () => {
+    expect(installedStepDefs().map((step) => step.id)).toEqual(["profile", "connect", "done"]);
     expect(STEP_DEFS.map((step) => step.id)).toEqual([
       "profile",
       "model",

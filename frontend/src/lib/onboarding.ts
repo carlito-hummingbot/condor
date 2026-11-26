@@ -102,7 +102,7 @@ export interface StepDef {
  * Steps this build actually renders. `done` stays last. Insert a new id here
  * when its screen ships; the order always follows `STEP_DEFS`.
  */
-export const INSTALLED_STEP_IDS = ["profile", "done"] as const;
+export const INSTALLED_STEP_IDS = ["profile", "connect", "done"] as const;
 
 export function installedStepDefs(): StepDef[] {
   const installed = new Set<string>(INSTALLED_STEP_IDS);

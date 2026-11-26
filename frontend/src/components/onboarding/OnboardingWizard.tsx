@@ -23,6 +23,7 @@ import {
   type ServerGate as ServerGateState,
 } from "@/lib/onboarding";
 
+import { ConnectTradeStep } from "./ConnectTradeStep";
 import { DoneStep } from "./DoneStep";
 import { MakeItYoursStep, type WizardAction } from "./MakeItYoursStep";
 import { ServerGate } from "./ServerGate";
@@ -171,6 +172,13 @@ export function OnboardingWizard() {
               }}
             />
             <div className="min-h-0 flex-1 overflow-y-auto">
+              {step.id === "connect" && (
+                <ConnectTradeStep
+                  busy={busy}
+                  onContinue={(partial) => void continueStep(partial, false)}
+                  onBind={onBind}
+                />
+              )}
               {step.id === "profile" && (
                 <MakeItYoursStep
                   prefs={preferences}
@@ -213,6 +221,11 @@ export function OnboardingWizard() {
                 >
                   Back
                 </Button>
+                {step.skippable && (
+                  <Button variant="ghost" disabled={busy} onClick={() => void continueStep({}, true)}>
+                    Skip
+                  </Button>
+                )}
                 <Button
                   variant="primary"
                   disabled={busy || !action || action.disabled}
