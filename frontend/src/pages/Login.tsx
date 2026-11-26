@@ -15,9 +15,7 @@ export function Login() {
   // `"unreachable"` is not a mode the server can report: it is what we know when
   // the probe never got an answer, and the only honest thing to render then.
   const [mode, setMode] = useState<string | null>(null);
-  const probed = useRef(false);
-  // Bumped by the Retry button on the unreachable card. The probe effect latches
-  // on `probed`, so re-running it takes clearing that ref and a new dep value.
+  // Bumped by the Retry button on the unreachable card to re-run the probe.
   const [probeAttempt, setProbeAttempt] = useState(0);
 
   // Where to land after login. Only allow internal paths to avoid open redirects.
@@ -55,8 +53,8 @@ export function Login() {
 
   // The one local-login attempt, shared by the probe below and the Retry
   // button. Retrying calls this directly rather than re-firing the effect: the
-  // `probed` ref has already latched, and the mode cannot have changed without
-  // a server restart, so a second /auth/mode round trip would buy nothing.
+  // mode cannot have changed without a server restart, so a second /auth/mode
+  // round trip would buy nothing.
   const attemptLocalLogin = useCallback(() => {
     setError("");
     setLoggingIn(true);
@@ -71,9 +69,14 @@ export function Login() {
   // Local mode (FEAT-049): there is no login step. Ask the server how it
   // authenticates and, if the answer is "locally", claim the session and go.
   // Skipped entirely when a one-time ?token= is being redeemed above.
+  //
+  // No "already probed" latch: the cleanup below discards the answer of a run
+  // that has been replaced, so a latch would also discard the only answer there
+  // is. StrictMode (development only) mounts, cleans up and mounts again; with
+  // a latch the second run never fetched and the first was cancelled, leaving
+  // the page on "Signing in..." for good.
   useEffect(() => {
-    if (searchParams.get("token") || probed.current) return;
-    probed.current = true;
+    if (searchParams.get("token")) return;
 
     let cancelled = false;
     fetch("/api/v1/auth/mode")
@@ -104,7 +107,6 @@ export function Login() {
   const retryProbe = useCallback(() => {
     setError("");
     setMode(null);
-    probed.current = false;
     setProbeAttempt((n) => n + 1);
   }, []);
 
