@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Bot, ChevronDown, ChevronLeft, ChevronRight, Loader2, Search } from "lucide-react";
+import { Bot, ChevronDown, ChevronLeft, ChevronRight, Cpu, Loader2, Search } from "lucide-react";
 
 import { AnchoredMenu } from "@/components/ui/AnchoredMenu";
 import { useBrainLabel } from "@/hooks/useBrainLabel";
@@ -390,9 +390,15 @@ export function BrainPicker({
         aria-expanded={open}
         aria-haspopup="listbox"
         title={boundAgent ? boundAgent.description || boundAgent.name : label}
-        className="flex items-center gap-1.5 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-xs text-[var(--color-text)] hover:border-[var(--color-primary)]/40 disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex items-center gap-1.5 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-xs text-[var(--color-text)] transition-colors hover:border-[var(--color-primary)]/40 hover:bg-[var(--color-surface-hover)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-primary)]/60 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {boundAgent && <Bot className="h-3 w-3 shrink-0 text-[var(--color-accent)]" />}
+        {/* A model with no icon read as a plain label; the chip says "this is
+            a control" and, with a bound Agent, whose brain it is. */}
+        {boundAgent ? (
+          <Bot className="h-3 w-3 shrink-0 text-[var(--color-accent)]" />
+        ) : (
+          <Cpu className="h-3 w-3 shrink-0 text-[var(--color-text-muted)]" />
+        )}
         <span className="truncate">{label}</span>
         <ChevronDown className="ml-1 h-3 w-3 shrink-0 text-[var(--color-text-muted)]" />
       </button>
