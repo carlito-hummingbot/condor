@@ -41,7 +41,7 @@
 </div>
 
 <h2 id="after">After</h2>
-<p>A frosted six-step wizard. Name is required; everything else can be skipped. An install that already has keys, a wallet, a conversation or a bot is marked complete and never sees it. Run setup again lives in the avatar menu and in Settings, Appearance.</p>
+<p>A frosted wizard that starts with a readiness summary and then shows only the steps this install still needs (five to seven dots). Name is required; everything else can be skipped. An install that already has keys, a wallet, a conversation or a bot is marked complete and never sees it. Run setup again lives in the avatar menu and in Settings, Appearance.</p>
 
 <h3>Before step 1: the server check</h3>
 <p>What a fresh install actually has (from <code>setup-environment.sh</code> and the Condor code at <code>97d9261</code>; read, not yet run on a clean machine):</p>
@@ -89,22 +89,38 @@
   <li><strong>Noisy Gateway poll.</strong> The dashboard asks for Gateway wallets about every 20 seconds and the server logs a full error each time when Gateway is not installed. It should check Gateway status first.</li>
 </ul>
 
-<h3>1. Make it yours</h3>
+<h3>Your setup (new first step, always shown)</h3>
+<p>The wizard opens with a summary of what setup already did, read from the install, so nothing is asked twice. Only the items marked <em>Needs you</em> lead to a step. Prototype built on branch <code>ui/onboarding-readiness</code> (stacked on #12, not pushed yet), seen on the rn5 preview with a stand-in Hummingbot API.</p>
+<div class="pair">
+  <figure><img src="assets/readiness-1-needs-model-and-key.png" alt="Here is your setup: server ready, AI model needs you, exchange or wallet needs you, DEX gateway optional"><figcaption>Matches the clean install described above: server ready, no usable model, no exchange key. Seven steps follow.</figcaption></figure>
+  <figure><img src="assets/readiness-2-key-present.png" alt="Same summary with the exchange row Ready"><figcaption>An exchange key is already present, so the "Connect where you trade" step drops out (six steps).</figcaption></figure>
+</div>
+<figure><img src="assets/readiness-3-server-offline.png" alt="Summary with the server row Needs you and a Check again button"><figcaption>Server configured but not answering: the row says so, the exchange row reads "Not checked" (a failed read is never treated as missing), and "Check again" re-reads everything.</figcaption></figure>
+<ul>
+  <li><strong>What the user is asked:</strong> name (always), AI model only if no model is ready, exchange or wallet only if none is connected, then look and alerts (preferences that cannot be detected). DEX Gateway is optional and never a step.</li>
+  <li><strong>The list freezes</strong> when the user presses Continue, so connecting a key mid-run does not remove a step under them.</li>
+  <li><strong>Checks never trap the user.</strong> A read still pending after 6 seconds shows "Not checked" and Continue works.</li>
+  <li><strong>The name step no longer repeats</strong> the server and model status line.</li>
+  <li><strong>Resume:</strong> reopening the wizard starts at the summary, which re-reads the install, instead of the last step.</li>
+</ul>
+<p class="sources">Checked: types, lint, 43 unit tests (the logic that picks the steps), and the screens above. Not captured: the "everything ready" summary, because the preview machine has no usable AI model to show as ready; that case is covered by a unit test only.</p>
+
+<h3>Make it yours (always)</h3>
 <figure><img src="assets/onboarding-1-make-it-yours.png" alt="Make it yours step with the name field prefilled Algo Trader"><figcaption>Name (required, prefilled "Algo Trader" when nothing is saved) and dashboard title (optional, per user). PR #2.</figcaption></figure>
 
-<h3>2. AI model</h3>
+<h3>AI model (only if no model is ready)</h3>
 <figure><img src="assets/onboarding-2-ai-model.png" alt="AI model step listing agent CLIs, all not installed"><figcaption>Confirms the model setup chose, or lets you pick one. On this test machine every row reads "not installed". PR #11.</figcaption></figure>
 
-<h3>3. Connect where you trade</h3>
+<h3>Connect where you trade (only if nothing is connected)</h3>
 <figure><img src="assets/onboarding-3-connect.png" alt="Connect where you trade step with exchange key, Hyperliquid and DEX wallet options"><figcaption>Exchange API key, Hyperliquid wallet or DEX wallet. Skippable. PR #9.</figcaption></figure>
 
-<h3>4. Look and units</h3>
+<h3>Look and units</h3>
 <figure><img src="assets/onboarding-4-look.png" alt="Look and units step with theme, colour-blind mode and display currency"><figcaption>Theme, colour-blind mode, display currency. Applied live. PR #12.</figcaption></figure>
 
-<h3>5. Stay in the loop</h3>
+<h3>Stay in the loop</h3>
 <figure><img src="assets/onboarding-5-alerts.png" alt="Stay in the loop step with push alerts, Telegram status and usage summaries"><figcaption>Push alerts, Telegram status (read-only) and the usage-summaries choice. PR #12.</figcaption></figure>
 
-<h3>6. You're set</h3>
+<h3>You're set</h3>
 <figure><img src="assets/onboarding-6-youre-set.png" alt="You're set summary with Deploy a bot and Browse agents shortcuts"><figcaption>What was set or skipped, plus two shortcuts. PR #2.</figcaption></figure>
 
 <h3>After skipping: a reminder, not a wall</h3>
@@ -139,6 +155,7 @@
 <table>
   <thead><tr><th>Date</th><th>Change</th><th>Reason / source</th><th>PR</th></tr></thead>
   <tbody>
+    <tr><td>2026-11-26</td><td>Decision: summary first, then only the missing steps. Built "Your setup" check (<code>ui/onboarding-readiness</code>), 43 unit tests, screenshots of three states; name step no longer repeats status; 6 s read deadline</td><td>Refinement session. Finding: Condor caches a server's online flag, so a server that just went down can read "Connected" until its cache refreshes (backend behaviour, not changed)</td><td>not pushed</td></tr>
     <tr><td>2026-11-26</td><td>Server check reworked: documented what a fresh <code>make setup</code> creates (<code>local</code> server, empty credentials the user fills in during setup) and proposed four states instead of one form</td><td>Refinement session; findings from <code>setup-environment.sh</code> and the Condor agent's read of the code. Not yet tested on a clean install</td><td>&mdash;</td></tr>
     <tr><td>2026-11-26</td><td>Page rebuilt as editable HTML in <code>docs/proposals/</code>; screenshots retaken from the PR branches</td><td>Previous version was a generated page that could not be edited by every agent</td><td>docs</td></tr>
     <tr><td>2026-11-26</td><td>Review notes added: model step list, server gate, header pill, resume behaviour</td><td>Review of PRs #2, #9, #11, #12 built on rn5</td><td>&mdash;</td></tr>
