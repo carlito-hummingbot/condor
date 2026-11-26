@@ -22,6 +22,7 @@ import { Link } from "react-router-dom";
 import { deriveAgentStatus } from "@/components/agent/agentStatus";
 import { ConfirmDialog } from "@/components/agent/ConfirmDialog";
 import { ARCHIVED_GROUP, ConversationList } from "@/components/chat/ConversationList";
+import type { ChatListFilter } from "@/components/chat/conversationFilter";
 import { WORKSPACE_BAR } from "@/components/chat/workspaceBar";
 import { AnchoredMenu } from "@/components/ui/AnchoredMenu";
 import { useWorkspacePane } from "@/hooks/useWorkspacePane";
@@ -115,6 +116,8 @@ export const ChatRail = memo(function ChatRail({
   onDeletedConversation?: (id: string) => void;
 }) {
   const [expanded, setExpanded] = useState(readOpen);
+  const [search, setSearch] = useState("");
+  const [listFilter, setListFilter] = useState<ChatListFilter>("all");
 
   // The agent a row's menu asked to delete, held here rather than in the row:
   // the row unmounts the moment the deletion lands, and a dialog owned by it
@@ -243,6 +246,43 @@ export const ChatRail = memo(function ChatRail({
         </button>
       </div>
 
+      {/* Search and a state filter over the chats already loaded. The list
+          does not ask the server again. The filter is three chips in the
+          panel rather than a dropdown, so nothing opens over New chat and the
+          active filter is readable at a glance. */}
+      <div className="flex flex-col gap-1.5 px-2 pt-2">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search chats"
+          aria-label="Search chats"
+          className="w-full min-w-0 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-1.5 text-xs text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:outline-none"
+        />
+        <div role="group" aria-label="Filter chats" className="flex gap-1">
+          {(
+            [
+              ["all", "All"],
+              ["answering", "Answering"],
+              ["waiting", "Waiting"],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              aria-pressed={listFilter === id}
+              onClick={() => setListFilter(id)}
+              className={`rounded-full border px-2 py-0.5 text-[11px] font-medium transition-colors ${
+                listFilter === id
+                  ? "border-[var(--color-primary)]/40 bg-[var(--color-primary-fill)]/10 text-[var(--color-primary)]"
+                  : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* One action above the list: a new chat with whoever is selected
           (Condor before anything is). A specific agent's is the `+` on its
           row. */}
@@ -266,6 +306,8 @@ export const ChatRail = memo(function ChatRail({
         agents={condor ? [condor, ...specialists] : specialists}
         busyIds={busyIds}
         waitingIds={waitingIds}
+        search={search}
+        listFilter={listFilter}
         liveDrafts={liveDrafts}
         onDeleted={onDeletedConversation}
         activeId={activeId}

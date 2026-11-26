@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { ShareConversation } from "@/components/chat/ShareConversation";
+import { chatAgentSlug, chatMatches, passesListFilter, type ChatListFilter } from "@/components/chat/conversationFilter";
 import { useEscapeKey } from "@/hooks/useEscapeKey";
 import { RAIL_OPEN_GROUPS_KEY } from "@/lib/sessionState";
 import { api, CHAT_SLUG, type AgentSummary, type ConversationMeta } from "@/lib/api";
@@ -110,6 +111,8 @@ export const ConversationList = memo(function ConversationList({
   onOpen,
   onDeleted,
   renderAgent,
+  search = "",
+  listFilter = "all",
 }: {
   /** The registry, Condor included (`CHAT_SLUG`). */
   agents: AgentSummary[];
@@ -124,6 +127,10 @@ export const ConversationList = memo(function ConversationList({
   /** After the server deleted a chat, so its session on screen can be closed. */
   onDeleted?: (id: string) => void;
   renderAgent: (header: AgentGroupHeader) => ReactNode;
+  /** Narrows the chats already loaded. Blank shows the full list. */
+  search?: string;
+  /** Answering and waiting are the sets the rail already tracks. */
+  listFilter?: ChatListFilter;
 }) {
   const queryClient = useQueryClient();
   const [renaming, setRenaming] = useState<string | null>(null);
@@ -218,9 +225,19 @@ export const ConversationList = memo(function ConversationList({
   // Held across renders: react-query keeps `conversations` identity-stable
   // between refetches, so the rail does not re-file 100 rows while an answer
   // streams beside it.
+  const filtering = search.trim() !== "" || listFilter !== "all";
+  const shownConversations = useMemo(() => {
+    if (!filtering) return conversations;
+    return conversations.filter((c) => {
+      if (!passesListFilter(c.id, listFilter, busyIds, waitingIds)) return false;
+      const name = agents.find((a) => a.slug === chatAgentSlug(c))?.name ?? "";
+      return chatMatches(c, search, name);
+    });
+  }, [conversations, filtering, listFilter, search, busyIds, waitingIds, agents]);
+
   const groups = useMemo(() => {
     const bySlug = new Map<string, ConversationMeta[]>();
-    for (const c of conversations) {
+    for (const c of shownConversations) {
       const slug = c.archived ? ARCHIVED_GROUP : c.agent_slug || CHAT_SLUG;
       const list = bySlug.get(slug);
       if (list) list.push(c);
@@ -273,14 +290,23 @@ export const ConversationList = memo(function ConversationList({
       // findable before the first one is archived.
       { slug: ARCHIVED_GROUP, agent: null, items: archived, latest: "" },
     ];
-    return [...talked, ...quiet, ...tail];
-  }, [conversations, agents]);
+    const all = [...talked, ...quiet, ...tail];
+    if (!filtering) return all;
+    const q = search.trim().toLowerCase();
+    return all.filter((g) => {
+      if (g.items.length > 0) return true;
+      return !!q && (g.agent?.name || "").toLowerCase().includes(q);
+    });
+  }, [shownConversations, agents, filtering, search]);
 
   const activeSlugOfList = conversations.find((c) => c.id === activeId);
   const activeAgentSlug = activeSlugOfList ? activeSlugOfList.agent_slug || CHAT_SLUG : null;
   const activeGroup = activeSlugOfList?.archived ? ARCHIVED_GROUP : activeAgentSlug;
-  // Open only if the reader opened it (and there is something inside).
-  const isExpanded = (slug: string, count: number) => count > 0 && !!openGroups[slug];
+  // A search or a state filter opens the groups it kept, so the matches are
+  // visible without a second click. The reader's own open/closed choice is
+  // what applies again the moment the filter is cleared.
+  const isExpanded = (slug: string, count: number) =>
+    count > 0 && (filtering || !!openGroups[slug]);
 
   const renderRow = (meta: ConversationMeta, withAgent = false) => {
     const isActive = meta.id === activeId;
@@ -488,24 +514,32 @@ export const ConversationList = memo(function ConversationList({
           </div>
         )}
         {talked.map((g) => renderGroup(g))}
-      </div>
 
-      {(quiet.length > 0 || foot.length > 0) && (
-        // Its own scroll past a third of the column, so a long list of unused
-        // agents never pushes the chats off screen.
-        <div className="flex max-h-[38%] shrink-0 flex-col gap-0.5 overflow-y-auto border-t border-[var(--color-border)] py-1">
-          {quiet.length > 0 && (
+        {/* Where to *start*, not history: it follows the chats instead of
+            being pinned to the foot of the column, so a short list does not
+            leave a gap between the chats and the agents you could talk to. A
+            rule and a heading set it apart. The Hub card below stays pinned. */}
+        {quiet.length > 0 && (
+          <div className="mt-2 flex flex-col gap-0.5 border-t border-[var(--color-border)] pt-1">
             <div className="px-4 pb-1.5 pt-2 text-xs font-medium text-[var(--color-text-muted)]">
               Start a chat with
             </div>
-          )}
-          {quiet.map((g) => renderGroup(g))}
-          {foot.length > 0 && quiet.length > 0 && (
-            <div className="mx-4 my-1 border-t border-[var(--color-border)]" />
-          )}
-          {foot.map((g) => renderGroup(g))}
-        </div>
-      )}
+            {quiet.map((g) => renderGroup(g))}
+          </div>
+        )}
+        {foot.length > 0 && (
+          <div className="flex flex-col gap-0.5">
+            <div
+              className={
+                quiet.length > 0
+                  ? "mx-4 my-1 border-t border-[var(--color-border)]"
+                  : "mt-2 border-t border-[var(--color-border)] pt-1"
+              }
+            />
+            {foot.map((g) => renderGroup(g))}
+          </div>
+        )}
+      </div>
 
       {/* One dialog for the whole rail rather than one per row: it is mounted
           only while a conversation is selected, and its preview query is keyed
