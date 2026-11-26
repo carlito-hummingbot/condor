@@ -781,7 +781,7 @@ export function ImportAgentDialog({
               {plan.requires.tools.length} tool{plan.requires.tools.length !== 1 ? "s" : ""} ·{" "}
               {declaredSkills.length} skill{declaredSkills.length !== 1 ? "s" : ""} ·{" "}
               {carriedRoutines.length} routine{carriedRoutines.length !== 1 ? "s" : ""} ·{" "}
-              {carriedLoops.length} loop{carriedLoops.length !== 1 ? "s" : ""} ·{" "}
+              {carriedLoops.length} strateg{carriedLoops.length !== 1 ? "ies" : "y"} ·{" "}
               {planFileCount} file{planFileCount !== 1 ? "s" : ""} · {plan.total_bytes} bytes
             </p>
           </div>

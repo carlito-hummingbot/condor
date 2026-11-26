@@ -467,7 +467,7 @@ function LiveStrip({
         >
           {icon}
           <span className="min-w-0 flex-1 truncate">
-            Nothing looping{tasks}
+            No strategies{tasks}
           </span>
           <ArrowUpRight className="h-3 w-3 shrink-0" />
         </Link>

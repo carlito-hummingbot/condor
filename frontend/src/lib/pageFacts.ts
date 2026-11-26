@@ -532,6 +532,10 @@ const ROUTES: {
   onScreen?: Reader;
 }[] = [
   {
+    pattern: /^\/strategies$/,
+    facts: () => ({ label: "Strategies" }),
+  },
+  {
     pattern: /^\/portfolio$/,
     facts: () => ({ label: "Portfolio" }),
     onScreen: (_p, tab, qc) => {

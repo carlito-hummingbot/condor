@@ -54,7 +54,7 @@ export function DockLoops({
           isLoading={isLoading}
           agents={agents}
           onOpenLoop={onOpenLoop}
-          emptyLabel={`Nothing looping on ${server}`}
+          emptyLabel={`No strategies running on ${server}`}
         />
       </div>
       {/* Every loop, on every server — the global view this section narrows. */}
