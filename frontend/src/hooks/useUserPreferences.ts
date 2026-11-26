@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
+import { useDisplayCurrency, CURRENCY_OPTIONS, type DisplayCurrency } from "@/hooks/useDisplayCurrency";
+import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/lib/auth";
 import { api } from "@/lib/api";
 import {
@@ -64,4 +66,23 @@ export function useDashboardTitle(): string {
     document.title = title;
   }, [title]);
   return title;
+}
+
+/** Apply a saved theme, colour-blind flag and currency once, when preferences arrive. */
+export function useApplySavedAppearance() {
+  const { data, isFetched } = useUserPreferences();
+  const { setTheme, setColorblind } = useTheme();
+  const { setCurrency } = useDisplayCurrency();
+  const applied = useRef(false);
+  useEffect(() => {
+    if (!isFetched || applied.current) return;
+    applied.current = true;
+    const ui = data?.ui;
+    if (!ui) return;
+    if (ui.theme === "dark" || ui.theme === "light") setTheme(ui.theme);
+    if (typeof ui.colorblind === "boolean") setColorblind(ui.colorblind);
+    if (ui.currency && (CURRENCY_OPTIONS as readonly string[]).includes(ui.currency)) {
+      setCurrency(ui.currency as DisplayCurrency);
+    }
+  }, [isFetched, data, setTheme, setColorblind, setCurrency]);
 }

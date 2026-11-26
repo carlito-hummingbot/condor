@@ -3359,6 +3359,8 @@ export const api = {
    * each key whole (`onboarding`, `profile`, `ui`). A partial `agent` object
    * would wipe its siblings. `code_run` is reserved and refused.
    */
+  getAuthMode: () => apiFetch<{ mode: string }>("/api/v1/auth/mode"),
+
   getPreferences: () => apiFetch<UserPreferences>("/api/v1/auth/preferences"),
 
   updatePreferences: (updates: Record<string, unknown>) =>

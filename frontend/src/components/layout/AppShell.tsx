@@ -11,7 +11,7 @@ import { RelaunchBanner } from "@/components/RelaunchBanner";
 import { ReportIssueDialog } from "@/components/ReportIssueDialog";
 import { TelemetryConsentBanner } from "@/components/TelemetryConsentBanner";
 import { ChatProvider } from "@/hooks/useChat";
-import { useDashboardTitle } from "@/hooks/useUserPreferences";
+import { useApplySavedAppearance, useDashboardTitle } from "@/hooks/useUserPreferences";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { usePrefetchData } from "@/hooks/usePrefetchData";
 import { useServer } from "@/hooks/useServer";
@@ -61,6 +61,7 @@ function AppShellBody() {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const dashboardTitle = useDashboardTitle();
+  useApplySavedAppearance();
   const { showWizard, showKeysBanner } = useOnboarding();
   const [reportOpen, setReportOpen] = useState(false);
 

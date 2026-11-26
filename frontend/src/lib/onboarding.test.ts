@@ -4,6 +4,7 @@ import {
   STEP_DEFS,
   advance,
   buildPreferenceUpdates,
+  canContinueAlerts,
   canJumpTo,
   dashboardTitleFrom,
   describeModel,
@@ -206,12 +207,7 @@ describe("step flow", () => {
   });
 
   it("ships the steps this build renders, with done last in the full list", () => {
-    expect(installedStepDefs().map((step) => step.id)).toEqual([
-      "profile",
-      "model",
-      "connect",
-      "done",
-    ]);
+    expect(installedStepDefs().map((step) => step.id)).toEqual(STEP_DEFS.map((step) => step.id));
     expect(STEP_DEFS.map((step) => step.id)).toEqual([
       "profile",
       "model",
@@ -224,8 +220,10 @@ describe("step flow", () => {
       "model",
       "connect",
       "look",
-      "alerts",
     ]);
+    expect(canContinueAlerts(null)).toBe(false);
+    expect(canContinueAlerts("yes")).toBe(true);
+    expect(canContinueAlerts("no")).toBe(true);
     expect(installedStepDefs().at(-1)?.id).toBe("done");
   });
 

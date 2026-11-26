@@ -42,6 +42,7 @@ export function DoneStep({
 
   const detected = prefs.onboarding?.detected;
   const name = prefs.profile?.display_name?.trim();
+  const skipped = (prefs.onboarding?.skipped ?? []).join(", ");
 
   return (
     <div>
@@ -61,6 +62,7 @@ export function DoneStep({
             done={detected.server_online !== false}
           />
         )}
+        {skipped && <SummaryRow label="Skipped" value={skipped} done={false} />}
         {detected?.model_label && (
           <SummaryRow
             label="Model"

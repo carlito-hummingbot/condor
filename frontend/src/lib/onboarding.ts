@@ -80,7 +80,7 @@ export const STEP_DEFS = [
   { id: "model", title: "AI model", skippable: true },
   { id: "connect", title: "Connect where you trade", skippable: true },
   { id: "look", title: "Look & units", skippable: true },
-  { id: "alerts", title: "Stay in the loop", skippable: true },
+  { id: "alerts", title: "Stay in the loop", skippable: false },
   { id: "done", title: "You're set", skippable: false },
 ] as const;
 
@@ -102,7 +102,12 @@ export interface StepDef {
  * Steps this build actually renders. `done` stays last. Insert a new id here
  * when its screen ships; the order always follows `STEP_DEFS`.
  */
-export const INSTALLED_STEP_IDS = ["profile", "model", "connect", "done"] as const;
+export const INSTALLED_STEP_IDS = ["profile", "model", "connect", "look", "alerts", "done"] as const;
+
+/** Telemetry has no default. Next on Stay in the loop waits for an explicit answer. */
+export function canContinueAlerts(choice: "yes" | "no" | null): boolean {
+  return choice === "yes" || choice === "no";
+}
 
 export function installedStepDefs(): StepDef[] {
   const installed = new Set<string>(INSTALLED_STEP_IDS);
@@ -188,7 +193,7 @@ export interface OnboardingSignals {
    * The wizard is already on screen. A server the user just picked can make
    * the credentials probe load, then fail, and that must not dismiss setup.
    */
-  wizardEngaged: boolean;
+  wizardEngaged?: boolean;
 }
 
 export function isOnboardingComplete(prefs: UserPreferences | undefined): boolean {

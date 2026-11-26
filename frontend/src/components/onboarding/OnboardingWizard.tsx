@@ -23,8 +23,10 @@ import {
   type ServerGate as ServerGateState,
 } from "@/lib/onboarding";
 
+import { AlertsStep } from "./AlertsStep";
 import { ConnectTradeStep } from "./ConnectTradeStep";
 import { DoneStep } from "./DoneStep";
+import { LookStep } from "./LookStep";
 import { ModelStep } from "./ModelStep";
 import { MakeItYoursStep, type WizardAction } from "./MakeItYoursStep";
 import { ServerGate } from "./ServerGate";
@@ -196,6 +198,20 @@ export function OnboardingWizard() {
                   user={user}
                   gate={gate}
                   model={model}
+                  busy={busy}
+                  onContinue={(partial) => void continueStep(partial, false)}
+                  onBind={onBind}
+                />
+              )}
+              {step.id === "look" && (
+                <LookStep
+                  busy={busy}
+                  onContinue={(partial) => void continueStep(partial, false)}
+                  onBind={onBind}
+                />
+              )}
+              {step.id === "alerts" && (
+                <AlertsStep
                   busy={busy}
                   onContinue={(partial) => void continueStep(partial, false)}
                   onBind={onBind}
