@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 
 import { fallbackServer, useServer } from "@/hooks/useServer";
@@ -83,7 +83,15 @@ export function useOnboarding() {
     hasActivity,
   };
 
-  const showWizard = shouldShowWizard(signals);
+  // Once setup is on screen, selecting a server starts a credentials probe.
+  // An offline API fails that probe; the outage rule still applies to a wizard
+  // that has not opened, and must not close one that has. Adjusted during
+  // render so the next pass keeps the same answer without an effect.
+  const [engaged, setEngaged] = useState(false);
+  const showWizard = shouldShowWizard({ ...signals, wizardEngaged: engaged });
+  if (showWizard && !engaged) setEngaged(true);
+  else if (!showWizard && engaged && (completed || hasKeys)) setEngaged(false);
+
   const pending = onboardingPending(signals);
   const showKeysBanner = shouldShowKeysBanner({
     showWizard,

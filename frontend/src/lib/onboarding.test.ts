@@ -43,6 +43,7 @@ function signals(over: Partial<OnboardingSignals> = {}): OnboardingSignals {
     hasKeys: false,
     activityReady: true,
     hasActivity: false,
+    wizardEngaged: false,
     ...over,
   };
 }
@@ -98,6 +99,13 @@ describe("who sees the wizard", () => {
     expect(shouldShowWizard(outage)).toBe(false);
     expect(shouldAutoComplete(outage)).toBe(false);
     expect(onboardingPending(outage)).toBe(false);
+  });
+
+  it("keeps an open wizard up while the server just picked is probed, including an upstream error", () => {
+    expect(shouldShowWizard(signals({ wizardEngaged: true, keysReady: false }))).toBe(true);
+    expect(shouldShowWizard(signals({ wizardEngaged: true, keysError: true, keysReady: true }))).toBe(true);
+    expect(shouldShowWizard(signals({ wizardEngaged: true, hasKeys: true }))).toBe(false);
+    expect(shouldShowWizard(signals({ wizardEngaged: true, completed: true }))).toBe(false);
   });
 
   it("does not open the wizard when preferences cannot be read", () => {
@@ -246,10 +254,13 @@ describe("name, title and the hidden server check", () => {
     expect(validateDisplayName("a".repeat(81))).toMatch(/80/);
   });
 
-  it("keeps the dashboard title at Condor until one is saved", () => {
+  it("keeps the dashboard title at Condor until one is saved, and caps a long one", () => {
     expect(dashboardTitleFrom(undefined)).toBe("Condor");
     expect(dashboardTitleFrom({ ui: { dashboard_title: "Ada's Desk" } })).toBe("Ada's Desk");
     expect(dashboardTitleFrom({ ui: { dashboard_title: "  " } })).toBe("Condor");
+    const long = "A".repeat(80);
+    expect(dashboardTitleFrom({ ui: { dashboard_title: long } })).toHaveLength(40);
+    expect(dashboardTitleFrom({ ui: { dashboard_title: long } })).toBe("A".repeat(40));
   });
 
   it("confirms a server that is already selected, including an offline one", () => {
@@ -373,6 +384,11 @@ describe("preference patches", () => {
   it("clears a blank dashboard title without dropping the rest of ui", () => {
     const updates = buildPreferenceUpdates(current, { ui: { dashboard_title: "  " } });
     expect(updates.ui).toEqual({ theme: "dark" });
+  });
+
+  it("stores at most 40 characters of a dashboard title", () => {
+    const updates = buildPreferenceUpdates(current, { ui: { dashboard_title: "B".repeat(80) } });
+    expect(updates.ui).toEqual({ theme: "dark", dashboard_title: "B".repeat(40) });
   });
 
   it("drops a blank display name instead of storing it", () => {

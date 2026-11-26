@@ -11,6 +11,9 @@ export const ONBOARDING_VERSION = 1;
 
 export const DEFAULT_DASHBOARD_TITLE = "Condor";
 
+/** Long enough for a desk name, short enough that the top bar can still show the nav. */
+export const DASHBOARD_TITLE_MAX = 40;
+
 /** Hard cap so a pasted paragraph cannot become the top-bar label. */
 export const DISPLAY_NAME_MAX = 80;
 
@@ -181,6 +184,11 @@ export interface OnboardingSignals {
   activityReady: boolean;
   /** A conversation or a bot: the dashboard has already been used. */
   hasActivity: boolean;
+  /**
+   * The wizard is already on screen. A server the user just picked can make
+   * the credentials probe load, then fail, and that must not dismiss setup.
+   */
+  wizardEngaged: boolean;
 }
 
 export function isOnboardingComplete(prefs: UserPreferences | undefined): boolean {
@@ -200,7 +208,11 @@ export function isExistingUser(signals: Pick<OnboardingSignals, "hasKeys" | "has
 export function shouldShowWizard(s: OnboardingSignals): boolean {
   if (!s.prefsReady || s.prefsError) return false;
   if (s.force) return true;
-  if (s.completed || !s.keysReady || s.keysError || s.hasKeys) return false;
+  if (s.completed || s.hasKeys) return false;
+  // Keep a setup that has already opened. The first credentials failure, before
+  // the wizard is up, is still an outage and does not open it.
+  if (s.wizardEngaged) return true;
+  if (!s.keysReady || s.keysError) return false;
   if (!s.activityReady || s.hasActivity) return false;
   return true;
 }
@@ -285,8 +297,12 @@ export function displayNameFrom(
   return prefillName(user);
 }
 
+export function clampDashboardTitle(title: string): string {
+  return title.trim().slice(0, DASHBOARD_TITLE_MAX);
+}
+
 export function dashboardTitleFrom(prefs: UserPreferences | undefined): string {
-  const title = prefs?.ui?.dashboard_title?.trim();
+  const title = clampDashboardTitle(prefs?.ui?.dashboard_title ?? "");
   return title || DEFAULT_DASHBOARD_TITLE;
 }
 
@@ -404,8 +420,10 @@ export function buildPreferenceUpdates(
   }
   if (patch.ui) {
     const ui: UiRecord = { ...current.ui, ...patch.ui };
-    if (patch.ui.dashboard_title !== undefined && !patch.ui.dashboard_title.trim()) {
-      delete ui.dashboard_title;
+    if (patch.ui.dashboard_title !== undefined) {
+      const title = clampDashboardTitle(patch.ui.dashboard_title);
+      if (!title) delete ui.dashboard_title;
+      else ui.dashboard_title = title;
     }
     updates.ui = ui;
   }

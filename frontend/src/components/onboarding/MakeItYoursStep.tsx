@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { Field, Input } from "@/components/ui/Field";
 import type { User } from "@/lib/auth";
 import {
+  DASHBOARD_TITLE_MAX,
+  clampDashboardTitle,
   prefillName,
   validateDisplayName,
   type DetectedModel,
@@ -41,7 +43,7 @@ export function MakeItYoursStep({
   const [name, setName] = useState(
     () => prefs.profile?.display_name?.trim() || prefillName(user),
   );
-  const [title, setTitle] = useState(() => prefs.ui?.dashboard_title?.trim() ?? "");
+  const [title, setTitle] = useState(() => clampDashboardTitle(prefs.ui?.dashboard_title ?? ""));
   const [tried, setTried] = useState(false);
   const nameError = tried ? validateDisplayName(name) : null;
   const valid = validateDisplayName(name) === null;
@@ -62,7 +64,7 @@ export function MakeItYoursStep({
       }
       onContinue({
         profile: { display_name: name.trim() },
-        ui: { dashboard_title: title.trim() },
+        ui: { dashboard_title: clampDashboardTitle(title) },
         onboarding: { detected },
       });
     };
@@ -110,6 +112,7 @@ export function MakeItYoursStep({
           <Input
             id="onboarding-title-field"
             value={title}
+            maxLength={DASHBOARD_TITLE_MAX}
             onChange={(event) => setTitle(event.target.value)}
             placeholder="Condor"
           />

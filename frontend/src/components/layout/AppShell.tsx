@@ -104,9 +104,13 @@ function AppShellBody() {
             window narrows, instead of pushing the controls on the right off
             screen (the bar used to need ~1080px and never shrank). */}
         <div className="flex min-w-0 flex-1 items-center gap-3 lg:gap-6">
-          <NavLink to="/" className="flex shrink-0 items-center gap-2 font-bold tracking-tight">
-            <img src="/condor_old.jpeg" alt={dashboardTitle} className="h-6 w-6 rounded-full" />
-            <span className="hidden text-sm sm:inline">{dashboardTitle}</span>
+          <NavLink
+            to="/"
+            title={dashboardTitle}
+            className="flex min-w-0 max-w-[9rem] items-center gap-2 font-bold tracking-tight sm:max-w-[12rem]"
+          >
+            <img src="/condor_old.jpeg" alt={dashboardTitle} className="h-6 w-6 shrink-0 rounded-full" />
+            <span className="hidden min-w-0 truncate text-sm sm:inline">{dashboardTitle}</span>
           </NavLink>
 
           {/* Labels drop to icons below ~1120px; past that, the strip scrolls
