@@ -4,13 +4,15 @@ import { Bug, Moon, Sun } from "lucide-react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import { ChatBubble } from "@/components/chat/ChatBubble";
-import { ConnectKeysOverlay } from "@/components/ConnectKeysOverlay";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { KeysReminderBanner } from "@/components/KeysReminderBanner";
+import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import { RelaunchBanner } from "@/components/RelaunchBanner";
 import { ReportIssueDialog } from "@/components/ReportIssueDialog";
 import { TelemetryConsentBanner } from "@/components/TelemetryConsentBanner";
 import { ChatProvider } from "@/hooks/useChat";
-import { useCredentials } from "@/hooks/useCredentials";
+import { useDashboardTitle } from "@/hooks/useUserPreferences";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import { usePrefetchData } from "@/hooks/usePrefetchData";
 import { useServer } from "@/hooks/useServer";
 import { useTheme } from "@/hooks/useTheme";
@@ -58,7 +60,8 @@ function AppShellBody() {
   const inAgentsSection = pathname === "/hub" || pathname.startsWith("/agents/");
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const { hasKeys, isLoading: keysLoading, isError: keysError } = useCredentials();
+  const dashboardTitle = useDashboardTitle();
+  const { showWizard, showKeysBanner } = useOnboarding();
   const [reportOpen, setReportOpen] = useState(false);
 
   // A pathname is enough: every full-bleed screen is its own route.
@@ -66,21 +69,6 @@ function AppShellBody() {
   const isFullBleed =
     FULL_BLEED_ROUTES.includes(pathname) ||
     FULL_BLEED_PATTERNS.some((re) => re.test(pathname));
-
-  // The home is exempt because it is the chat: the one surface that can talk a
-  // new user through connecting keys, and so the last one that should be
-  // hidden behind a block telling them to. `/fleet` is exempt for the weaker
-  // but sufficient reason that it needs no keys either — it reads agents,
-  // loops and journals, none of which is an exchange — so blocking it would
-  // teach nobody anything. Matched exactly rather than by prefix, because `/`
-  // prefixes every route in the app.
-  // `/hub` reads Botcamp, never an exchange, so it needs no keys either.
-  const exemptRoutes = ["/routines", "/settings", "/hub"];
-  // Not while the keys are unknown either: a failed credentials request is an
-  // outage to report, not a user to send off to connect an exchange (FU-02).
-  const showKeysOverlay =
-    server && !keysLoading && !keysError && !hasKeys && pathname !== "/" &&
-    !exemptRoutes.some((r) => pathname.startsWith(r));
 
   // ⌘K used to toggle the overlay panel. It now goes to the chat, so the
   // reflex still lands somewhere sensible instead of silently doing nothing.
@@ -117,8 +105,8 @@ function AppShellBody() {
             screen (the bar used to need ~1080px and never shrank). */}
         <div className="flex min-w-0 flex-1 items-center gap-3 lg:gap-6">
           <NavLink to="/" className="flex shrink-0 items-center gap-2 font-bold tracking-tight">
-            <img src="/condor_old.jpeg" alt="Condor" className="h-6 w-6 rounded-full" />
-            <span className="hidden text-sm sm:inline">Condor</span>
+            <img src="/condor_old.jpeg" alt={dashboardTitle} className="h-6 w-6 rounded-full" />
+            <span className="hidden text-sm sm:inline">{dashboardTitle}</span>
           </NavLink>
 
           {/* Labels drop to icons below ~1120px; past that, the strip scrolls
@@ -196,29 +184,34 @@ function AppShellBody() {
           time, which is nearly always. */}
       <RelaunchBanner />
 
-      {/* Asks once, for an install that has never answered (FEAT-023). Renders
-          nothing for everyone else, including on the chat workspace, which owns
-          its own scrolling — hence outside `main` rather than inside it. */}
-      <TelemetryConsentBanner />
+      {/* Asks once, for an install that has never answered (FEAT-023). Hidden
+          during first-run setup so a new user is not asked twice. */}
+      {!showWizard && <TelemetryConsentBanner />}
 
-      {/* Main content */}
-      <main
-        className={`relative flex-1 ${
-          isFullBleed ? "overflow-hidden" : "overflow-auto p-6"
-        }`}
-      >
-        <ErrorBoundary resetKey={pathname + server}>
-          <Outlet key={server} />
-        </ErrorBoundary>
-        {showKeysOverlay && <ConnectKeysOverlay />}
+      {/* Non-blocking: the page underneath stays usable. The wizard, while it
+          is open, is the prompt instead. */}
+      {showKeysBanner && <KeysReminderBanner />}
+
+      {/* Main content. The scroller is the inner div so the wizard, which is
+          positioned against `main`, stays put when the page is long. */}
+      <main className="relative flex flex-1 flex-col overflow-hidden">
+        <div
+          className={`relative min-h-0 flex-1 ${
+            isFullBleed ? "overflow-hidden" : "overflow-auto p-6"
+          }`}
+        >
+          <ErrorBoundary resetKey={pathname + server}>
+            <Outlet key={server} />
+          </ErrorBoundary>
+        </div>
+        {showWizard && <OnboardingWizard />}
       </main>
 
       <ReportIssueDialog open={reportOpen} onClose={() => setReportOpen(false)} />
 
-      {/* The quick chat on every page but `/` (FEAT-059). Inside the
-          provider, outside `main`, so it neither scrolls with the page nor
-          unmounts on navigation. */}
-      <ChatBubble />
+      {/* The quick chat on every page but `/` (FEAT-059). Hidden during
+          setup so it does not sit on top of the wizard. */}
+      {!showWizard && <ChatBubble />}
     </div>
   );
 }

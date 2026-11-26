@@ -496,6 +496,20 @@ export function gatewayWalletsQuery(server: string | null | undefined) {
 }
 
 /**
+ * Per-user preferences (`GET /api/v1/auth/preferences`).
+ *
+ * The wizard, the dashboard title and the display name all read this one
+ * cache. A minute is enough: nothing else on the page writes it, and every
+ * save replaces the cache with the response.
+ */
+export function preferencesQuery() {
+  return {
+    queryKey: ["auth-preferences"] as const,
+    staleTime: 60_000,
+  };
+}
+
+/**
  * Invalidates every cached answer a credential mutation (add/delete a CEX
  * key, or the Hyperliquid connect flow) can change: the credential list
  * itself, the venue traits the Trade page's `credentialed` gate reads

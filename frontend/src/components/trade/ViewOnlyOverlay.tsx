@@ -13,7 +13,7 @@ import { formatConnectorName } from "@/lib/formatters";
  * behind this are all live and stay usable — the single thing missing is an
  * account to place the order against, and that is the single thing covered.
  *
- * `ConnectKeysOverlay` is the page-sized sibling for "no venues at all"; this one
+ * `KeysReminderBanner` is the page-level reminder for "no venues at all"; this one
  * is scoped to one panel and names the venue, because the fix is per-venue.
  */
 export function ViewOnlyOverlay({ connector }: { connector: string }) {
