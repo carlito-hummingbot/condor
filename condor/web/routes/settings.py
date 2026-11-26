@@ -6,8 +6,8 @@ import re
 from urllib.parse import urlsplit
 
 import aiohttp
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel, ValidationError
 
 from condor.fetchers.api_server import (
     ApiServerSettingsUnsupported,
@@ -23,6 +23,7 @@ from condor.server_data_service import (
     ServerDataType,
     get_server_data_service,
 )
+from condor.server_probe import connection_test_limiter, probe_connection
 from condor.web.auth import (
     get_current_user,
     require_owner,
@@ -33,6 +34,8 @@ from condor.web.models import (
     AddServerRequest,
     ApiClientConfigUpdateRequest,
     ApiUpgradeRequest,
+    ConnectionCheckRequest,
+    ConnectionCheckResult,
     GatewayNetworkUpdateRequest,
     GatewayPullRequest,
     GatewayStartRequest,
@@ -103,6 +106,68 @@ async def add_server(req: AddServerRequest, user: WebUser = Depends(get_current_
     if not ok:
         raise HTTPException(status_code=400, detail="Server name already exists")
     return {"added": True, "name": req.name}
+
+
+def _throttle_connection_test(user: WebUser) -> None:
+    """429 when this user has used up their connection-test budget."""
+    retry_after = connection_test_limiter.check(user.id)
+    if retry_after is not None:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many connection tests, try again shortly",
+            headers={"Retry-After": str(retry_after)},
+        )
+
+
+@router.post("/servers/test-connection", response_model=ConnectionCheckResult)
+async def test_connection(request: Request, user: WebUser = Depends(get_current_user)):
+    """Try an address and credentials without saving them.
+
+    Open to any signed-in user, like ``add_server`` it is the step before. The
+    outcome is always a 200 with a status to switch on (wrong password and an
+    unreachable host are answers, not failures); only a malformed request (422)
+    or too many tries (429) is an HTTP error.
+
+    The body is validated here rather than declared as a parameter, because
+    FastAPI's own 422 echoes the offending input, and for a missing field that
+    input is the whole body, password included.
+    """
+    try:
+        req = ConnectionCheckRequest.model_validate(await request.json())
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=422,
+            detail=e.errors(
+                include_input=False, include_url=False, include_context=False
+            ),
+        )
+    except ValueError:  # not JSON
+        raise HTTPException(status_code=422, detail="Request body must be JSON")
+    _throttle_connection_test(user)
+    return await probe_connection(req.host, req.port, req.username, req.password)
+
+
+@router.post("/servers/{name}/test-connection", response_model=ConnectionCheckResult)
+async def test_saved_connection(name: str, user: WebUser = Depends(get_current_user)):
+    """Try a saved server with its stored credentials; the request has no body.
+
+    For a server that already exists (the ``local`` one a fresh install ships),
+    so the caller never has to hold its password. Needs the same access as
+    reading the server's status.
+    """
+    cm = get_config_manager()
+    if not cm.has_server_access(user.id, name):
+        raise HTTPException(status_code=404, detail="Server not found")
+    server = cm.get_server(name)
+    if not server:
+        raise HTTPException(status_code=404, detail="Server not found")
+    _throttle_connection_test(user)
+    return await probe_connection(
+        server.get("host", ""),
+        server.get("port", 0),
+        server.get("username", ""),
+        server.get("password", ""),
+    )
 
 
 @router.put("/servers/{name}")
