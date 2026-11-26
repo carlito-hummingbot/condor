@@ -43,8 +43,30 @@
 <h2 id="after">After</h2>
 <p>A frosted six-step wizard. Name is required; everything else can be skipped. An install that already has keys, a wallet, a conversation or a bot is marked complete and never sees it. Run setup again lives in the avatar menu and in Settings, Appearance.</p>
 
-<h3>Before step 1: connect a server (only when none is configured)</h3>
-<figure><img src="assets/onboarding-0-server-gate.png" alt="Connect a server form"><figcaption>Shown only when no Hummingbot API server exists yet. Not part of the six steps. PR #2.</figcaption></figure>
+<h3>Before step 1: the server check</h3>
+<p>What a fresh install actually has (from <code>setup-environment.sh</code> and the Condor code at <code>97d9261</code>; read, not yet run on a clean machine):</p>
+<ul>
+  <li><strong>A server named <code>local</code> almost always exists.</strong> The config template ships <code>local</code> at <code>localhost:8000</code> as the default server, owned by the admin. The name stays <code>local</code> even when the API is remote or on Tailscale.</li>
+  <li><strong>No default username.</strong> Nothing is <code>admin</code>/<code>admin</code>. The template leaves username and password empty on purpose.</li>
+  <li><strong>The user types the API username and password during <code>make setup</code></strong> (nothing is generated), and setup writes the same values into <code>config.yml</code> and into the Hummingbot API's own <code>.env</code>. If a Hummingbot API is already installed beside Condor, setup reads its credentials and asks nothing.</li>
+  <li><strong>Local and Telegram mode behave the same</strong> for the server; the mode only changes how the dashboard logs in.</li>
+  <li><strong>No server at all</strong> only happens with a hand-edited or deleted config. A skipped or failed API step leaves <code>local</code> in place with empty credentials, so the dashboard sees an offline or rejected server, not a missing one.</li>
+  <li><strong>The add-server call does not test the connection.</strong> It only rejects a duplicate name and saves. Offline servers stay in the list.</li>
+</ul>
+<p>So the wizard's current first screen, the full "Connect a server" form below, is the rare case. It appeared in the review because the preview was set up by hand, not with <code>make setup</code>. A normal install would not see it.</p>
+<figure><img src="assets/onboarding-0-server-gate.png" alt="Connect a server form"><figcaption>Current behaviour (PR #2): the full form, shown only when the server list is empty. Rare on a real install. It asks for name, host, port, username and password and does not offer to use <code>local</code>.</figcaption></figure>
+
+<h4>Proposed behaviour</h4>
+<table>
+  <thead><tr><th>State of the <code>local</code> server</th><th>What the wizard shows</th></tr></thead>
+  <tbody>
+    <tr><td>Online</td><td>Confirm only: "Connected to local &middot; localhost:8000". No password asked.</td></tr>
+    <tr><td>Exists but offline</td><td>"Hummingbot API isn't responding yet", a Retry button, and host and port with an Edit link. Do not ask for credentials first.</td></tr>
+    <tr><td>Reachable but empty or rejected credentials</td><td>Ask only for username and password, save to the existing server, then re-check its status.</td></tr>
+    <tr><td>No servers</td><td>The full form (today's screen), pre-filled with <code>local</code>, <code>localhost</code>, <code>8000</code>.</td></tr>
+  </tbody>
+</table>
+<p>Because saving never tests the connection, the wizard should save, then poll the server status and show the result. Telling "wrong password" from "unreachable" may need a small backend change (a test-connection call); that is not confirmed yet.</p>
 
 <h3>1. Make it yours</h3>
 <figure><img src="assets/onboarding-1-make-it-yours.png" alt="Make it yours step with the name field prefilled Algo Trader"><figcaption>Name (required, prefilled "Algo Trader" when nothing is saved) and dashboard title (optional, per user). PR #2.</figcaption></figure>
@@ -82,7 +104,7 @@
 <h2 id="open">Open points from review</h2>
 <ol>
   <li><strong>Model step (#11).</strong> When no agent tool is installed, the list is a wall of "not installed &mdash; npm install ..." lines. Consider showing the ready or recommended option first and folding the rest.</li>
-  <li><strong>Server gate is not in the six steps.</strong> The proposal and the dots say six steps, but a keyless, serverless install first sees the "Connect a server" form. Decide whether to count it or to explain it.</li>
+  <li><strong>Server check (before step 1).</strong> The current screen is a full form for the rare no-server case and ignores the <code>local</code> server that setup creates. Replace it with the four states in the table above. Open: whether a test-connection call is added on the backend, and how the wizard shows "starting" for a container that is still coming up.</li>
   <li><strong>Header noise.</strong> A red "Gateway" pill sits in the top bar behind the wizard on a fresh install. It is not actionable at that moment.</li>
   <li><strong>Resume behaviour.</strong> After a reload the wizard reopens at the last step (6 of 6), which is useful, but the only way back to step 1 is Back five times.</li>
 </ol>
@@ -96,6 +118,7 @@
 <table>
   <thead><tr><th>Date</th><th>Change</th><th>Reason / source</th><th>PR</th></tr></thead>
   <tbody>
+    <tr><td>2026-11-26</td><td>Server check reworked: documented what a fresh <code>make setup</code> creates (<code>local</code> server, empty credentials the user fills in during setup) and proposed four states instead of one form</td><td>Refinement session; findings from <code>setup-environment.sh</code> and the Condor agent's read of the code. Not yet tested on a clean install</td><td>&mdash;</td></tr>
     <tr><td>2026-11-26</td><td>Page rebuilt as editable HTML in <code>docs/proposals/</code>; screenshots retaken from the PR branches</td><td>Previous version was a generated page that could not be edited by every agent</td><td>docs</td></tr>
     <tr><td>2026-11-26</td><td>Review notes added: model step list, server gate, header pill, resume behaviour</td><td>Review of PRs #2, #9, #11, #12 built on rn5</td><td>&mdash;</td></tr>
   </tbody>
