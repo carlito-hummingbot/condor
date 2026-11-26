@@ -68,20 +68,19 @@
 </table>
 <p>Because saving never tests the connection, the wizard should save, then poll the server status and show the result. Telling "wrong password" from "unreachable" may need a small backend change (a test-connection call); that is not confirmed yet.</p>
 
-<h4>Wording per connection result (planned, waits for the backend)</h4>
-<p>A test-connection call is being built by another lane. When it lands, the Server row and the server fallback screens use its status. Planned wording, one line each, no technical text from the server:</p>
+<h4>Wording per connection result</h4>
+<p>Backend calls (built by another lane, final names): <code>POST /api/v1/settings/servers/{name}/test-connection</code> checks the saved server with its stored credentials; <code>POST /api/v1/settings/servers/test-connection</code> with host, port, username and password checks values before saving. Both return <code>{ok, status, message}</code> and save nothing. <code>GET /api/v1/servers/{name}/status</code> now also returns <code>checked_at</code>, and a dead API reads as not online within about 15 seconds. Wording, one line each, never the server's own text:</p>
 <table>
   <thead><tr><th>Status</th><th>Row detail</th><th>What the user can do</th></tr></thead>
   <tbody>
     <tr><td><code>online</code></td><td>Connected to <em>name</em>.</td><td>Nothing. Continue.</td></tr>
-    <tr><td><code>not_configured</code> (no saved credentials)</td><td><em>name</em> has no username or password saved yet.</td><td>Ask for username and password only, then save to the existing server.</td></tr>
-    <tr><td><code>auth_error</code></td><td>The server answered but rejected the saved credentials.</td><td>Ask for username and password only. Show "Check again" after saving.</td></tr>
-    <tr><td><code>unreachable</code></td><td><em>name</em> is not responding. It may still be starting.</td><td>"Check again". Show host and port with an Edit link, not a form.</td></tr>
-    <tr><td><code>timeout</code></td><td>The server is slow to answer.</td><td>"Check again".</td></tr>
+    <tr><td><code>not_configured</code> (blank username or password, no network call)</td><td><em>name</em> has no username or password saved yet.</td><td>Ask for username and password only, then save to the existing server.</td></tr>
+    <tr><td><code>auth_error</code></td><td>The server answered but rejected the saved credentials.</td><td>Ask for username and password only. "Check again" after saving.</td></tr>
+    <tr><td><code>unreachable</code> or <code>timeout</code> (treated the same: on Windows a refused port reads as timeout)</td><td><em>name</em> is not responding yet. It may still be starting.</td><td>"Check again". Show host and port with an Edit link, not a form.</td></tr>
     <tr><td><code>error</code></td><td>The server answered something unexpected.</td><td>"Check again", then Settings, Servers.</td></tr>
   </tbody>
 </table>
-<p>Rules: never say "wrong password" unless the status is <code>auth_error</code>; never show the server's own error text; the form always keeps what the user typed. Frontend work waits until the rail PRs merge, because it adds one function to <code>api.ts</code>, a shared file.</p>
+<p>Rules: never say "wrong password" unless the status is <code>auth_error</code>; never show the server's own error text; the form keeps what the user typed; show "last checked" from <code>checked_at</code>. After a dead API comes back, Connected can take up to about a minute to return, so "Check again" may need a second try. The frontend call waits until the rail PRs merge, because it adds one function to <code>api.ts</code>, a shared file.</p>
 
 <h4>Better: a readiness check, not a form</h4>
 <p>On a real install, the server step should not appear at all when the server is fine. Instead the wizard opens with a short checklist built from the actual state, and asks only for what is missing. Signals the dashboard can already read:</p>
