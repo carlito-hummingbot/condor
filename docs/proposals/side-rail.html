@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Condor proposal: side-rail layout</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main>
+
+<!-- EDITING: plain HTML, one <section> per heading. See README.md in this folder.
+     Add a row to the "Refinement log" for every change. Keep screenshots in assets/. -->
+
+<nav class="top"><a href="index.html">All proposals</a></nav>
+
+<h1>A left icon rail instead of the top nav</h1>
+<p class="meta">Status: <strong>in review</strong> &middot; PRs #3, #4, #6, #7, #8 into <code>ui-redesign</code> &middot; Last updated: 2026-11-26 &middot; Branches reviewed on rn5 against an empty preview Condor</p>
+<p class="lede">Move Condor's navigation from the crowded top bar into a slim left icon rail, with secondary pages under More, account controls behind an initials avatar, and a bottom tab bar on phones. The look stays the same. Only the layout changes.</p>
+
+<h2 id="why">Why</h2>
+<p>The top bar carries seven page links and six controls in one 48 px strip, and it keeps growing as agents, strategies, routines and DEX tools arrive. On phones the links disappear and nothing replaces them. A left rail gives every surface a stable home and frees the top of the screen for the work.</p>
+<ul>
+  <li><strong>Vertical navigation scales.</strong> Nielsen Norman Group finds left-side navigation leaves room for new categories without redesigning the nav.</li>
+  <li><strong>Familiar shape.</strong> Slack's 2023 redesign moved to a left rail with the profile at the bottom left; Discord uses an icon rail; the ChatGPT and Claude apps keep navigation in a left sidebar next to the conversation, the same shape as Condor's chat home.</li>
+</ul>
+<p class="sources">Sources carried over from the first version of this proposal (not re-checked in this revision):
+<a href="https://www.nngroup.com/articles/vertical-nav/">NN/G: left-side vertical navigation</a>,
+<a href="https://slack.design/articles/a-more-focused-productive-slack/">Slack Design: a more focused, productive Slack</a>,
+<a href="https://uit.stanford.edu/service/slack/redesign2023/sidebar">Stanford IT: the new Slack sidebar</a>,
+<a href="https://support.discord.com/hc/en-us/articles/360034842871-How-do-I-join-a-Server">Discord: join a server</a>.</p>
+
+<h2 id="before">Before</h2>
+<p>Seven links and six controls share one top strip. Server, Gateway, currency, bell, report and theme controls crowd the same bar. On a phone the page links are gone and the controls overflow.</p>
+<div class="pair">
+  <figure><img src="assets/before-home-desktop.png" alt="Condor home with the full top navigation bar, desktop"><figcaption>Desktop, <code>ui-redesign</code> baseline.</figcaption></figure>
+  <figure><img src="assets/before-keys-overlay-phone.png" alt="Condor on a 390 px phone: top bar shows controls but no page links"><figcaption>Phone (390 px frame): no navigation links at all.</figcaption></figure>
+</div>
+
+<h2 id="after">After</h2>
+<p>A 56 px rail, a list panel, then the main area. Rail items: logo and Dashboard, Bots, Strategies, More, then bell, Settings and an initials avatar at the bottom.</p>
+
+<h3>The rail (PR #3)</h3>
+<figure><img src="assets/rail-home.png" alt="Condor home with the left icon rail"><figcaption>Labels appear on hover and keyboard focus. The slim strip at the top still holds server, currency, bell and theme until PR #4 moves them.</figcaption></figure>
+<figure><img src="assets/rail-more-menu.png" alt="Rail with the More menu open: Portfolio, Trade, DEX, Routines, Agent Hub, Report an issue"><figcaption>More holds Portfolio, Trade, DEX, Routines, Agent Hub and Report an issue.</figcaption></figure>
+
+<h3>The avatar menu (PR #4)</h3>
+<figure><img src="assets/avatar-menu.png" alt="Avatar menu with server list, Gateway, display currency, theme, Run setup again and Logout"><figcaption>Server list, Gateway status, display currency, theme, Run setup again, Logout. The bell moves onto the rail with its unread badge.</figcaption></figure>
+
+<h3>Phones (PR #6)</h3>
+<figure><img src="assets/phone-tab-bar.png" alt="Two 390 px phone frames showing the bottom tab bar; the right one has the More menu open"><figcaption>Bottom tab bar (Dashboard, Bots, Strategies, More, Account) below 768 px. Right: the More menu open.</figcaption></figure>
+
+<h3>Strategies page (PR #7)</h3>
+<figure><img src="assets/strategies-page.png" alt="Strategies page with an empty list"><figcaption>New <code>/strategies</code> page; "Loops" is renamed Strategies everywhere in the UI. Only the empty state has been seen so far (the preview has no strategies running).</figcaption></figure>
+
+<h3>Chat list search and filter (PR #8)</h3>
+<figure><img src="assets/chat-list-filter.png" alt="Chat list with a Search box and a filter menu: All chats, Answering, Waiting"><figcaption>Search box and a state filter above the chat list.</figcaption></figure>
+
+<h2 id="rollout">Rollout</h2>
+<table>
+  <thead><tr><th>PR</th><th>Branch</th><th>Scope</th><th>Review status</th></tr></thead>
+  <tbody>
+    <tr><td>#3</td><td><code>ui/side-rail</code></td><td>Left icon rail replaces the top bar; hover labels; More menu</td><td class="s tweak">Works, tweaks 1</td></tr>
+    <tr><td>#4</td><td><code>ui/account-menu</code></td><td>Header controls move into the avatar menu; bell moves onto the rail</td><td class="s ok">Built, works</td></tr>
+    <tr><td>#6</td><td><code>ui/mobile-nav</code></td><td>Bottom tab bar on phone widths</td><td class="s tweak">Works, tweaks 2 and 3</td></tr>
+    <tr><td>#7</td><td><code>ui/strategies-page</code></td><td><code>/strategies</code> page; Loops renamed</td><td class="s todo">Empty state only</td></tr>
+    <tr><td>#8</td><td><code>ui/chat-list-search</code></td><td>Search and state filter above the chat list</td><td class="s tweak">Works, tweak 4</td></tr>
+  </tbody>
+</table>
+<p>Stacked PRs, merge in order. Frontend only; routes, the API and panel ids are unchanged, so existing links keep working. Merge the rail first; the <a href="onboarding.html">onboarding proposal</a> rebases afterwards because both touch <code>AppShell.tsx</code>.</p>
+
+<h2 id="open">Open points from review</h2>
+<ol>
+  <li><strong>Hover-only labels (#3).</strong> Icons have no visible text, and hover does not exist on phones. Also, the chat page now shows two rails side by side: the new left one and the existing right-hand panel rail (Layout, Agent, Portfolio, Tasks, Routines). Consider visible labels or a clearer split.</li>
+  <li><strong>Panel rail on phones (#6).</strong> The right-hand panel rail still takes about 60 px of a 390 px screen, so the chat is squeezed. The proposal says the tab bar "replaces the rail"; that is true for the left rail only.</li>
+  <li><strong>More menu on phones (#6).</strong> It opens as a popover that is clipped at the left edge rather than a bottom sheet. This was seen in a 390 px frame; recheck on a real phone.</li>
+  <li><strong>Filter menu (#8).</strong> The All / Answering / Waiting menu overlaps the New chat button.</li>
+  <li><strong>Strategies with data (#7).</strong> Not seen yet with real strategies listed.</li>
+</ol>
+<p>Not checked yet: light theme, colour-blind mode, a real phone, and pages that need a Hummingbot server with data (Portfolio, Bots, Trade).</p>
+
+<h2 id="decision">Decision requested</h2>
+<div class="callout"><p>Approve replacing the top nav with the left icon rail and the phone bottom tab bar, shipped as PRs #3, #4, #6, #7 and #8 into <code>ui-redesign</code>, subject to the open points above.</p></div>
+
+<h2 id="log">Refinement log</h2>
+<p>Newest first. Add a row for every change that comes out of review.</p>
+<table>
+  <thead><tr><th>Date</th><th>Change</th><th>Reason / source</th><th>PR</th></tr></thead>
+  <tbody>
+    <tr><td>2026-11-26</td><td>Page rebuilt as editable HTML in <code>docs/proposals/</code>; screenshots retaken from the PR branches</td><td>Previous version was a generated page that could not be edited by every agent</td><td>docs</td></tr>
+    <tr><td>2026-11-26</td><td>Review notes added: hover-only labels, panel rail and More menu on phones, filter overlap</td><td>Review of PRs #3, #4, #6, #7, #8 built on rn5</td><td>&mdash;</td></tr>
+  </tbody>
+</table>
+
+</main>
+</body>
+</html>

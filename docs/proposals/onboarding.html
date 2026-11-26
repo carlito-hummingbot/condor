@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Condor proposal: guided first-run onboarding</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main>
+
+<!-- EDITING: plain HTML, one <section> per heading. See README.md in this folder.
+     Add a row to the "Refinement log" for every change. Keep screenshots in assets/. -->
+
+<nav class="top"><a href="index.html">All proposals</a></nav>
+
+<h1>Guided first-run onboarding</h1>
+<p class="meta">Status: <strong>in review</strong> &middot; PRs #2, #9, #11, #12 into <code>ui-redesign</code> &middot; Last updated: 2026-11-26 &middot; Branches reviewed on rn5 against an empty preview Condor</p>
+<p class="lede">Replace the blocking "Connect an Exchange or Wallet" overlay with a short, skippable setup that greets traders by name, confirms what <code>make setup</code> already configured, and leaves a gentle reminder instead of a wall. The look stays the same. Only the workflow changes.</p>
+
+<h2 id="why">Why</h2>
+<p>A new Condor install opens on a wall: a modal that blocks Portfolio, Trade, DEX and Bots until an API key exists. The first thing a trader learns is what they cannot do yet. A short guided setup flips that. It confirms what setup already did, asks only for what Condor needs, lets people skip what they are not ready for, and lands them in a dashboard that already feels like theirs.</p>
+<ul>
+  <li><strong>Setup, not a tour.</strong> The wizard collects settings (name, model, keys, look, alerts) and never explains the interface. This follows the Nielsen Norman Group guidance that onboarding fits apps that need user information to start, and that push tutorials interrupt people.</li>
+  <li><strong>Short and visible.</strong> Six steps with progress dots, every step except the name skippable.</li>
+  <li><strong>No dead end.</strong> Skipping leaves a one-line reminder on trading pages, not a modal.</li>
+</ul>
+<p class="sources">Sources carried over from the first version of this proposal (not re-checked in this revision):
+<a href="https://www.nngroup.com/articles/mobile-app-onboarding/">NN/G: mobile app onboarding</a>,
+<a href="https://www.nngroup.com/articles/onboarding-tutorials/">NN/G: onboarding tutorials</a>,
+<a href="https://www.appcues.com/blog/product-adoption-benchmarks">Appcues: product adoption benchmarks</a>,
+<a href="https://userpilot.com/blog/user-onboarding/">Userpilot: user onboarding</a>,
+<a href="https://www.pendo.io/customers/cin7-uses-pendo-to-reduce-friction-and-increase-conversions/">Pendo: Cin7</a>,
+<a href="https://www.growthdives.com/p/the-onboarding-linear-built-without">Growth Dives: Linear onboarding</a>.</p>
+
+<h2 id="before">Before</h2>
+<p>On a fresh install, Portfolio, Trade, DEX and Bots show a modal that cannot be dismissed. Its only exit is a button to Settings, then API keys. It asks nothing about the trader: no name, model or theme.</p>
+<div class="pair">
+  <figure><img src="assets/before-keys-overlay-desktop.png" alt="Portfolio page covered by the Connect an Exchange or Wallet modal, desktop"><figcaption>Desktop: the modal blocks the whole Portfolio page.</figcaption></figure>
+  <figure><img src="assets/before-keys-overlay-phone.png" alt="Same modal on a 390 px wide phone"><figcaption>Phone (390 px frame): same wall, and the page links are missing from the top bar.</figcaption></figure>
+</div>
+
+<h2 id="after">After</h2>
+<p>A frosted six-step wizard. Name is required; everything else can be skipped. An install that already has keys, a wallet, a conversation or a bot is marked complete and never sees it. Run setup again lives in the avatar menu and in Settings, Appearance.</p>
+
+<h3>Before step 1: connect a server (only when none is configured)</h3>
+<figure><img src="assets/onboarding-0-server-gate.png" alt="Connect a server form"><figcaption>Shown only when no Hummingbot API server exists yet. Not part of the six steps. PR #2.</figcaption></figure>
+
+<h3>1. Make it yours</h3>
+<figure><img src="assets/onboarding-1-make-it-yours.png" alt="Make it yours step with the name field prefilled Algo Trader"><figcaption>Name (required, prefilled "Algo Trader" when nothing is saved) and dashboard title (optional, per user). PR #2.</figcaption></figure>
+
+<h3>2. AI model</h3>
+<figure><img src="assets/onboarding-2-ai-model.png" alt="AI model step listing agent CLIs, all not installed"><figcaption>Confirms the model setup chose, or lets you pick one. On this test machine every row reads "not installed". PR #11.</figcaption></figure>
+
+<h3>3. Connect where you trade</h3>
+<figure><img src="assets/onboarding-3-connect.png" alt="Connect where you trade step with exchange key, Hyperliquid and DEX wallet options"><figcaption>Exchange API key, Hyperliquid wallet or DEX wallet. Skippable. PR #9.</figcaption></figure>
+
+<h3>4. Look and units</h3>
+<figure><img src="assets/onboarding-4-look.png" alt="Look and units step with theme, colour-blind mode and display currency"><figcaption>Theme, colour-blind mode, display currency. Applied live. PR #12.</figcaption></figure>
+
+<h3>5. Stay in the loop</h3>
+<figure><img src="assets/onboarding-5-alerts.png" alt="Stay in the loop step with push alerts, Telegram status and usage summaries"><figcaption>Push alerts, Telegram status (read-only) and the usage-summaries choice. PR #12.</figcaption></figure>
+
+<h3>6. You're set</h3>
+<figure><img src="assets/onboarding-6-youre-set.png" alt="You're set summary with Deploy a bot and Browse agents shortcuts"><figcaption>What was set or skipped, plus two shortcuts. PR #2.</figcaption></figure>
+
+<h3>After skipping: a reminder, not a wall</h3>
+<figure><img src="assets/onboarding-keys-reminder.png" alt="Portfolio page with a one-line Connect an exchange or wallet banner at the top"><figcaption>The page stays usable; a banner offers "Connect keys". PR #2.</figcaption></figure>
+
+<h2 id="rollout">Rollout</h2>
+<table>
+  <thead><tr><th>PR</th><th>Branch</th><th>Scope</th><th>Review status</th></tr></thead>
+  <tbody>
+    <tr><td>#2</td><td><code>ui/onboarding-shell</code></td><td>Wizard shell, server gate, name step, You're set, keys reminder; removes the overlay</td><td class="s ok">Built, works</td></tr>
+    <tr><td>#9</td><td><code>ui/onboarding-connect</code></td><td>Connect where you trade step</td><td class="s ok">Built, works</td></tr>
+    <tr><td>#11</td><td><code>ui/onboarding-model</code></td><td>AI model step</td><td class="s tweak">Works, tweak below</td></tr>
+    <tr><td>#12</td><td><code>ui/onboarding-look</code></td><td>Look and units, Stay in the loop</td><td class="s ok">Built, works</td></tr>
+  </tbody>
+</table>
+<p>Stacked PRs, merge in order. Frontend only; the API and routes are unchanged. This proposal and the <a href="side-rail.html">side-rail proposal</a> both touch <code>AppShell.tsx</code>: merge the rail first, then rebase onboarding.</p>
+
+<h2 id="open">Open points from review</h2>
+<ol>
+  <li><strong>Model step (#11).</strong> When no agent tool is installed, the list is a wall of "not installed &mdash; npm install ..." lines. Consider showing the ready or recommended option first and folding the rest.</li>
+  <li><strong>Server gate is not in the six steps.</strong> The proposal and the dots say six steps, but a keyless, serverless install first sees the "Connect a server" form. Decide whether to count it or to explain it.</li>
+  <li><strong>Header noise.</strong> A red "Gateway" pill sits in the top bar behind the wizard on a fresh install. It is not actionable at that moment.</li>
+  <li><strong>Resume behaviour.</strong> After a reload the wizard reopens at the last step (6 of 6), which is useful, but the only way back to step 1 is Back five times.</li>
+</ol>
+<p>Not checked yet: light theme and colour-blind mode inside the wizard, a real phone, and the wizard on an install that already has keys.</p>
+
+<h2 id="decision">Decision requested</h2>
+<div class="callout"><p>Approve the six-step wizard and the non-blocking reminder, shipped as PRs #2, #9, #11 and #12 into <code>ui-redesign</code>, subject to the open points above.</p></div>
+
+<h2 id="log">Refinement log</h2>
+<p>Newest first. Add a row for every change that comes out of review.</p>
+<table>
+  <thead><tr><th>Date</th><th>Change</th><th>Reason / source</th><th>PR</th></tr></thead>
+  <tbody>
+    <tr><td>2026-11-26</td><td>Page rebuilt as editable HTML in <code>docs/proposals/</code>; screenshots retaken from the PR branches</td><td>Previous version was a generated page that could not be edited by every agent</td><td>docs</td></tr>
+    <tr><td>2026-11-26</td><td>Review notes added: model step list, server gate, header pill, resume behaviour</td><td>Review of PRs #2, #9, #11, #12 built on rn5</td><td>&mdash;</td></tr>
+  </tbody>
+</table>
+
+</main>
+</body>
+</html>
