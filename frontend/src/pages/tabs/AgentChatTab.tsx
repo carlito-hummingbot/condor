@@ -5,6 +5,8 @@ import {
   ClipboardList,
   PanelLeftClose,
   PanelLeftOpen,
+  PanelRightClose,
+  PanelRightOpen,
   Rocket,
   ShieldAlert,
   Wallet,
@@ -210,6 +212,8 @@ export function AgentChatTab() {
     [switchBrain],
   );
   const [railOpen, setRailOpen] = useState(false);
+  // The panel rail (Layout, Agent, Portfolio...) on a phone: hidden until asked for.
+  const [panelsOpen, setPanelsOpen] = useState(false);
   /** The rail row selected while no session exists yet, to colour the hero. */
   const [pendingAgent, setPendingAgent] = useState<AgentSummary | null>(null);
   /**
@@ -1051,7 +1055,7 @@ export function AgentChatTab() {
 
   return (
     <WorkspacePaneProvider>
-      <div className="flex h-full min-h-0">
+      <div className="relative flex h-full min-h-0">
         <ChatRail
           agents={agents}
           runningTasks={runningTasks}
@@ -1143,6 +1147,22 @@ export function AgentChatTab() {
                   }
                 />
               )}
+              {/* Phone only: the panel rail is a drawer, not a 64px strip
+                  taking a sixth of the screen from the chat. */}
+              <button
+                type="button"
+                onClick={() => setPanelsOpen((v) => !v)}
+                aria-expanded={panelsOpen}
+                aria-label={panelsOpen ? "Hide panels" : "Show panels"}
+                title={panelsOpen ? "Hide panels" : "Show panels"}
+                className="ml-auto rounded p-1 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)] md:hidden"
+              >
+                {panelsOpen ? (
+                  <PanelRightClose className="h-4 w-4" />
+                ) : (
+                  <PanelRightOpen className="h-4 w-4" />
+                )}
+              </button>
             </div>
             )}
 
@@ -1442,6 +1462,8 @@ export function AgentChatTab() {
             a squeeze is recoverable. It is also why the dock's overlay below
             `xl` no longer covers it: the overlay is anchored to the row. */}
         <WorkspaceRail
+          mobileOpen={panelsOpen}
+          onMobileClose={() => setPanelsOpen(false)}
           header={
             <LayoutPicker
               choice={layoutChoice}
