@@ -229,17 +229,22 @@ export function ChatThread({
         </div>
       )}
 
-      {/* Offline — said before the user finds out by waiting for an answer. */}
+      {/* Offline — said before the user finds out by waiting for an answer.
+          Tinted with the warning colour so it reads as a state of the chat,
+          not as one more line of chrome; the words and the spinner stay in
+          text colours, which is what keeps them readable in every theme (the
+          warning yellow alone is about 2:1 on the light theme). */}
       {connectionLost && (
         <div
           role="status"
-          className="flex items-center gap-2 border-b border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-xs text-[var(--color-text-muted)]"
+          className="flex items-start gap-2.5 border-b border-[var(--color-yellow)]/40 bg-[var(--color-yellow)]/10 px-4 py-2.5 text-xs text-[var(--color-text)]"
         >
-          <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
-          <span>
-            Reconnecting… nothing reaches the agent until the connection is
-            back. Messages sent now wait for it.
-          </span>
+          <Loader2 className="mt-0.5 h-3.5 w-3.5 shrink-0 animate-spin text-[var(--color-text-muted)]" />
+          <p className="min-w-0">
+            <span className="font-semibold">Reconnecting to Condor…</span>{" "}
+            Messages you send now wait and are sent when the connection is
+            back.
+          </p>
         </div>
       )}
 

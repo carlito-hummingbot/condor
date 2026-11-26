@@ -89,6 +89,16 @@ describe("the reconnecting strip (FU-03)", () => {
     expect(strip()?.textContent).toContain("Reconnecting");
   });
 
+  it("names what is down and what happens to a message sent meanwhile", () => {
+    render(false);
+    wait(CONNECTION_LOST_DELAY_MS);
+    const text = strip()?.textContent ?? "";
+    expect(text).toContain("Reconnecting to Condor");
+    expect(text).toContain("wait and are sent when the connection is back");
+    // The warning colour is a tint, not a text colour: the words stay readable.
+    expect(strip()?.className).toContain("text-[var(--color-text)]");
+  });
+
   it("goes the moment the socket is back, and waits again on the next drop", () => {
     render(false);
     wait(CONNECTION_LOST_DELAY_MS);
