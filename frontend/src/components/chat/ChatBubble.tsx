@@ -116,7 +116,7 @@ export function ChatBubble() {
   // Hooks above, bail-out below: `/agents/:slug` keeps the bubble, and so does
   // `/fleet`; the home loses it, and so does `/hub` — the same workspace with
   // the Hub in its column, where the conversation is one rail click away.
-  if (pathname === "/" || pathname === "/hub") return null;
+  if (pathname === "/" || pathname === "/chat" || pathname === "/hub") return null;
 
   const toggle = (next: boolean) => {
     setOpen(next);

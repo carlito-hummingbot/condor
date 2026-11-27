@@ -13,6 +13,7 @@ import {
   AgentWorkspace,
 } from "@/pages/AgentWorkspace";
 import { Agents } from "@/pages/Agents";
+import { Home } from "@/pages/Home";
 import { BotDetail } from "@/pages/BotDetail";
 import { Bots } from "@/pages/Bots";
 import { CreateExecutor } from "@/pages/CreateExecutor";
@@ -102,7 +103,10 @@ export default function App() {
                   </ProtectedRoute>
                 }
               >
-                <Route path="/" element={<Agents />} />
+                {/* Showcase only (preview/combined): `/` is the sample Dashboard and the chat
+                    home moved to `/chat`. Chat deep links on `/` are forwarded by `Home`. */}
+                <Route path="/" element={<Home />} />
+                <Route path="/chat" element={<Agents />} />
                 {/* What every agent is doing is the conversation's Execution
                     panel now, read owner first (FEAT-114) — so this address is
                     a redirect into it rather than a page. Kept rather than
@@ -158,7 +162,7 @@ export default function App() {
                     agent one message away — which is what somebody typing this
                     is after. The listing they might mean instead is the
                     Execution panel on that same screen (FEAT-114). */}
-                <Route path="/agents" element={<Navigate to="/" replace />} />
+                <Route path="/agents" element={<Navigate to="/chat" replace />} />
                 {/* One agent, one screen: every section, run and tick is a query
                     parameter on this route (FEAT-103). */}
                 <Route path="/agents/:slug" element={<AgentWorkspace />} />

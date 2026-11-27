@@ -101,7 +101,7 @@ export function routeFacts(
   // the desk's Execution panel, since FEAT-114 — is the conversation's own
   // furniture rather than a page, and the agent can read the same fleet
   // through its tools at any scope it is asked about.
-  if (pathname === "/") return null;
+  if (pathname === "/" || pathname === "/chat") return null;
 
   const params = new URLSearchParams(search);
   // A page's own tab, where it has one — `/routines?tab=reports`, `/portfolio`.

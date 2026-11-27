@@ -399,7 +399,7 @@ export function shouldShowKeysBanner(input: {
  * Hub stay clear; everything else is a trading surface for the reminder.
  */
 export function isTradingSurface(pathname: string): boolean {
-  if (pathname === "/") return false;
+  if (pathname === "/" || pathname === "/chat") return false;
   return !["/routines", "/settings", "/hub"].some((route) => pathname.startsWith(route));
 }
 

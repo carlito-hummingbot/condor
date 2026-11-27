@@ -201,7 +201,7 @@ export function WorkspaceHeader({
   isRunning,
   onAskAgent,
   onDelete,
-  backHref = "/",
+  backHref = "/chat",
   sidePanelHref,
 }: {
   agent: AgentDetail;
@@ -228,7 +228,7 @@ export function WorkspaceHeader({
         <Link
           to={backHref}
           className="flex items-center gap-1 transition-colors hover:text-[var(--color-text)]"
-          title={backHref === "/" ? "Back to your agents" : "Back to the chat"}
+          title={backHref === "/chat" ? "Back to your agents" : "Back to the chat"}
         >
           <ArrowLeft className="h-3.5 w-3.5" />
         </Link>

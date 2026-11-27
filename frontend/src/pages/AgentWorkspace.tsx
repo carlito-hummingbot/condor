@@ -82,7 +82,7 @@ export function AgentWorkspace() {
       queryClient.invalidateQueries({ queryKey: agentsQuery().queryKey });
       // Its chats were deleted with it (server side), so the rail re-reads.
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
-      navigate("/");
+      navigate("/chat");
     },
   });
 
@@ -151,7 +151,7 @@ export function AgentWorkspace() {
             {error instanceof Error ? error.message : "An unexpected error occurred."}
           </p>
           <Link
-            to="/"
+            to="/chat"
             className="mt-4 inline-flex items-center gap-1 text-xs text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text)]"
           >
             <ArrowLeft className="h-3.5 w-3.5" /> Back to Agents
@@ -204,7 +204,7 @@ export function AgentWorkspace() {
             backHref={
               returnState?.returnTo && strategy
                 ? paneHref(returnState, strategy.slug, run?.run_id, section)
-                : returnState?.returnTo || "/"
+                : returnState?.returnTo || "/chat"
             }
             sidePanelHref={
               strategy

@@ -20,3 +20,18 @@ hooks/useDisplayName.ts re-exports onboarding's helpers. Two small fixes on top 
 
 Run: the wizard needs the backend from this branch (#16, #17, #24 are Python in condor/web).
 Rerun the wizard: Settings (gear) > Appearance > Run setup again, or open /welcome.
+
+## Showcase Dashboard (preview only)
+
+Added on top of the merges, on this throwaway branch only. It is not on any PR branch and is not meant to be merged;
+the real Dashboard is a later proposal.
+
+- `/` is now a sample Dashboard (`pages/Dashboard.tsx`, `pages/dashboard/sampleData.ts`, `pages/dashboard/charts.tsx`):
+  four summary cards, daily and hourly P&L, BTC hourly chart, Top News, and three Live Agents cards. All data is made up
+  and labelled "Sample data"; nothing is fetched. Charts are inline SVG. News links are `href="#"` and go nowhere.
+- The old chat home moved to `/chat`. Chat links that arrive on `/` with a chat query (`?panel=`, `?conversation=`,
+  `?agent=`, `?ask=`, `?desk=`, `?who=`, `?loop=`, `?run=`) are forwarded to `/chat` with the query intact (`pages/Home.tsx`).
+  `/agents`, the Ctrl/Cmd+K shortcut, "Back to your agents" and the chat's own "leave Hub" now go to `/chat`.
+  The Agents rail door also lights on `/chat`.
+- `/?onboarding=1` and `/welcome` stay on the Dashboard; the first-run wizard shows over its page area.
+- Small shell fix: the right-hand column of `AppShell` got `min-h-0`, so a long page scrolls inside `main` on a phone.

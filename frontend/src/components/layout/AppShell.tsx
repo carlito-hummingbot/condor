@@ -72,7 +72,7 @@ function AppShellBody() {
     const onKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        navigate("/");
+        navigate("/chat");
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -96,7 +96,7 @@ function AppShellBody() {
       {/* The rail replaces the 48px top bar. The onboarding wizard mounts in
           `main`, so the rail stays visible and usable beside it. */}
       <SideRail onReport={() => setReportOpen(true)} />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {/* Server, Gateway status and Switch Mode (light/dark). */}
         <ShellControls />
 

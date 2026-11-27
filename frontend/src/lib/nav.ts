@@ -140,7 +140,7 @@ export function isDashboardActive(pathname: string): boolean {
 
 /** The Agents workspace: the Hub, and a single agent's page. */
 export function isAgentsActive(pathname: string): boolean {
-  return pathname === "/hub" || pathname.startsWith("/agents/");
+  return pathname === "/hub" || pathname === "/chat" || pathname.startsWith("/agents/");
 }
 
 export function isLabsActive(pathname: string): boolean {
@@ -235,4 +235,4 @@ export function isRailItemLit(
  * route with a body any more (FEAT-116): a layout rule for it would be a rule
  * about a redirect. What it used to draw is `/bots`, which is on this list.
  */
-export const FULL_BLEED_ROUTES = ["/", "/hub", "/bots", "/routines"];
+export const FULL_BLEED_ROUTES = ["/chat", "/hub", "/bots", "/routines"];

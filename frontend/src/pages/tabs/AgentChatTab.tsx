@@ -196,7 +196,7 @@ export function AgentChatTab() {
   const navigate = useNavigate();
   const onHub = pathname === "/hub";
   const leaveHub = useCallback(() => {
-    if (onHub) navigate("/");
+    if (onHub) navigate("/chat");
   }, [onHub, navigate]);
   const {
     agents: modelOptions,

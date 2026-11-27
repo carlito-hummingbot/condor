@@ -82,6 +82,7 @@ describe("active state", () => {
 
   it("lights Agents on the Hub and on an agent workspace", () => {
     expect(isAgentsActive("/hub")).toBe(true);
+    expect(isAgentsActive("/chat")).toBe(true);
     expect(isAgentsActive("/agents/alpha")).toBe(true);
     expect(isAgentsActive("/agents")).toBe(false);
     expect(isAgentsActive("/bots")).toBe(false);
@@ -129,8 +130,10 @@ describe("full bleed", () => {
     expect(FULL_BLEED_ROUTES as readonly string[]).not.toContain("/floor");
   });
 
-  it("includes the home, which scrolls its own transcript", () => {
-    expect(FULL_BLEED_ROUTES).toContain("/");
+  it("includes the chat home, which scrolls its own transcript, but not the Dashboard at /", () => {
+    // Showcase (preview/combined): the Dashboard took `/` and is an ordinary padded, scrolling page.
+    expect(FULL_BLEED_ROUTES).toContain("/chat");
+    expect(FULL_BLEED_ROUTES as readonly string[]).not.toContain("/");
     expect(FULL_BLEED_ROUTES as readonly string[]).not.toContain("/fleet");
   });
 });
