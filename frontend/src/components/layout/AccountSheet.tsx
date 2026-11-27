@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, LogOut } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 import { useDisplayName } from "@/hooks/useDisplayName";
@@ -36,16 +36,16 @@ export function AccountSheet({
   onClose: () => void;
   onReport: () => void;
 }) {
+  // The body mounts only while open, so it always starts on the first level.
+  return open ? <AccountSheetBody onClose={onClose} onReport={onReport} /> : null;
+}
+
+function AccountSheetBody({ onClose, onReport }: { onClose: () => void; onReport: () => void }) {
   const { pathname, search } = useLocation();
   const name = useDisplayName();
   const { user, logout } = useAuth();
   const role = user?.role === "admin" ? "Admin" : user?.role === "user" ? "User" : user?.role;
   const [level, setLevel] = useState<RailPanelId | null>(null);
-
-  // Always reopen on the first level.
-  useEffect(() => {
-    if (!open) setLevel(null);
-  }, [open]);
 
   const MoreIcon = MORE_ICON;
   const SettingsIcon = SETTINGS_ICON;
@@ -58,7 +58,7 @@ export function AccountSheet({
         ? isMoreEntryActive(entry, pathname, search)
         : isSettingsEntryActive(entry, pathname, search);
     return (
-      <BottomSheet open={open} onClose={onClose} label={title}>
+      <BottomSheet open onClose={onClose} label={title}>
         <div className="flex items-center gap-1 px-2 pb-1 pt-2">
           <button
             type="button"
@@ -120,7 +120,7 @@ export function AccountSheet({
     `${ROW} ${active ? "bg-[var(--color-primary-fill)]/10 text-[var(--color-primary)]" : "text-[var(--color-text)]"}`;
 
   return (
-    <BottomSheet open={open} onClose={onClose} label="Account">
+    <BottomSheet open onClose={onClose} label="Account">
       <div className="px-4 pb-2 pt-3">
         <div className="truncate text-sm font-medium text-[var(--color-text)]">{name}</div>
         {role && (
