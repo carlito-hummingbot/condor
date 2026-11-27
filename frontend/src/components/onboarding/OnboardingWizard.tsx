@@ -271,6 +271,7 @@ export function OnboardingWizard() {
                   customProviders={options.data?.custom_providers ?? []}
                   busy={busy}
                   onContinue={(partial) => void continueStep(partial, false)}
+                  onRecheck={recheck}
                   onBind={onBind}
                 />
               )}

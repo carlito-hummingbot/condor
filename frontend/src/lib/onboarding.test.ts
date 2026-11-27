@@ -14,6 +14,8 @@ import {
   planStepIds,
   readinessLoading,
   readinessRows,
+  groupMissingModels,
+  preferredModel,
   splitModelOptions,
   stepsForPlan,
   type Readiness,
@@ -514,5 +516,28 @@ describe("model step detection", () => {
   it("never calls an unprobed row or a picker found", () => {
     expect(splitModelOptions([rows[2], rows[3]]).found).toEqual([]);
     expect(splitModelOptions([]).found).toEqual([]);
+  });
+});
+
+describe("model step rows", () => {
+  it("names the recommended model on the primary button, else the first found", () => {
+    const found = [{ key: "codex" }, { key: "claude-acp:sonnet" }, { key: "gemini" }];
+    expect(preferredModel(found)?.key).toBe("claude-acp:sonnet");
+    expect(preferredModel(found.slice(2))?.key).toBe("gemini");
+    expect(preferredModel([])).toBeNull();
+  });
+
+  it("shows one row per provider that is not found, with what to run", () => {
+    const rows = groupMissingModels([
+      { key: "claude-code", label: "Claude Code", ready: false, detail: "not installed" },
+      { key: "claude-acp:opus", label: "Claude (ACP) — Opus", ready: false, detail: "not installed — npm i" },
+      { key: "claude-acp:sonnet", label: "Claude (ACP) — Sonnet", ready: false, detail: "not installed — npm i" },
+      { key: "codex", label: "ChatGPT Codex", ready: true, detail: "installed and logged in" },
+      { key: "ollama:", label: "Ollama", detail: undefined },
+      { key: "openrouter:", label: "OpenRouter", ready: false, picker: true },
+    ]);
+    expect(rows.map((row) => row.label)).toEqual(["Claude Code", "Claude (ACP)", "Ollama"]);
+    expect(rows[1].detail).toBe("not installed — npm i");
+    expect(rows[2].detail).toBe("Could not be checked from here.");
   });
 });
