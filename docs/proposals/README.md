@@ -29,6 +29,7 @@ status, and keep a log of refinements, so the team can see how a design changed 
 - Show the "before" from the `ui-redesign` baseline.
 - Phone views: render the app in a 390 px wide frame.
 - Never include real balances, keys, addresses or server names. Use an empty or stub backend.
+- For a screen that does not exist yet, a picture may put a mock page body into the real shell (rail, top bar). Say so in the caption, label every number as sample data, and keep the mock as one standalone file in `assets/` (for example `dashboard-mock.html`).
 
 ## Rules
 

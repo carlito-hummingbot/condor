@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Condor proposal: Dashboard as the default home page</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main>
+
+<!-- EDITING: plain HTML, one <section> per heading. See README.md in this folder.
+     Add a row to the "Refinement log" for every change. Keep screenshots in assets/. -->
+
+<nav class="top"><a href="index.html">All proposals</a></nav>
+
+<h1>Dashboard as the Default Home Page</h1>
+<p class="meta">Status: <strong>in review, not built</strong> &middot; No code PR exists yet: this page only proposes &middot; Last updated: 2026-11-27</p>
+<p class="lede">Open Condor on a page made for a trader's routine: how the portfolio changed, what the bots are doing, what the market is doing, the top news. Today the home page is a chat with agents. The chat stays, one step further out. The picture below is a mock with sample data, built on the real rail and top bar.</p>
+
+<h2 id="why">Why</h2>
+<p>When a trader opens Condor, the home page should answer the question they came with. Today it asks them to start a conversation. The reasons, in order:</p>
+<ol>
+  <li><strong>Traders check far more than they ask.</strong> What a trader looks at most of the time is how much the portfolio changed, what the bots are doing, what the market is doing, the top news and BTC statistics. The team's estimate is that checking is about 99% of the visits and asking an agent a question about 1%. This is an estimate, not a measurement: Condor has no usage analytics today. Measuring it is an open point below. A dashboard is a tool for monitoring the current state at a glance, with the detail one click away.</li>
+  <li><strong>A home page should show the answers at a glance.</strong> Dashboard guidance agrees on a few points: put the most important numbers where the eye lands first (top left), show only what the reader needs to monitor, keep it to one screen, and keep detail behind a click. The proposal follows these points.</li>
+  <li><strong>A blank chat box is a hard start for beginners.</strong> A chat asks the user to know what to type. Research on AI chat finds that many people struggle to put a need into words, and a small study found that people usually added structure to a request only after a poor first answer. Condor's chat home already shows three suggested questions ("How is my portfolio doing?", "What are my bots doing right now?", "Any positions at risk?"). Those are the things a dashboard would simply show.</li>
+  <li><strong>The numbers should come to the trader, not wait behind a tab.</strong> A beginner may never click Portfolio. That is how the team's trader felt, and still feels, using Condor. A home page built around a summary is a familiar idea: Grafana, for one, lets each user pick their own home dashboard.</li>
+  <li><strong>Chat stays, as the second step.</strong> The current home is built around agents, which suits developers. A Portfolio, Market and Trader view suits the person trading. Asking an agent is still one click away, and moving rarely needed features to a second screen is a long-standing usability pattern.</li>
+</ol>
+
+<h2 id="research">Research</h2>
+<p>Each source below was opened and read for this page. The notes are paraphrased and only say what the page itself says.</p>
+<table>
+  <thead><tr><th>Source</th><th>Publisher, year</th><th>What it says, and which reason it backs</th></tr></thead>
+  <tbody>
+    <tr><td><a href="https://learn.microsoft.com/en-gb/power-bi/create-reports/service-dashboards-design-tips">Tips for Designing a Great Power BI Dashboard</a></td><td>Microsoft Learn, 2025 (date from the page's own data)</td><td>A dashboard is an overview for watching the current state of data at a glance, and the detail sits in the reports behind it. Put the most important numbers top left, make a key figure stand out with a card, keep everything on one screen and remove all but the essential tiles. Backs reasons 1 and 2.</td></tr>
+    <tr><td><a href="https://www.smashingmagazine.com/2025/09/ux-strategies-real-time-dashboards/">From Data To Decisions: UX Strategies For Real-Time Dashboards</a></td><td>Karan Rawal, Smashing Magazine, 2025</td><td>A real-time dashboard is there to help people decide and act quickly. Critical figures go in the upper left, grouped in cards; limit what is visible to about five elements; show small trend lines and change indicators next to key numbers, and fold dense detail away. Backs reason 2.</td></tr>
+    <tr><td><a href="https://grafana.com/docs/grafana/latest/dashboards/">Dashboards</a></td><td>Grafana documentation; year not shown on the page</td><td>A dashboard is a set of panels that gives an at-a-glance view of related information. Backs reasons 1 and 2.</td></tr>
+    <tr><td><a href="https://grafana.com/docs/grafana/latest/administration/organization-preferences/">Organization preferences</a></td><td>Grafana documentation; year not shown on the page</td><td>The home dashboard is a setting that can be chosen for the whole server, an organisation, a team or one user, and the user's own choice wins. Shows that a default home page does not lock anyone in. Backs reason 4 and the "let users choose" open point.</td></tr>
+    <tr><td><a href="https://jakobnielsenphd.substack.com/p/prompt-driven-ai-ux-hurts-usability">The Articulation Barrier: Prompt-Driven AI UX Hurts Usability</a></td><td>Jakob Nielsen, personal Substack (not an NN/g article), 2023</td><td>Prompt-based AI asks users for clear writing, which many cannot easily give; the author argues for mixing prompts with buttons and other visible controls. His figure that fewer than one in five people write well enough for advanced use is his own estimate. Backs reason 3.</td></tr>
+    <tr><td><a href="https://www.nngroup.com/articles/response-outlining/">Response Outlining with Generative-AI Chatbots</a></td><td>Tarun Mugunthan, Nielsen Norman Group, 2024</td><td>In a small qualitative study of professionals and students using a chatbot, people usually added structure to their request only after an unsatisfying first answer, which costs effort; some could not name what they needed up front. The page gives no numbers. Backs reason 3.</td></tr>
+    <tr><td><a href="https://www.nngroup.com/articles/empty-state-interface-design/">Designing Empty States in Complex Applications: 3 Guidelines</a></td><td>Kate Kaplan, Nielsen Norman Group, 2021</td><td>An empty screen in a new account should say what is going on, explain what the area is for, and give a direct way to start. Backs the empty-state open point.</td></tr>
+    <tr><td><a href="https://www.nngroup.com/articles/progressive-disclosure/">Progressive Disclosure</a></td><td>Jakob Nielsen, Nielsen Norman Group, 2006</td><td>Move advanced or rarely used features to a second screen so the first one shows the most important options. Backs reason 5.</td></tr>
+  </tbody>
+</table>
+<p class="sources">What this does not show: none of these sources studies a trading app, and the dashboard pages come from business-reporting tools, not from trading. The 99% / 1% split has no source: it is the team's estimate. Pages tried and left out because they did not open or did not say what was needed: Coinbase and Robinhood help pages, a TradingView help page, and Stephen Few's dashboard article. No product's home page is claimed here.</p>
+
+<h2 id="before">Before</h2>
+<p>The home page (<code>/</code>) is the Agents page: a chat. A trader who opens Condor sees:</p>
+<ul>
+  <li><strong>Left:</strong> a "New chat" button, a list of chats with agents, "Start a chat with" more agents, Archived, and an Agent Hub card.</li>
+  <li><strong>Middle:</strong> "Ask Condor", a model picker, an empty message box, and three suggested questions about the portfolio, the bots and positions at risk.</li>
+  <li><strong>Right:</strong> a panel for tasks and routines, and a strip of panel icons (Layout, Agent, Portfolio, Bots, Loops, Tasks, Routines).</li>
+</ul>
+<p><strong>What is missing for a trader:</strong> no balance, no profit or loss, nothing about the market, no news. All of it sits behind other tabs or behind a question typed into the chat.</p>
+<figure class="wide"><img src="assets/before-topnav-desktop.png" alt="Condor home on the ui-redesign build: the Agents page with the chat list on the left, an empty Ask Condor message box in the middle and a tasks panel on the right"><figcaption>Desktop, <code>ui-redesign</code> baseline (1280 by 700 at twice the pixel density, dark theme): the Agents page, which is the home page today. The "Reconnecting" banner comes from the demo server used for the picture, which has no chat connection.</figcaption></figure>
+
+<h2 id="after">After</h2>
+<p>The home page becomes a dashboard titled "Condor Dashboard". Under the title: "Welcome back, Algo Trader." On the same line as the title, at the right: when the page was last updated. Below, in order: four cards, two profit and loss charts, then a BTC chart with a Top News card.</p>
+<figure class="wide"><a href="assets/dashboard-home-after.png"><img src="assets/dashboard-home-after.png" alt="Mock of the Condor Dashboard in the dark theme with sample data: the rail with Dashboard lit, the top bar, the title Condor Dashboard with a welcome greeting and an updated time, four cards (Combined Funds, Combined P&amp;L, BTC Meter, BTC Price Timeframes), Daily and Hourly P&amp;L bar charts, a BTC hourly chart and a Top News card with five links"></a><figcaption>Mock with <strong>sample data</strong> (click the picture for the full size, 2560 by 2000). The left rail and the top bar (Local, Gateway status, theme switch) are the real ones from the rail stack tip (<code>ui/panel-rail-v2</code>), running on a demo server. Only the page body is a mock, added when the picture was taken. Every number and headline is made up, and the data is deliberately positive. The viewport is 1280 by 1000 at twice the pixel density: the same width as the other pictures, taller so the whole page fits.</figcaption></figure>
+<table>
+  <thead><tr><th>Block</th><th>What it is meant to show</th></tr></thead>
+  <tbody>
+    <tr><td>Combined Funds</td><td>The total balance across all connected accounts and servers, with today's change.</td></tr>
+    <tr><td>Combined P&amp;L</td><td>Total profit or loss across everything, with today's change.</td></tr>
+    <tr><td>BTC Meter</td><td>A gauge of market mood from Fear to Greed, in the style of a sentiment index. It is a quick read on the market, not a trading signal. The value 68 in the picture is made up, and where the real value comes from is not decided.</td></tr>
+    <tr><td>BTC Price Timeframes (Live)</td><td>The live BTC price and its change over 1 hour, 24 hours, 7 days and 30 days, with a small live indicator.</td></tr>
+    <tr><td>Daily and Hourly P&amp;L (Combined)</td><td>Profit and loss per day and per hour, green for gain, red for loss.</td></tr>
+    <tr><td>BTC hourly chart</td><td>The BTC price by the hour, so a trader sees the market the bots are trading in.</td></tr>
+    <tr><td>Top News</td><td>Five one-line headlines, each a link. The headlines and links in the picture are examples; they point nowhere.</td></tr>
+  </tbody>
+</table>
+<p>The mock is kept as one standalone file, <a href="assets/dashboard-mock.html"><code>assets/dashboard-mock.html</code></a> (no scripts, no outside resources), so the team and the designer can reuse it.</p>
+
+<h2 id="notes">Notes</h2>
+<ol>
+  <li><strong>The contents are for the team to fine-tune and decide.</strong> The blocks above are a starting list. Suggestions are welcome.</li>
+  <li><strong>The layout and design are not final.</strong> They will be redesigned by Sofi.</li>
+</ol>
+
+<h2 id="connects">How it connects to the other proposals</h2>
+<ul>
+  <li><strong><a href="side-rail.html">Left icon rail</a> (PRs #3, #4, #6, #7).</strong> The Dashboard door already exists on the rail, but today it opens the chat home. This proposal gives that door a page worth opening.</li>
+  <li><strong><a href="trader-nav.html">Navigation Built Around the Trader's Day</a>.</strong> Dashboard is door 1 there, "check". This page says what is behind it.</li>
+  <li><strong><a href="onboarding.html">Guided first-run onboarding</a>.</strong> A new user should finish setup on the Dashboard instead of the chat. See the open points for the empty first screen. This page does not change where setup ends today.</li>
+</ul>
+
+<h2 id="rollout">Rollout</h2>
+<p><strong>Not built yet. There is no code PR for this proposal.</strong> This page only proposes. If the direction is approved, the work would be:</p>
+<table>
+  <thead><tr><th>Piece</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td>A Dashboard page, and <code>/</code> opening it instead of the chat home</td><td class="s todo">Not built</td></tr>
+    <tr><td>Data for funds, profit and loss, bots and BTC price</td><td class="s todo">Not built, sources to decide</td></tr>
+    <tr><td>BTC Meter and Top News data</td><td class="s todo">Not built, sources to decide</td></tr>
+    <tr><td>A way into the chat from the Dashboard</td><td class="s todo">Not built, to decide</td></tr>
+    <tr><td>Empty state for a new user, and setup ending on the Dashboard</td><td class="s todo">Not built</td></tr>
+  </tbody>
+</table>
+
+<h2 id="open">Open points</h2>
+<ol>
+  <li><strong>Where does chat live?</strong> Once the Dashboard is home, the chat needs a place. Options: the Agents door opens the chat workspace; an "Ask Condor" button on the Dashboard; both. Team decision.</li>
+  <li><strong>Which blocks are in version 1?</strong> A small first version could be Combined Funds, Combined P&amp;L, a bots status block and the P&amp;L charts, with the BTC blocks and news later. Team decision.</li>
+  <li><strong>Bots status is not in the picture.</strong> Bot status is on the trader's list but is not one of the four cards. The picture only hints at it ("3 bots running"). A Bots card is a suggestion.</li>
+  <li><strong>Data sources.</strong> The BTC Meter, the news and the market prices need data decisions: where they come from, what they cost, who may use them, and what shows when the source is down. This page does not claim that any of them exists in Condor today.</li>
+  <li><strong>Measure the 99% / 1%.</strong> The split is the team's estimate. Counting how often the chat and each page are opened for a few weeks would settle it. Nothing is collected today, and adding analytics is a privacy decision of its own.</li>
+  <li><strong>Empty state for new users.</strong> A new user has no funds and no bots, so every block would be empty. The empty Dashboard should say what is missing, what each block will show, and give one button to start (for example "Connect where you trade"). Sample data labelled as a demo is one option.</li>
+  <li><strong>The first screen after onboarding.</strong> Setup should end on the Dashboard, not the chat.</li>
+  <li><strong>Display currency has no home yet.</strong> It left the shell with the side rail. A Dashboard that shows money is a natural place to put it back. Which currency the totals use is also open.</li>
+  <li><strong>Let users choose their home page?</strong> Grafana does. It could come later, if some users still prefer the chat.</li>
+  <li><strong>Not checked yet:</strong> the light theme, colour-blind mode (the green and red must still tell apart), phone widths, and the page with real data.</li>
+</ol>
+
+<h2 id="decision">Decision requested</h2>
+<div class="callout"><p>Approve the direction: the Dashboard, not the chat, becomes the default home page, with its contents decided by the team and its design by Sofi. Nothing is built, so no PR is waiting.</p></div>
+
+<h2 id="log">Refinement log</h2>
+<p>Newest first. Add a row for every change that comes out of review.</p>
+<table>
+  <thead><tr><th>Date</th><th>Change</th><th>Reason / source</th><th>PR</th></tr></thead>
+  <tbody>
+    <tr><td>2026-11-27</td><td>First version: five reasons, eight researched sources, the current Agents home as "Before", a mock Dashboard with sample data on the real rail and top bar as "After" (the mock is kept in <code>assets/dashboard-mock.html</code>), notes, open points, and a statement that nothing is built</td><td>User request for a proposal on the Dashboard as the default home page. The reference pictures the user mentioned did not arrive, so the layout follows the written list; if they are sent, the picture can be adjusted</td><td>#13</td></tr>
+  </tbody>
+</table>
+
+</main>
+</body>
+</html>
