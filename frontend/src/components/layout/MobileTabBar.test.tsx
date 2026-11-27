@@ -152,6 +152,21 @@ describe("MobileTabBar", () => {
     );
   });
 
+  it("lights only Account while the sheet is open, then the route again", async () => {
+    renderAt("/");
+    await flush();
+    expect(container.querySelector('[aria-current="page"]')?.getAttribute("aria-label")).toBe(
+      "Dashboard",
+    );
+    await openAccount();
+    expect(container.querySelector('nav a[aria-current="page"]')).toBeNull();
+    expect(container.querySelector('nav button[aria-expanded="true"]')).not.toBeNull();
+    await click(container.querySelector('button[aria-label="Algo Trader"]'));
+    expect(container.querySelector('[aria-current="page"]')?.getAttribute("aria-label")).toBe(
+      "Dashboard",
+    );
+  });
+
   it("opens the Account sheet with name, role and three rows", async () => {
     renderAt("/");
     await flush();

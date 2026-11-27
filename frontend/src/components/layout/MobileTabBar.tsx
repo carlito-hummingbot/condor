@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 
 import { initialsFrom, useDisplayName } from "@/hooks/useDisplayName";
 import { useServerRoster } from "@/hooks/useServerRoster";
-import { RAIL_TOP, isMoreActive, isRailEntryActive, isSettingsActive } from "@/lib/nav";
+import { RAIL_TOP, isMoreActive, isRailItemLit, isSettingsActive, type RailOverlayId } from "@/lib/nav";
 import { AccountSheet } from "./AccountSheet";
 
 /**
@@ -22,8 +22,12 @@ export function MobileTabBar({ onReport }: { onReport: () => void }) {
   const { current } = useServerRoster();
   const serverOffline = !!current && !current.online;
   const [accountOpen, setAccountOpen] = useState(false);
-  // On a Settings page, the page is one of the sheet's lists.
-  const accountActive = isMoreActive(pathname, search) || isSettingsActive(pathname, search);
+  // Same rule as the rail (`isRailItemLit`): while the sheet is open only Account
+  // is lit; with it closed the route decides, and a Settings page is one of the
+  // sheet's lists, so it lights Account.
+  const overlay: RailOverlayId | null = accountOpen ? "account" : null;
+  const accountActive =
+    accountOpen || isMoreActive(pathname, search) || isSettingsActive(pathname, search);
 
   return (
     <>
@@ -32,7 +36,7 @@ export function MobileTabBar({ onReport }: { onReport: () => void }) {
         className="flex h-14 shrink-0 items-stretch border-t border-[var(--color-border)] bg-[var(--color-surface)] pb-[env(safe-area-inset-bottom)] md:hidden"
       >
         {RAIL_TOP.map((item) => {
-          const active = isRailEntryActive(item.id, pathname, search);
+          const active = isRailItemLit(item.id, overlay, pathname, search);
           return (
             <Link
               key={item.id}
@@ -67,13 +71,13 @@ export function MobileTabBar({ onReport }: { onReport: () => void }) {
           aria-label={name}
           aria-expanded={accountOpen}
           aria-haspopup="dialog"
-          aria-current={accountActive ? "page" : undefined}
+          aria-current={accountActive && !accountOpen ? "page" : undefined}
           onClick={() => setAccountOpen((open) => !open)}
           className="relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5"
         >
           <span
             className={`flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-primary-fill)] text-[10px] font-bold text-[var(--on-primary)] ${
-              accountOpen || accountActive ? "ring-2 ring-[var(--color-primary)]" : ""
+              accountActive ? "ring-2 ring-[var(--color-primary)]" : ""
             }`}
           >
             {initialsFrom(name)}

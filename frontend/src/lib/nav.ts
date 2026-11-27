@@ -53,7 +53,7 @@ import {
  * Dashboard, Agents, Labs and More (three dots). Dashboard is `/` (the chat
  * home until the stats page lands). Agents is `/hub`, the Agents workspace,
  * and stays lit on an agent's own page. Labs is `/labs`, a
- * placeholder page for now (Design, Backtest and Test Run come later);
+ * placeholder page for now (Design, Backtest, Test Run and Diagnose come later);
  * `/strategies` redirects to it.
  * More opens a panel beside the rail with six entries: five Settings tabs
  * about the server and the install, and Report an Issue. The Settings gear
@@ -118,6 +118,14 @@ export const RAIL_PANELS: Record<
   more: { title: "More", entries: MORE_ITEMS, report: true },
   settings: { title: "Settings", entries: SETTINGS_ITEMS, report: false },
 };
+
+/**
+ * Whatever the rail has open beside or above itself. At most one thing at a
+ * time: the More panel, the Settings panel, and (PR #4) the avatar popup,
+ * which adds "account". The rail keeps this one value, so every open overlay
+ * has the same lit-state rule (`isRailItemLit`).
+ */
+export type RailOverlayId = RailPanelId | "account";
 
 /** The three dots in the main group. It opens the More menu; it is not a link. */
 export const MORE_ICON = MoreHorizontal;
@@ -191,6 +199,21 @@ export function isRailEntryActive(id: string, pathname: string, search: string):
       return setting ? isSettingsEntryActive(setting, pathname, search) : false;
     }
   }
+}
+
+/**
+ * Is this rail item lit? While an overlay is open only the item that opened
+ * it is lit, so the page behind it (Dashboard on `/`) stops competing. With
+ * nothing open, the route decides.
+ */
+export function isRailItemLit(
+  id: string,
+  overlay: RailOverlayId | null,
+  pathname: string,
+  search: string,
+): boolean {
+  if (overlay !== null) return id === overlay;
+  return isRailEntryActive(id, pathname, search);
 }
 
 /**
