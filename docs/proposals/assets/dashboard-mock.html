@@ -49,6 +49,22 @@
 .dash .chip { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; padding: 2px 7px; border-radius: 5px; color: var(--d-gold); background: color-mix(in srgb, var(--d-gold) 14%, transparent); min-width: 62px; text-align: center; }
 .dash a.lnk { color: var(--d-text); text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-bottom: 1px solid color-mix(in srgb, var(--d-gold) 55%, transparent); width: fit-content; max-width: 100%; }
 .dash .when { color: var(--d-muted); font-size: 13px; }
+.dash h2.sect { display: flex; align-items: center; margin: 22px 0 12px; font-size: 18px; font-weight: 700; text-transform: none; letter-spacing: 0; color: var(--d-text); gap: 14px; }
+.dash .row4 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.dash .acard { position: relative; padding: 16px 20px 6px; }
+.dash .acard .corner { position: absolute; top: 14px; right: 14px; display: flex; align-items: center; gap: 10px; }
+.dash .acard .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--d-up); box-shadow: 0 0 0 4px color-mix(in srgb, var(--d-up) 26%, transparent); }
+.dash .acard .btn { display: inline-flex; width: 28px; height: 28px; align-items: center; justify-content: center; border-radius: 7px; border: 1px solid var(--d-border); color: var(--d-muted); background: color-mix(in srgb, var(--d-muted) 8%, transparent); }
+.dash .acard h3 { margin: 0; text-align: center; font-size: 19px; font-weight: 700; letter-spacing: -0.005em; }
+.dash .acard .asub { margin: 2px 0 14px; text-align: center; font-size: 14px; color: var(--d-muted); }
+.dash .plrow { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; padding-bottom: 12px; font-variant-numeric: tabular-nums; }
+.dash .plrow .lab { display: block; font-size: 12.5px; color: var(--d-muted); margin-bottom: 3px; }
+.dash .plrow b { font-size: 15px; font-weight: 700; white-space: nowrap; }
+.dash .plrow .r { text-align: right; }
+.dash .rows { margin: 0; font-variant-numeric: tabular-nums; }
+.dash .rows div { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 0; border-top: 1px solid var(--d-border); font-size: 14.5px; }
+.dash .rows dt { color: var(--d-muted); }
+.dash .rows dd { margin: 0; font-weight: 600; }
 .dash .foot { margin-top: 6px; font-size: 11.5px; color: var(--d-muted); }
 </style>
 <style>html,body{margin:0;background:#121212;} body{max-width:1216px;margin:0 auto;}</style>
@@ -84,5 +100,8 @@
     <ul class="news"><li><span class="chip">Market</span><a href="#" class="lnk">Bitcoin holds weekly gains on rising volume</a><span class="when">1h</span></li><li><span class="chip">Macro</span><a href="#" class="lnk">Traders eye rate-decision week</a><span class="when">2h</span></li><li><span class="chip">On-chain</span><a href="#" class="lnk">Exchange balances keep falling</a><span class="when">4h</span></li><li><span class="chip">Ethereum</span><a href="#" class="lnk">Network activity rises, fees stay low</a><span class="when">5h</span></li><li><span class="chip">Rules</span><a href="#" class="lnk">Crypto reporting guidance open for comment</a><span class="when">8h</span></li></ul>
     <div class="foot">Example headlines and links.</div></article>
 </section>
+
+<h2 class="sect">Live Agents <span class="live"><i></i>3 running</span></h2>
+<section class="row4" aria-label="Live agents"><article class="card acard"><div class="corner"><span class="dot"></span><span class="btn"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M3 13V8M8 13V3M13 13V6" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></span></div><h3>Stable Churn</h3><p class="asub">Binance (spot)</p><div class="plrow"><div><span class="lab">P&amp;L</span><b class="up">+$412.80 (+2.1%)</b></div><div class="r"><span class="lab">Realized / Unrealized</span><b><span class="up">+$388.10</span> / <span class="up">+$24.70</span></b></div></div><dl class="rows"><div><dt>Pair</dt><dd>USDC-USDT</dd></div><div><dt>Filled Orders Qty</dt><dd>1,284</dd></div><div><dt>Volume</dt><dd>$186,420</dd></div></dl></article><article class="card acard"><div class="corner"><span class="dot"></span><span class="btn"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M3 13V8M8 13V3M13 13V6" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></span></div><h3>GateForum</h3><p class="asub">Gate (perps)</p><div class="plrow"><div><span class="lab">P&amp;L</span><b class="up">+$1,236.40 (+4.8%)</b></div><div class="r"><span class="lab">Realized / Unrealized</span><b><span class="up">+$1,102.60</span> / <span class="up">+$133.80</span></b></div></div><dl class="rows"><div><dt>Pair</dt><dd>BTC-USDT perp</dd></div><div><dt>Filled Orders Qty</dt><dd>312</dd></div><div><dt>Volume</dt><dd>$842,950</dd></div></dl></article><article class="card acard"><div class="corner"><span class="dot"></span><span class="btn"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M3 13V8M8 13V3M13 13V6" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg></span></div><h3>JEV</h3><p class="asub">Meteora</p><div class="plrow"><div><span class="lab">P&amp;L</span><b class="up">+$96.30 (+1.3%)</b></div><div class="r"><span class="lab">Realized / Unrealized</span><b><span class="up">+$118.90</span> / <span class="down">−$22.60</span></b></div></div><dl class="rows"><div><dt>Pair</dt><dd>SOL-USDC</dd></div><div><dt>Filled Orders Qty</dt><dd>74</dd></div><div><dt>Volume</dt><dd>$24,310</dd></div></dl></article></section>
 </main>
 </body></html>
