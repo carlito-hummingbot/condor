@@ -532,8 +532,8 @@ const ROUTES: {
   onScreen?: Reader;
 }[] = [
   {
-    pattern: /^\/strategies$/,
-    facts: () => ({ label: "Strategies" }),
+    pattern: /^\/labs$/,
+    facts: () => ({ label: "Labs" }),
   },
   {
     pattern: /^\/portfolio$/,

@@ -41,14 +41,14 @@ import {
  * Hub joined it in FEAT-153 and left it again. `/hub` mounts the Agents
  * workspace with its transcript column swapped for the catalogue, so a tab of
  * its own sat beside Agents saying the same thing twice. Its door was the card
- * at the foot of the Agents rail. It is listed under More anyway: a second
- * door, which overrides that one-door rule on purpose.
+ * at the foot of the Agents rail.
  *
  * The top bar is a left icon rail now. Dashboard is the chat home (lit on
  * `/hub` and `/agents/*` as Agents used to be). Portfolio, Trade, DEX and
- * Routines sit under More until those pages are redesigned. Strategies is
- * `/strategies`, the cross-agent list. `/?panel=loops` still opens the same
- * list inside the chat, for old links, and still lights this item.
+ * Routines sit under More until those pages are redesigned. Agent Hub is
+ * under More too: a second door, which overrides the FEAT-153 one-door rule
+ * on purpose. Strategies points at the cross-agent loops panel
+ * (`/?panel=loops`) until `/strategies` is its own page.
  */
 export interface NavEntry {
   id: string;
@@ -61,7 +61,7 @@ export interface NavEntry {
 export const RAIL_TOP: readonly NavEntry[] = [
   { id: "dashboard", to: "/", icon: LayoutDashboard, label: "Dashboard" },
   { id: "bots", to: "/bots", icon: Bot, label: "Bots" },
-  { id: "strategies", to: "/strategies", icon: Workflow, label: "Strategies" },
+  { id: "strategies", to: "/?panel=loops", icon: Workflow, label: "Strategies" },
 ];
 
 /** The ⋯ menu. No route of its own; it lights when the page is one of these. */
@@ -150,4 +150,4 @@ export function isRailEntryActive(id: string, pathname: string, search: string):
  * route with a body any more (FEAT-116): a layout rule for it would be a rule
  * about a redirect. What it used to draw is `/bots`, which is on this list.
  */
-export const FULL_BLEED_ROUTES = ["/", "/hub", "/bots", "/routines", "/strategies"];
+export const FULL_BLEED_ROUTES = ["/", "/hub", "/bots", "/routines"];
