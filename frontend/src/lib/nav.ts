@@ -53,7 +53,7 @@ import {
  * Dashboard, Agents, Labs and More (three dots). Dashboard is `/` (the chat
  * home until the stats page lands). Agents is `/hub`, the Agents workspace,
  * and stays lit on an agent's own page. Labs is `/labs`, a
- * placeholder page for now (Design, Backtest and Test Run come later);
+ * placeholder page for now (Design, Backtest, Test Run and Diagnose come later);
  * `/strategies` redirects to it.
  * More opens a panel beside the rail with six entries: five Settings tabs
  * about the server and the install, and Report an Issue. The Settings gear

@@ -30,6 +30,6 @@ describe("Labs", () => {
   it("shows the Labs heading and a line about what is coming", () => {
     act(() => root.render(<Labs />));
     expect(container.querySelector("h1")?.textContent).toBe("Labs");
-    expect(container.textContent).toContain("Design, Backtest and Test Run");
+    expect(container.textContent).toContain("Design, Backtest, Test Run and Diagnose");
   });
 });
