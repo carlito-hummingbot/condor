@@ -1,19 +1,12 @@
-import { Bot, Compass, type LucideIcon } from "lucide-react";
 import { useEffect, useRef } from "react";
 
-import { DONE_ACTIONS, dashboardTitleFrom, type UserPreferences } from "@/lib/onboarding";
+import { dashboardTitleFrom, type UserPreferences } from "@/lib/onboarding";
 
 import type { WizardAction } from "./MakeItYoursStep";
 
-const ACTION_ICONS: Record<(typeof DONE_ACTIONS)[number]["to"], LucideIcon> = {
-  "/bots": Bot,
-  "/hub": Compass,
-};
-
 /**
- * Recap of what this run saved, then the two ways forward. Each card finishes
- * the wizard and opens that page. Full-width rows, so two cards fill the
- * space a four-card grid used to.
+ * Recap of what this run saved. Finish closes the wizard and leaves the
+ * person on the page they were on: a new user looks around first.
  */
 export function DoneStep({
   prefs,
@@ -23,7 +16,7 @@ export function DoneStep({
 }: {
   prefs: UserPreferences;
   busy: boolean;
-  onFinish: (to?: string) => void;
+  onFinish: () => void;
   onBind: (action: WizardAction | null) => void;
 }) {
   const finishRef = useRef(onFinish);
@@ -75,26 +68,6 @@ export function DoneStep({
           />
         )}
       </ul>
-      <div className="mt-5 grid grid-cols-1 gap-2">
-        {DONE_ACTIONS.map((action) => {
-          const Icon = ACTION_ICONS[action.to];
-          return (
-            <button
-              key={action.to}
-              type="button"
-              disabled={busy}
-              onClick={() => onFinish(action.to)}
-              className="flex items-center gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3.5 py-3 text-left transition-colors hover:bg-[var(--color-surface-hover)] disabled:opacity-50"
-            >
-              <Icon className="h-4 w-4 shrink-0 text-[var(--color-primary)]" />
-              <span className="min-w-0">
-                <span className="block text-sm font-medium text-[var(--color-text)]">{action.title}</span>
-                <span className="block text-xs text-[var(--color-text-muted)]">{action.body}</span>
-              </span>
-            </button>
-          );
-        })}
-      </div>
     </div>
   );
 }

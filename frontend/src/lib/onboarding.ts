@@ -88,12 +88,6 @@ export const STEP_DEFS = [
 
 export type StepId = (typeof STEP_DEFS)[number]["id"];
 
-/** The two cards on the last step. Each one finishes setup and opens that page. */
-export const DONE_ACTIONS = [
-  { to: "/bots", title: "Deploy a bot", body: "Run a strategy" },
-  { to: "/hub", title: "Browse agents", body: "See the Hub" },
-] as const;
-
 export interface StepDef {
   id: string;
   title: string;
