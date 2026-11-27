@@ -122,7 +122,12 @@ _DEFAULTS: Dict[ServerDataType, DataTypeDefaults] = {
     ServerDataType.EXECUTORS: DataTypeDefaults(interval=2, ttl=30),
     ServerDataType.BOT_RUNS: DataTypeDefaults(interval=30, ttl=120),
     ServerDataType.CANDLE_CONNECTORS: DataTypeDefaults(interval=300, ttl=600),
-    ServerDataType.SERVER_STATUS: DataTypeDefaults(interval=60, ttl=120),
+    # What the "Connected" badge is read from, so it must notice a dead API in
+    # seconds, not minutes. It was 60s/120s, which left a stale "online" on screen
+    # for up to two minutes after the API died. One lightweight call per server
+    # per 15s (4/min) is the price; ``interval == ttl`` so a read at the boundary
+    # refreshes instead of serving the previous answer.
+    ServerDataType.SERVER_STATUS: DataTypeDefaults(interval=15, ttl=15),
     # A capability, not data: the answer changes only when the API image is
     # rebuilt or pulled, so it is asked about as rarely as anything here and
     # is deliberately not in the auto-subscribe set — nothing polls it, the
