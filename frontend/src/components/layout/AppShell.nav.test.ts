@@ -24,6 +24,7 @@ import {
   isMoreActive,
   isMoreEntryActive,
   isRailEntryActive,
+  isRailItemLit,
   isSettingsActive,
   isSettingsEntryActive,
 } from "@/lib/nav";
@@ -131,5 +132,23 @@ describe("full bleed", () => {
   it("includes the home, which scrolls its own transcript", () => {
     expect(FULL_BLEED_ROUTES).toContain("/");
     expect(FULL_BLEED_ROUTES as readonly string[]).not.toContain("/fleet");
+  });
+});
+
+describe("lit state with an overlay open", () => {
+  it("lights only the opener, whatever the route", () => {
+    expect(isRailItemLit("dashboard", "more", "/", "")).toBe(false);
+    expect(isRailItemLit("more", "more", "/", "")).toBe(true);
+    expect(isRailItemLit("settings", "more", "/settings", "?tab=voice")).toBe(false);
+    expect(isRailItemLit("settings", "settings", "/", "")).toBe(true);
+    expect(isRailItemLit("account", "account", "/", "")).toBe(true);
+    expect(isRailItemLit("agents", "account", "/hub", "")).toBe(false);
+  });
+
+  it("follows the route when nothing is open", () => {
+    expect(isRailItemLit("dashboard", null, "/", "")).toBe(true);
+    expect(isRailItemLit("agents", null, "/hub", "")).toBe(true);
+    expect(isRailItemLit("more", null, "/settings", "?tab=keys")).toBe(true);
+    expect(isRailItemLit("settings", null, "/settings", "?tab=privacy")).toBe(true);
   });
 });
