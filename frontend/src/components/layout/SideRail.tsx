@@ -3,13 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 
 import { Tooltip } from "@/components/ui/Tooltip";
 import { initialsFrom, useDashboardTitle, useDisplayName } from "@/hooks/useDisplayName";
-import {
-  MORE_ICON,
-  RAIL_BOTTOM,
-  RAIL_TOP,
-  isRailEntryActive,
-  type NavEntry,
-} from "@/lib/nav";
+import { MORE_ICON, RAIL_TOP, isRailEntryActive, type NavEntry } from "@/lib/nav";
 import { MoreMenu } from "./MoreMenu";
 
 /**
@@ -18,8 +12,10 @@ import { MoreMenu } from "./MoreMenu";
  * Every door shows its name under the icon (10px, like the panel rail on the
  * right), so nothing depends on a hover. The logo and the avatar are the two
  * items without a text label and keep a tooltip. The avatar has no menu yet:
- * it goes to Settings, and the account menu lands in the next change. The
- * bell still lives in the temporary strip above the page.
+ * it goes to Settings, and the account menu lands in the next change.
+ *
+ * Three doors on top (Dashboard, Agents, Labs), then the More gear and the
+ * avatar at the foot. There is no bell in the rail.
  */
 function itemClass(active: boolean): string {
   return `flex h-12 w-14 flex-col items-center justify-center gap-0.5 rounded-md transition-colors ${
@@ -68,6 +64,8 @@ export function SideRail({ onReport }: { onReport: () => void }) {
         <RailLink key={item.id} item={item} />
       ))}
 
+      <div className="flex-1" />
+
       <button
         ref={setMoreAnchor}
         type="button"
@@ -80,12 +78,6 @@ export function SideRail({ onReport }: { onReport: () => void }) {
         <MoreIcon className="h-5 w-5" />
         <span className="text-[10px] font-medium leading-none">More</span>
       </button>
-
-      <div className="flex-1" />
-
-      {RAIL_BOTTOM.map((item) => (
-        <RailLink key={item.id} item={item} />
-      ))}
 
       <Tooltip label={name}>
         <Link

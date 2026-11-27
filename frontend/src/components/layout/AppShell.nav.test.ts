@@ -16,38 +16,38 @@ import { describe, expect, it } from "vitest";
 import {
   FULL_BLEED_ROUTES,
   MORE_ITEMS,
-  RAIL_BOTTOM,
   RAIL_TOP,
-  isBotsActive,
+  isAgentsActive,
   isDashboardActive,
+  isLabsActive,
   isMoreActive,
+  isMoreEntryActive,
   isRailEntryActive,
-  isSettingsActive,
-  isStrategiesActive,
 } from "@/lib/nav";
 
-const destinations = [...RAIL_TOP, ...RAIL_BOTTOM, ...MORE_ITEMS];
+const destinations = [...RAIL_TOP, ...MORE_ITEMS];
 
 describe("the nav", () => {
   it("has neither a fleet nor a floor entry: both are somebody else's report now", () => {
     const paths = destinations.map((item) => item.to);
     expect(paths).not.toContain("/fleet");
     expect(paths).not.toContain("/floor");
-    expect(paths).toContain("/bots");
   });
 
-  it("keeps Agent Hub under More, not as a twin of Dashboard", () => {
-    // FEAT-153 took `/hub` out of the nav. It comes back under More: a second
-    // door, Carlito's override of that one-door rule. The rail itself still
-    // does not list it beside Dashboard.
-    expect(RAIL_TOP.map((item) => item.to)).not.toContain("/hub");
-    expect(MORE_ITEMS.map((item) => item.to)).toContain("/hub");
+  it("has exactly Dashboard, Agents and Labs on the rail", () => {
+    expect(RAIL_TOP.map((item) => item.label)).toEqual(["Dashboard", "Agents", "Labs"]);
+    expect(RAIL_TOP.map((item) => item.to)).toEqual(["/", "/hub", "/labs"]);
   });
 
-  it("parks Portfolio, Trade, DEX and Routines under More", () => {
-    const more = MORE_ITEMS.map((item) => item.to);
-    expect(more).toEqual(["/portfolio", "/trade", "/dex", "/routines", "/hub"]);
-    expect(RAIL_TOP.map((item) => item.label)).toEqual(["Dashboard", "Bots", "Strategies"]);
+  it("has exactly five Settings tabs under More, before Report an Issue", () => {
+    expect(MORE_ITEMS.map((item) => item.label)).toEqual([
+      "Hummingbot API",
+      "Gateway",
+      "Keys and Wallets",
+      "Servers",
+      "Updates",
+    ]);
+    expect(MORE_ITEMS.every((item) => item.to.startsWith("/settings?tab="))).toBe(true);
   });
 
   it("gives every entry a distinct address and label", () => {
@@ -57,42 +57,40 @@ describe("the nav", () => {
 });
 
 describe("active state", () => {
-  it("lights Dashboard on the chat home, the Hub and an agent workspace", () => {
+  it("lights Dashboard on the home only", () => {
     expect(isDashboardActive("/")).toBe(true);
-    expect(isDashboardActive("/hub")).toBe(true);
-    expect(isDashboardActive("/agents/alpha")).toBe(true);
-    expect(isDashboardActive("/bots")).toBe(false);
-    expect(isDashboardActive("/agents")).toBe(false);
+    expect(isDashboardActive("/hub")).toBe(false);
+    expect(isDashboardActive("/agents/alpha")).toBe(false);
+    expect(isDashboardActive("/labs")).toBe(false);
   });
 
-  it("lights Bots on the browser and on a bot detail", () => {
-    expect(isBotsActive("/bots")).toBe(true);
-    expect(isBotsActive("/bots/grid-1")).toBe(true);
-    expect(isBotsActive("/bot")).toBe(false);
+  it("lights Agents on the Hub and on an agent workspace", () => {
+    expect(isAgentsActive("/hub")).toBe(true);
+    expect(isAgentsActive("/agents/alpha")).toBe(true);
+    expect(isAgentsActive("/agents")).toBe(false);
+    expect(isAgentsActive("/bots")).toBe(false);
   });
 
-  it("lights Strategies on the loops panel and on /strategies", () => {
-    expect(isStrategiesActive("/", "?panel=loops")).toBe(true);
-    expect(isStrategiesActive("/", "")).toBe(false);
-    expect(isStrategiesActive("/strategies", "")).toBe(true);
-    expect(isStrategiesActive("/portfolio", "?panel=loops")).toBe(false);
+  it("lights Labs on /labs and below it", () => {
+    expect(isLabsActive("/labs")).toBe(true);
+    expect(isLabsActive("/labs/new")).toBe(true);
+    expect(isLabsActive("/laboratory")).toBe(false);
   });
 
-  it("lights More when the page is one of its entries, including a pool", () => {
-    expect(isMoreActive("/portfolio")).toBe(true);
-    expect(isMoreActive("/trade")).toBe(true);
-    expect(isMoreActive("/dex")).toBe(true);
-    expect(isMoreActive("/dex/solana/pool")).toBe(true);
-    expect(isMoreActive("/routines")).toBe(true);
-    expect(isMoreActive("/hub")).toBe(true);
-    expect(isMoreActive("/bots")).toBe(false);
-    expect(isMoreActive("/")).toBe(false);
+  it("lights More on every Settings page", () => {
+    expect(isMoreActive("/settings")).toBe(true);
+    expect(isMoreActive("/settings/extra")).toBe(true);
+    expect(isMoreActive("/portfolio")).toBe(false);
+    expect(isRailEntryActive("more", "/settings", "?tab=keys")).toBe(true);
   });
 
-  it("lights Settings on the settings page only", () => {
-    expect(isSettingsActive("/settings")).toBe(true);
-    expect(isSettingsActive("/settings/extra")).toBe(true);
-    expect(isRailEntryActive("more", "/settings", "")).toBe(false);
+  it("lights the More entry whose tab is open, and Servers when no tab is given", () => {
+    const keys = MORE_ITEMS.find((i) => i.id === "keys")!;
+    const servers = MORE_ITEMS.find((i) => i.id === "servers")!;
+    expect(isMoreEntryActive(keys, "/settings", "?tab=keys")).toBe(true);
+    expect(isMoreEntryActive(keys, "/settings", "?tab=gateway")).toBe(false);
+    expect(isMoreEntryActive(servers, "/settings", "")).toBe(true);
+    expect(isMoreEntryActive(servers, "/", "?tab=servers")).toBe(false);
   });
 });
 
