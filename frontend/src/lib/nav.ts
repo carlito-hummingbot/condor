@@ -1,14 +1,14 @@
 import {
   Bot,
-  Brain,
-  Droplets,
+  Bug,
+  Download,
+  FlaskConical,
+  KeyRound,
   LayoutDashboard,
-  MoreHorizontal,
+  Network,
+  Server,
+  ServerCog,
   Settings,
-  Swords,
-  Wallet,
-  Workflow,
-  Zap,
   type LucideIcon,
 } from "lucide-react";
 
@@ -43,12 +43,14 @@ import {
  * its own sat beside Agents saying the same thing twice. Its door was the card
  * at the foot of the Agents rail.
  *
- * The top bar is a left icon rail now. Dashboard is the chat home (lit on
- * `/hub` and `/agents/*` as Agents used to be). Portfolio, Trade, DEX and
- * Routines sit under More until those pages are redesigned. Agent Hub is
- * under More too: a second door, which overrides the FEAT-153 one-door rule
- * on purpose. Strategies points at the cross-agent loops panel
- * (`/?panel=loops`) until `/strategies` is its own page.
+ * The top bar is a left icon rail now, with four doors: Dashboard, Agents,
+ * Labs and More. Dashboard is `/` (the chat home until the stats page lands).
+ * Agents is `/hub`, the Agents workspace, and stays lit on an agent's own
+ * page. Labs is `/labs`, built in a later change; until then it shows the
+ * ordinary not-found page inside the shell. More is the gear at the foot of
+ * the rail and opens the Settings tabs people reach for most. Portfolio,
+ * Trade, DEX, Routines and Bots have no door in the nav for now; their routes
+ * still work by address.
  */
 export interface NavEntry {
   id: string;
@@ -60,73 +62,68 @@ export interface NavEntry {
 /** Rail, top group. The logo is not an entry: it is the brand, and it never lights. */
 export const RAIL_TOP: readonly NavEntry[] = [
   { id: "dashboard", to: "/", icon: LayoutDashboard, label: "Dashboard" },
-  { id: "bots", to: "/bots", icon: Bot, label: "Bots" },
-  { id: "strategies", to: "/?panel=loops", icon: Workflow, label: "Strategies" },
+  { id: "agents", to: "/hub", icon: Bot, label: "Agents" },
+  { id: "labs", to: "/labs", icon: FlaskConical, label: "Labs" },
 ];
-
-/** The ⋯ menu. No route of its own; it lights when the page is one of these. */
-export const MORE_ITEMS: readonly NavEntry[] = [
-  { id: "portfolio", to: "/portfolio", icon: Wallet, label: "Portfolio" },
-  { id: "trade", to: "/trade", icon: Swords, label: "Trade" },
-  { id: "dex", to: "/dex", icon: Droplets, label: "DEX" },
-  { id: "routines", to: "/routines", icon: Zap, label: "Routines" },
-  { id: "hub", to: "/hub", icon: Brain, label: "Agent Hub" },
-];
-
-export const MORE_ICON = MoreHorizontal;
-
-/** Rail, bottom group, besides the bell and the avatar (those are controls, not routes). */
-export const RAIL_BOTTOM: readonly NavEntry[] = [
-  { id: "settings", to: "/settings", icon: Settings, label: "Settings" },
-];
-
-/** The chat home, and the two pages that are still that home with a different column. */
-export function isDashboardActive(pathname: string): boolean {
-  return pathname === "/" || pathname === "/hub" || pathname.startsWith("/agents/");
-}
-
-export function isBotsActive(pathname: string): boolean {
-  return pathname === "/bots" || pathname.startsWith("/bots/");
-}
 
 /**
- * The strategies door. `/strategies` once that page exists; until then the
- * bookmarked loops panel on the home (`?panel=loops`).
+ * The More menu: Settings tabs, in the order a person reaches for them. Each
+ * `to` is a Settings tab (`/settings?tab=...`). Report an Issue is last and is
+ * not a route: it opens the existing dialog.
  */
-export function isStrategiesActive(pathname: string, search: string): boolean {
-  if (pathname === "/strategies" || pathname.startsWith("/strategies/")) return true;
-  return pathname === "/" && new URLSearchParams(search).get("panel") === "loops";
+export const MORE_ITEMS: readonly NavEntry[] = [
+  { id: "api", to: "/settings?tab=api", icon: ServerCog, label: "Hummingbot API" },
+  { id: "gateway", to: "/settings?tab=gateway", icon: Network, label: "Gateway" },
+  { id: "keys", to: "/settings?tab=keys", icon: KeyRound, label: "Keys and Wallets" },
+  { id: "servers", to: "/settings?tab=servers", icon: Server, label: "Servers" },
+  { id: "updates", to: "/settings?tab=updates", icon: Download, label: "Updates" },
+];
+
+export const REPORT_ISSUE = { label: "Report an Issue", icon: Bug } as const;
+
+/** The gear at the foot of the rail. It opens the More menu; it is not a link. */
+export const MORE_ICON = Settings;
+
+/** The chat home only. The Hub and an agent's page belong to Agents now. */
+export function isDashboardActive(pathname: string): boolean {
+  return pathname === "/";
 }
 
-export function isSettingsActive(pathname: string): boolean {
+/** The Agents workspace: the Hub, and a single agent's page. */
+export function isAgentsActive(pathname: string): boolean {
+  return pathname === "/hub" || pathname.startsWith("/agents/");
+}
+
+export function isLabsActive(pathname: string): boolean {
+  return pathname === "/labs" || pathname.startsWith("/labs/");
+}
+
+/** True on any Settings page, so the gear stays lit while More's pages are open. */
+export function isMoreActive(pathname: string): boolean {
   return pathname === "/settings" || pathname.startsWith("/settings/");
 }
 
-function matchesEntry(pathname: string, to: string): boolean {
-  if (to === "/dex") return pathname === "/dex" || pathname.startsWith("/dex/");
-  return pathname === to || pathname.startsWith(`${to}/`);
-}
-
-/** True when the page is one of the More menu's routes, so the ⋯ stays lit. */
-export function isMoreActive(pathname: string): boolean {
-  return MORE_ITEMS.some((item) => matchesEntry(pathname, item.to));
+/** The More entry whose Settings tab is on screen. `/settings` alone opens Servers. */
+export function isMoreEntryActive(entry: NavEntry, pathname: string, search: string): boolean {
+  if (!isMoreActive(pathname)) return false;
+  const want = new URL(entry.to, "http://x").searchParams.get("tab");
+  const have = new URLSearchParams(search).get("tab") ?? "servers";
+  return want === have;
 }
 
 export function isRailEntryActive(id: string, pathname: string, search: string): boolean {
   switch (id) {
     case "dashboard":
       return isDashboardActive(pathname);
-    case "bots":
-      return isBotsActive(pathname);
-    case "strategies":
-      return isStrategiesActive(pathname, search);
-    case "settings":
-      return isSettingsActive(pathname);
+    case "agents":
+      return isAgentsActive(pathname);
+    case "labs":
+      return isLabsActive(pathname);
     case "more":
       return isMoreActive(pathname);
     default: {
-      const parked = MORE_ITEMS.find((entry) => entry.id === id);
-      return parked ? matchesEntry(pathname, parked.to) : false;
+      const entry = MORE_ITEMS.find((item) => item.id === id);
+      return entry ? isMoreEntryActive(entry, pathname, search) : false;
     }
   }
 }
