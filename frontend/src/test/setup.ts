@@ -27,3 +27,57 @@ if (typeof window !== "undefined" && !window.matchMedia) {
     dispatchEvent: () => false,
   })) as unknown as typeof window.matchMedia;
 }
+
+// No test may reach a real Condor or Hummingbot API. In development builds
+// (`import.meta.env.DEV`, which Vitest also sets) the chat socket dials
+// `ws://localhost:8088` directly, and a dev machine usually has the real
+// Condor listening there; `localhost:8000` is the Hummingbot API. A test that
+// mounts something which opens a socket or fetches an absolute URL on one of
+// those ports without stubbing it would talk to the developer's live
+// instance. Guard both calls here, once: the call throws, so the test that
+// made it fails loudly instead of quietly succeeding against a real server.
+// Tests that stub `WebSocket` or `fetch` themselves replace these wrappers and
+// are not affected.
+const REAL_SERVER = /^(?:wss?|https?):\/\/(?:localhost|127\.0\.0\.1|\[::1\]|0\.0\.0\.0):(?:8088|8000)(?:[/?#]|$)/i;
+
+function assertNotRealServer(target: unknown, how: string): void {
+  const url =
+    typeof target === "string"
+      ? target
+      : target instanceof URL
+        ? target.href
+        : typeof (target as { url?: unknown } | null)?.url === "string"
+          ? (target as { url: string }).url
+          : "";
+  if (REAL_SERVER.test(url)) {
+    throw new Error(
+      `A test tried to reach a real server with ${how}: ${url}. ` +
+        "Stub WebSocket or fetch in the test (ports 8088 and 8000 belong to a live Condor).",
+    );
+  }
+}
+
+if (typeof globalThis.WebSocket === "function") {
+  const RealWebSocket = globalThis.WebSocket;
+  const GuardedWebSocket = function (
+    this: unknown,
+    url: string | URL,
+    protocols?: string | string[],
+  ) {
+    assertNotRealServer(url, "new WebSocket()");
+    return Reflect.construct(RealWebSocket, [url, protocols], new.target ?? GuardedWebSocket);
+  } as unknown as typeof WebSocket;
+  GuardedWebSocket.prototype = RealWebSocket.prototype;
+  for (const key of ["CONNECTING", "OPEN", "CLOSING", "CLOSED"] as const) {
+    Object.defineProperty(GuardedWebSocket, key, { value: RealWebSocket[key] });
+  }
+  globalThis.WebSocket = GuardedWebSocket;
+}
+
+if (typeof globalThis.fetch === "function") {
+  const realFetch = globalThis.fetch.bind(globalThis);
+  globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
+    assertNotRealServer(input, "fetch()");
+    return realFetch(input, init);
+  }) as typeof fetch;
+}
