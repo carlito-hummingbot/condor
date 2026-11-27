@@ -118,6 +118,14 @@ export const RAIL_PANELS: Record<
   settings: { title: "Settings", entries: SETTINGS_ITEMS, report: false },
 };
 
+/**
+ * Whatever the rail has open beside or above itself. At most one thing at a
+ * time: the More panel, the Settings panel, and (PR #4) the avatar popup,
+ * which adds "account". The rail keeps this one value, so every open overlay
+ * has the same lit-state rule (`isRailItemLit`).
+ */
+export type RailOverlayId = RailPanelId | "account";
+
 /** The three dots in the main group. It opens the More menu; it is not a link. */
 export const MORE_ICON = MoreHorizontal;
 
@@ -190,6 +198,21 @@ export function isRailEntryActive(id: string, pathname: string, search: string):
       return setting ? isSettingsEntryActive(setting, pathname, search) : false;
     }
   }
+}
+
+/**
+ * Is this rail item lit? While an overlay is open only the item that opened
+ * it is lit, so the page behind it (Dashboard on `/`) stops competing. With
+ * nothing open, the route decides.
+ */
+export function isRailItemLit(
+  id: string,
+  overlay: RailOverlayId | null,
+  pathname: string,
+  search: string,
+): boolean {
+  if (overlay !== null) return id === overlay;
+  return isRailEntryActive(id, pathname, search);
 }
 
 /**
