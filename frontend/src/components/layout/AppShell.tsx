@@ -108,7 +108,9 @@ function AppShellBody() {
           on this root — not inside `main` — so it covers the rail too. PR #2
           currently mounts it inside `main`; expect that conflict. */}
       <SideRail onReport={() => setReportOpen(true)} />
-      <div className="flex min-w-0 flex-1 flex-col">
+      {/* `min-h-0` so a long padded page scrolls inside the screen on a phone: a flex
+          column otherwise grows to its content and the page scrolls the whole shell. */}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {/* Server, Gateway status and Switch Mode (light/dark). */}
         <ShellControls />
 

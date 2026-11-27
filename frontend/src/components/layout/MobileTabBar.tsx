@@ -3,7 +3,8 @@ import { Link, useLocation } from "react-router-dom";
 
 import { initialsFrom, useDisplayName } from "@/hooks/useDisplayName";
 import { useServerRoster } from "@/hooks/useServerRoster";
-import { RAIL_TOP, isMoreActive, isRailItemLit, isSettingsActive, type RailOverlayId } from "@/lib/nav";
+import { RAIL_TOP, isRailItemLit, isSettingsActive, type RailOverlayId } from "@/lib/nav";
+import { AccountDialog } from "./AccountDialog";
 import { AccountSheet } from "./AccountSheet";
 
 /**
@@ -12,9 +13,11 @@ import { AccountSheet } from "./AccountSheet";
  *
  * Dashboard, Agents and Labs are the rail's doors (`RAIL_TOP` in `lib/nav`).
  * Account is the rail's avatar: it opens a sheet with the name and role, then
- * More, Settings and Logout (see `AccountSheet`). A red dot on it means the
+ * Account, Settings and Logout (see `AccountSheet`). A red dot on it means the
  * selected server is offline. The Account tab is fixed: it is the only home
- * for More, Settings and Logout on a phone.
+ * for Account, Settings and Logout on a phone. The Account row opens the shared
+ * `AccountDialog` after the sheet has closed (one layer at a time on a small
+ * screen); closing the dialog puts focus back on this tab.
  */
 export function MobileTabBar({ onReport }: { onReport: () => void }) {
   const { pathname, search } = useLocation();
@@ -22,12 +25,13 @@ export function MobileTabBar({ onReport }: { onReport: () => void }) {
   const { current } = useServerRoster();
   const serverOffline = !!current && !current.online;
   const [accountOpen, setAccountOpen] = useState(false);
+  const [accountDialog, setAccountDialog] = useState(false);
+  const [tab, setTab] = useState<HTMLButtonElement | null>(null);
   // Same rule as the rail (`isRailItemLit`): while the sheet is open only Account
   // is lit; with it closed the route decides, and a Settings page is one of the
   // sheet's lists, so it lights Account.
   const overlay: RailOverlayId | null = accountOpen ? "account" : null;
-  const accountActive =
-    accountOpen || isMoreActive(pathname, search) || isSettingsActive(pathname, search);
+  const accountActive = accountOpen || isSettingsActive(pathname);
 
   return (
     <>
@@ -67,6 +71,7 @@ export function MobileTabBar({ onReport }: { onReport: () => void }) {
         })}
 
         <button
+          ref={setTab}
           type="button"
           aria-label={name}
           aria-expanded={accountOpen}
@@ -98,7 +103,13 @@ export function MobileTabBar({ onReport }: { onReport: () => void }) {
         </button>
       </nav>
 
-      <AccountSheet open={accountOpen} onClose={() => setAccountOpen(false)} onReport={onReport} />
+      <AccountSheet
+        open={accountOpen}
+        onClose={() => setAccountOpen(false)}
+        onReport={onReport}
+        onAccount={() => setAccountDialog(true)}
+      />
+      <AccountDialog open={accountDialog} onOpenChange={setAccountDialog} returnFocusTo={tab} />
     </>
   );
 }
