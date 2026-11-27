@@ -51,7 +51,7 @@
  * that had to stay reachable. A short window is the one place where a rail
  * that clips is worse than a rail that scrolls.
  */
-import type { LucideIcon } from "lucide-react";
+import { PanelRightClose, type LucideIcon } from "lucide-react";
 
 /** One thing the rail can open, and whether it is open. */
 export type RailItem = {
@@ -83,16 +83,43 @@ export type RailGroup = {
 export function WorkspaceRail({
   groups,
   header,
+  mobileOpen = false,
+  onMobileClose,
 }: {
   groups: RailGroup[];
   /** Drawn above the groups and ruled off from them — the layout picker. */
   header?: React.ReactNode;
+  /**
+   * Below `md` the rail is a drawer over the right edge, not a strip: it takes
+   * a sixth of a 390px screen from the chat otherwise. Hidden until this is
+   * true. From `md` up it is the strip, whatever this says.
+   */
+  mobileOpen?: boolean;
+  /** After a tile is picked on a phone, so the drawer gets out of the way. */
+  onMobileClose?: () => void;
 }) {
   return (
     <aside
       data-testid="workspace-rail"
-      className="flex w-16 shrink-0 flex-col items-center gap-0.5 overflow-y-auto border-l border-[var(--color-border)] bg-[var(--color-bg)] py-2"
+      data-mobile-open={mobileOpen}
+      className={`w-16 shrink-0 flex-col items-center gap-0.5 overflow-y-auto border-l border-[var(--color-border)] bg-[var(--color-bg)] py-2 ${
+        mobileOpen
+          ? "max-md:absolute max-md:inset-y-0 max-md:right-0 max-md:z-30 max-md:flex max-md:bg-[var(--color-surface)] max-md:shadow-xl md:flex"
+          : "max-md:hidden md:flex"
+      }`}
     >
+      {/* The drawer covers the bar's own toggle, so it carries its way out. */}
+      {mobileOpen && onMobileClose && (
+        <button
+          type="button"
+          onClick={onMobileClose}
+          aria-label="Hide panels"
+          title="Hide panels"
+          className="mb-1 flex h-7 w-10 shrink-0 items-center justify-center rounded text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)] md:hidden"
+        >
+          <PanelRightClose className="h-4 w-4" />
+        </button>
+      )}
       {header && (
         <div className="mb-1.5 flex w-full shrink-0 flex-col items-center border-b border-[var(--color-border)] pb-2">
           {header}
@@ -112,8 +139,25 @@ export function WorkspaceRail({
             }`}
           >
             {group.items.map((item) => (
-              <RailButton key={item.id} {...item} />
+              <RailButton
+                key={item.id}
+                {...item}
+                onToggle={() => {
+                  item.onToggle();
+                  onMobileClose?.();
+                }}
+              />
             ))}
+            {/* Tiles that are all waiting on the same thing say so once. Three
+                dimmed tiles alone read as broken; the reason is the hint. */}
+            {group.items.every((item) => item.disabled) && (
+              <span
+                className="w-full px-1 pb-0.5 text-center text-[9px] leading-tight text-[var(--color-text-muted)]"
+                title={group.items[0]?.disabledHint}
+              >
+                Pick a server
+              </span>
+            )}
           </div>
         ))}
     </aside>

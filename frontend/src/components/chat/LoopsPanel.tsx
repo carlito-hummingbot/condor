@@ -42,8 +42,8 @@ export function LoopsPanel({
 }) {
   return (
     <WorkspaceSheet
-      title="Loops"
-      subtitle="Every live tick loop, across every agent"
+      title="Strategies"
+      subtitle="Every strategy, across every agent"
       onClose={onClose}
       fullscreen={false}
     >
@@ -70,7 +70,7 @@ export function LoopCardGrid({
   isLoading,
   agents,
   onOpenLoop,
-  emptyLabel = "Nothing looping right now",
+  emptyLabel = "No strategies running right now",
 }: {
   loops: LiveFleetOwner[];
   isLoading: boolean;

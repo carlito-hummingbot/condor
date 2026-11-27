@@ -140,7 +140,7 @@ export function ChatBubble() {
     return (
       <button
         onClick={() => toggle(true)}
-        className="fixed bottom-4 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-primary-fill)] text-[var(--on-primary)] shadow-lg transition-opacity hover:opacity-90"
+        className="fixed bottom-[4.5rem] right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-primary-fill)] text-[var(--on-primary)] shadow-lg transition-opacity hover:opacity-90 md:bottom-4"
         title={connectionLost ? "Chat is reconnecting…" : "Ask about this page"}
         aria-label="Open quick chat"
       >
@@ -195,7 +195,7 @@ export function ChatBubble() {
   };
 
   return (
-    <div className="fixed inset-x-2 bottom-2 top-16 z-40 flex flex-col overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] shadow-2xl sm:inset-x-auto sm:top-auto sm:bottom-4 sm:right-4 sm:h-[min(560px,calc(100vh-7rem))] sm:w-[380px]">
+    <div className="fixed inset-x-2 bottom-[4.5rem] top-16 z-40 flex flex-col overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] shadow-2xl sm:inset-x-auto sm:top-auto sm:bottom-[4.5rem] sm:right-4 sm:h-[min(560px,calc(100vh-7rem))] sm:w-[380px] md:bottom-4">
       {/* Header: who answers, what is being shared, and the way out. */}
       <div className="flex shrink-0 items-center gap-2 border-b border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2">
         <span className="min-w-0 truncate text-sm font-medium text-[var(--color-text)]">

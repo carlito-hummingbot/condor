@@ -507,9 +507,9 @@ describe("the desk's Loops section (FEAT-1xx)", () => {
 
     await click(tab("Portfolio"));
     await click(tab("Bots"));
-    await click(tab("Loops"));
+    await click(tab("Strategies"));
 
-    expect(tab("Loops").getAttribute("aria-pressed")).toBe("true");
+    expect(tab("Strategies").getAttribute("aria-pressed")).toBe("true");
     // Three open sections, not the two-way drag: the seam only knows how to
     // divide Portfolio and Execution, so a third pane falls back to the even
     // split every `DockSection` gets when nobody hands it a `share`.
@@ -528,20 +528,20 @@ describe("the desk's Loops section (FEAT-1xx)", () => {
     // desk on screen for the first time, and that is the moment its default
     // is decided.
     await click(tab("Portfolio"));
-    expect(tab("Loops").getAttribute("aria-pressed")).toBe("true");
+    expect(tab("Strategies").getAttribute("aria-pressed")).toBe("true");
   });
 
   it("leaves Loops closed by default when this server has nothing looping", async () => {
     await render("brigado_2", false, 0);
 
     await click(tab("Portfolio"));
-    expect(tab("Loops").getAttribute("aria-pressed")).toBe("false");
+    expect(tab("Strategies").getAttribute("aria-pressed")).toBe("false");
   });
 
   it("carries the same badge the old standalone tile showed", async () => {
     await render("brigado_2", false, 3);
 
-    expect(tab("Loops").textContent).toContain("3");
+    expect(tab("Strategies").textContent).toContain("3");
   });
 
   it("does not decide a default before the fleet data has settled", async () => {
@@ -552,7 +552,7 @@ describe("the desk's Loops section (FEAT-1xx)", () => {
     await render("brigado_2");
 
     await click(tab("Portfolio"));
-    expect(tab("Loops").getAttribute("aria-pressed")).toBe("false");
+    expect(tab("Strategies").getAttribute("aria-pressed")).toBe("false");
   });
 
   it("reads the fleet's own loops, narrowed to this server, and opens the one clicked", async () => {
@@ -626,7 +626,7 @@ describe("the desk's Loops section (FEAT-1xx)", () => {
     const onOpenLoop = vi.fn();
 
     await render("brigado_2", false, undefined, onOpenLoop);
-    await click(tab("Loops"));
+    await click(tab("Strategies"));
     await act(async () => {
       await new Promise((r) => setTimeout(r, 0));
     });

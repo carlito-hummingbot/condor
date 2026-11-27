@@ -354,7 +354,7 @@ export const AgentKnowledge = memo(function AgentKnowledge({
     },
     {
       id: "loops",
-      label: "Loops",
+      label: "Strategies",
       icon: <Repeat className="h-3.5 w-3.5" />,
       count: counts.strategies,
     },

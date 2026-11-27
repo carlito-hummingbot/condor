@@ -44,7 +44,15 @@ function preview(text: string): string {
  * is what guarantees it is seen, and the poll is what guarantees the store
  * catches up even when the socket is gone.
  */
-export function NotificationBell() {
+export function NotificationBell({
+  align = "right",
+  rail = false,
+}: {
+  /** Which edge of the menu lines up with the trigger. The rail opens to the right. */
+  align?: "left" | "right";
+  /** Labelled 56×48 rail target instead of the old top-bar icon button. */
+  rail?: boolean;
+} = {}) {
   const { token } = useAuth();
   const [open, setOpen] = useState(false);
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
@@ -150,12 +158,22 @@ export function NotificationBell() {
         onClick={toggle}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="relative rounded p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-accent)]"
+        className={
+          rail
+            ? "relative flex h-12 w-14 flex-col items-center justify-center gap-0.5 rounded-md text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]"
+            : "relative rounded p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-accent)]"
+        }
         title={unread > 0 ? `${unread} unread notification(s)` : "Notifications"}
+        aria-label={unread > 0 ? `${unread} unread notifications` : "Notifications"}
       >
-        <Bell className="h-4 w-4" />
+        <Bell className={rail ? "h-5 w-5" : "h-4 w-4"} />
+        {rail && <span className="text-[10px] font-medium leading-none">Alerts</span>}
         {unread > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[var(--color-red)] px-1 text-[9px] font-bold leading-none text-white">
+          <span
+            className={`absolute flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[var(--color-red)] px-1 text-[9px] font-bold leading-none text-white ${
+              rail ? "right-2 top-1" : "-right-0.5 -top-0.5"
+            }`}
+          >
             {unread > 9 ? "9+" : unread}
           </span>
         )}
@@ -165,7 +183,7 @@ export function NotificationBell() {
         anchor={anchor}
         open={open}
         onClose={close}
-        align="right"
+        align={align}
         role="menu"
         className="w-[360px] py-1"
       >
