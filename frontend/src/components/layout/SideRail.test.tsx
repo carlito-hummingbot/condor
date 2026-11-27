@@ -441,4 +441,117 @@ describe("SideRail", () => {
       });
     });
   });
+  describe("the lit state", () => {
+    const button = (name: string) =>
+      [...container.querySelectorAll("button")].find(
+        (el) => el.textContent?.trim() === name,
+      ) as HTMLButtonElement;
+    const click = async (el: Element) => {
+      await act(async () => {
+        (el as HTMLElement).click();
+      });
+      await flush();
+    };
+    /** Rail items that are painted lit, by their label. */
+    const lit = () =>
+      [...container.querySelectorAll('nav[aria-label="Primary"] a, nav[aria-label="Primary"] button')]
+        .filter((el) => el.className.includes("bg-[var(--color-nav-active)]"))
+        .map((el) => el.textContent?.trim());
+
+    it("lights the route's item when nothing is open", async () => {
+      renderAt("/");
+      await flush();
+      expect(lit()).toEqual(["Dashboard"]);
+    });
+
+    it("lights only More while the More panel is open, not the page behind it", async () => {
+      renderAt("/");
+      await flush();
+      await click(button("More"));
+      expect(lit()).toEqual(["More"]);
+    });
+
+    it("lights only Settings while the Settings panel is open", async () => {
+      renderAt("/labs");
+      await flush();
+      expect(lit()).toEqual(["Labs"]);
+      await click(button("Settings"));
+      expect(lit()).toEqual(["Settings"]);
+    });
+
+    it("moves the lit state when the panel switches, and restores the route when it closes", async () => {
+      renderAt("/hub");
+      await flush();
+      expect(lit()).toEqual(["Agents"]);
+      await click(button("More"));
+      expect(lit()).toEqual(["More"]);
+      await click(button("Settings"));
+      expect(lit()).toEqual(["Settings"]);
+      await click(button("Settings"));
+      expect(lit()).toEqual(["Agents"]);
+    });
+
+    it("keeps the route lit rule for More's tabs and the other Settings tabs when closed", async () => {
+      renderAt("/settings?tab=keys");
+      await flush();
+      expect(lit()).toEqual(["More"]);
+      act(() => root.unmount());
+      root = createRoot(container);
+      renderAt("/settings?tab=voice");
+      await flush();
+      expect(lit()).toEqual(["Settings"]);
+    });
+
+    it("does not mark the open opener as the current page", async () => {
+      renderAt("/settings?tab=keys");
+      await flush();
+      expect(currentLabels()).toEqual(["More"]);
+      await click(button("More"));
+      // The panel's own open tab still says "page"; the rail's opener does not.
+      expect(currentLabels()).toEqual(["Keys and Wallets"]);
+      expect(button("More").getAttribute("aria-current")).toBeNull();
+      expect(lit()).toEqual(["More"]);
+    });
+
+    it("lights only the avatar while the account popup is open, not the page behind it", async () => {
+      renderAt("/");
+      await flush();
+      const avatar = container.querySelector('button[aria-label="Algo Trader"]') as HTMLButtonElement;
+      // Closed: the route's item is lit and the avatar is plain.
+      expect(lit()).toEqual(["Dashboard"]);
+      expect(avatar.className).not.toContain("ring-2");
+
+      await click(avatar);
+      expect(lit()).toEqual([]);
+      expect(avatar.className).toContain("ring-2");
+      expect(avatar.getAttribute("aria-expanded")).toBe("true");
+      expect(avatar.getAttribute("aria-current")).toBeNull();
+      expect(currentLabels()).toEqual([]);
+
+      // Switching to a panel moves the lit state to its opener and clears the avatar.
+      await click(button("More"));
+      expect(lit()).toEqual(["More"]);
+      expect(avatar.className).not.toContain("ring-2");
+
+      // Closing the popup brings the route's item back.
+      await click(avatar);
+      expect(avatar.className).toContain("ring-2");
+      await click(avatar);
+      expect(lit()).toEqual(["Dashboard"]);
+      expect(avatar.className).not.toContain("ring-2");
+    });
+
+    it("clears the avatar's lit state after Logout", async () => {
+      renderAt("/labs");
+      await flush();
+      const avatar = container.querySelector('button[aria-label="Algo Trader"]') as HTMLButtonElement;
+      await click(avatar);
+      const logoutItem = [...document.body.querySelectorAll('[role="menuitem"]')].find((el) =>
+        el.textContent?.includes("Logout"),
+      ) as HTMLElement;
+      await click(logoutItem);
+      expect(avatar.className).not.toContain("ring-2");
+      expect(lit()).toEqual(["Labs"]);
+    });
+  });
 });

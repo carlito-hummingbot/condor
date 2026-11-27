@@ -7,8 +7,9 @@ import {
   MORE_ICON,
   RAIL_TOP,
   SETTINGS_ICON,
-  isRailEntryActive,
+  isRailItemLit,
   type NavEntry,
+  type RailOverlayId,
   type RailPanelId,
 } from "@/lib/nav";
 import { useServerRoster } from "@/hooks/useServerRoster";
@@ -22,7 +23,8 @@ import { RailPanel } from "./RailPanel";
  * right), so nothing depends on a hover. The logo and the avatar are the two
  * items without a text label and keep a tooltip. The avatar opens the account
  * menu (name, role, Logout); a red dot on it means the selected server is
- * offline. The account menu and the panel are never open together.
+ * offline. The account menu is the third overlay: it and the panel are never
+ * open together, and while it is open only the avatar is lit.
  *
  * Dashboard, Agents, Labs and More (three dots) on top. The Settings gear and
  * the avatar sit at the foot. More and Settings open one panel beside the
@@ -36,9 +38,9 @@ function itemClass(active: boolean): string {
   }`;
 }
 
-function RailLink({ item }: { item: NavEntry }) {
+function RailLink({ item, overlay }: { item: NavEntry; overlay: RailOverlayId | null }) {
   const { pathname, search } = useLocation();
-  const active = isRailEntryActive(item.id, pathname, search);
+  const active = isRailItemLit(item.id, overlay, pathname, search);
   return (
     <Link
       to={item.to}
@@ -55,31 +57,27 @@ export function SideRail({ onReport }: { onReport: () => void }) {
   const { pathname, search } = useLocation();
   const title = useDashboardTitle();
   const name = useDisplayName();
-  const [panel, setPanel] = useState<RailPanelId | null>(null);
+  // The one open overlay (see `RailOverlayId`). While it is set, only its
+  // opener is lit.
+  const [overlay, setOverlay] = useState<RailOverlayId | null>(null);
+  const [accountAnchor, setAccountAnchor] = useState<HTMLElement | null>(null);
+  const accountOpen = overlay === "account";
+  // Also keeps a deleted server from staying selected while the menu is closed.
+  const { current } = useServerRoster();
+  const serverOffline = !!current && !current.online;
+  const panel: RailPanelId | null = overlay === "more" || overlay === "settings" ? overlay : null;
   const panelId = useId();
   const moreRef = useRef<HTMLButtonElement>(null);
   const settingsRef = useRef<HTMLButtonElement>(null);
   const buttons = { more: moreRef, settings: settingsRef };
-  const [accountAnchor, setAccountAnchor] = useState<HTMLElement | null>(null);
-  const [accountOpen, setAccountOpen] = useState(false);
-  // Also keeps a deleted server from staying selected while the menu is closed.
-  const { current } = useServerRoster();
-  const serverOffline = !!current && !current.online;
-  const toggle = (id: RailPanelId) => {
-    setAccountOpen(false);
-    setPanel((open) => (open === id ? null : id));
-  };
-  const toggleAccount = () => {
-    setPanel(null);
-    setAccountOpen((open) => !open);
-  };
+  const toggle = (id: RailOverlayId) => setOverlay((open) => (open === id ? null : id));
   const close = (restoreFocus: boolean) => {
     const was = panel;
-    setPanel(null);
+    setOverlay(null);
     if (restoreFocus && was) buttons[was].current?.focus();
   };
-  const moreActive = isRailEntryActive("more", pathname, search);
-  const settingsActive = isRailEntryActive("settings", pathname, search);
+  const moreLit = isRailItemLit("more", overlay, pathname, search);
+  const settingsLit = isRailItemLit("settings", overlay, pathname, search);
   const MoreIcon = MORE_ICON;
   const SettingsIcon = SETTINGS_ICON;
 
@@ -95,7 +93,7 @@ export function SideRail({ onReport }: { onReport: () => void }) {
       </Tooltip>
 
       {RAIL_TOP.map((item) => (
-        <RailLink key={item.id} item={item} />
+        <RailLink key={item.id} item={item} overlay={overlay} />
       ))}
 
       <Tooltip label="More">
@@ -105,9 +103,9 @@ export function SideRail({ onReport }: { onReport: () => void }) {
           aria-expanded={panel === "more"}
           aria-controls={panel === "more" ? panelId : undefined}
           aria-haspopup="menu"
-          aria-current={moreActive ? "page" : undefined}
+          aria-current={moreLit && overlay === null ? "page" : undefined}
           onClick={() => toggle("more")}
-          className={itemClass(moreActive || panel === "more")}
+          className={itemClass(moreLit)}
         >
           <MoreIcon className="h-5 w-5" />
           <span className="text-[10px] font-medium leading-none">More</span>
@@ -123,9 +121,9 @@ export function SideRail({ onReport }: { onReport: () => void }) {
           aria-expanded={panel === "settings"}
           aria-controls={panel === "settings" ? panelId : undefined}
           aria-haspopup="menu"
-          aria-current={settingsActive ? "page" : undefined}
+          aria-current={settingsLit && overlay === null ? "page" : undefined}
           onClick={() => toggle("settings")}
-          className={itemClass(settingsActive || panel === "settings")}
+          className={itemClass(settingsLit)}
         >
           <SettingsIcon className="h-5 w-5" />
           <span className="text-[10px] font-medium leading-none">Settings</span>
@@ -139,7 +137,7 @@ export function SideRail({ onReport }: { onReport: () => void }) {
           aria-label={name}
           aria-expanded={accountOpen}
           aria-haspopup="menu"
-          onClick={toggleAccount}
+          onClick={() => toggle("account")}
           className={`relative mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-primary-fill)] text-[11px] font-bold text-[var(--on-primary)] ${
             accountOpen ? "ring-2 ring-[var(--color-primary)] ring-offset-2 ring-offset-[var(--color-surface)]" : ""
           }`}
@@ -164,7 +162,7 @@ export function SideRail({ onReport }: { onReport: () => void }) {
       <AccountMenu
         anchor={accountAnchor}
         open={accountOpen}
-        onClose={() => setAccountOpen(false)}
+        onClose={() => setOverlay(null)}
       />
     </nav>
   );
