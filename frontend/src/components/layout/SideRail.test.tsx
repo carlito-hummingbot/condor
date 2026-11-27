@@ -2,7 +2,7 @@
  * The rail's active item and the More menu.
  *
  * Active-state rules live in `lib/nav` and are tested there. This checks that
- * the rail actually paints them, and that More opens onto its six entries. The avatar has no menu yet: it is the initials and it
+ * the rail actually paints them, and that More and Settings open onto their own entries. The avatar has no menu yet: it is the initials and it
  * goes to Settings.
  *
  * @vitest-environment jsdom
@@ -100,7 +100,7 @@ describe("SideRail", () => {
   it("lights More on a Settings page and marks the open tab in the menu", async () => {
     renderAt("/settings?tab=gateway");
     await flush();
-    expect(currentLabels()).toContain("More");
+    expect(currentLabels()).toEqual(["More"]);
 
     const more = [...container.querySelectorAll("button")].find(
       (el) => el.textContent?.trim() === "More",
@@ -121,6 +121,48 @@ describe("SideRail", () => {
     ]);
     const lit = rows.filter((el) => el.getAttribute("aria-current") === "page");
     expect(lit.map((el) => el.textContent?.trim())).toEqual(["Gateway"]);
+  });
+
+  it("puts More right after Labs, and Settings last, above the avatar", async () => {
+    renderAt("/");
+    await flush();
+    const nav = container.querySelector('nav[aria-label="Primary"]')!;
+    const order = [...nav.querySelectorAll("a, button")].map(
+      (el) => el.getAttribute("aria-label") || el.textContent?.trim(),
+    );
+    expect(order.slice(-6)).toEqual(["Dashboard", "Agents", "Labs", "More", "Settings", "Algo Trader"]);
+  });
+
+  it("opens the Settings menu with five entries of its own and lights the open tab", async () => {
+    renderAt("/settings?tab=appearance");
+    await flush();
+    expect(currentLabels()).toEqual(["Settings"]);
+
+    const gear = [...container.querySelectorAll("button")].find(
+      (el) => el.textContent?.trim() === "Settings",
+    ) as HTMLButtonElement;
+    await act(async () => {
+      gear.click();
+    });
+    await flush();
+
+    const rows = [...document.body.querySelectorAll('[role="menuitem"]')];
+    expect(rows.map((el) => el.textContent?.trim())).toEqual([
+      "Agents",
+      "LLM Endpoints",
+      "Voice & AI",
+      "Appearance",
+      "Privacy",
+    ]);
+    expect(rows.map((el) => el.getAttribute("href"))).toEqual([
+      "/settings?tab=agents",
+      "/settings?tab=llm",
+      "/settings?tab=voice",
+      "/settings?tab=appearance",
+      "/settings?tab=privacy",
+    ]);
+    const lit = rows.filter((el) => el.getAttribute("aria-current") === "page");
+    expect(lit.map((el) => el.textContent?.trim())).toEqual(["Appearance"]);
   });
 
   it("opens the report dialog from the last More row", async () => {
@@ -157,7 +199,7 @@ describe("SideRail", () => {
     await flush();
     const nav = container.querySelector('nav[aria-label="Primary"]')!;
     const labels = [...nav.querySelectorAll("a span, button span")].map((el) => el.textContent);
-    expect(labels).toEqual(["Dashboard", "Agents", "Labs", "More"]);
+    expect(labels).toEqual(["Dashboard", "Agents", "Labs", "More", "Settings"]);
     expect(nav.querySelector('[aria-label*="otification"]')).toBeNull();
   });
 

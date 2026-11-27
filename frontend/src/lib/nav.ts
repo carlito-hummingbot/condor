@@ -1,14 +1,20 @@
 import {
   Bot,
+  Brain,
   Bug,
   Download,
   FlaskConical,
   KeyRound,
   LayoutDashboard,
+  Mic,
+  MoreHorizontal,
   Network,
+  Palette,
   Server,
   ServerCog,
   Settings,
+  Shield,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 
@@ -43,14 +49,16 @@ import {
  * its own sat beside Agents saying the same thing twice. Its door was the card
  * at the foot of the Agents rail.
  *
- * The top bar is a left icon rail now, with four doors: Dashboard, Agents,
- * Labs and More. Dashboard is `/` (the chat home until the stats page lands).
- * Agents is `/hub`, the Agents workspace, and stays lit on an agent's own
- * page. Labs is `/labs`, built in a later change; until then it shows the
- * ordinary not-found page inside the shell. More is the gear at the foot of
- * the rail and opens the Settings tabs people reach for most. Portfolio,
- * Trade, DEX, Routines and Bots have no door in the nav for now; their routes
- * still work by address.
+ * The top bar is a left icon rail now. Four doors in the main group:
+ * Dashboard, Agents, Labs and More (three dots). Dashboard is `/` (the chat
+ * home until the stats page lands). Agents is `/hub`, the Agents workspace,
+ * and stays lit on an agent's own page. Labs is `/labs`, built in a later
+ * change; until then it shows the ordinary not-found page inside the shell.
+ * More opens six entries: five Settings tabs about the server and the install,
+ * and Report an Issue. The Settings gear sits at the foot of the rail, above
+ * the avatar, and opens five other Settings tabs. Portfolio, Trade, DEX,
+ * Routines and Bots have no door in the nav for now; their routes still work
+ * by address.
  */
 export interface NavEntry {
   id: string;
@@ -79,10 +87,26 @@ export const MORE_ITEMS: readonly NavEntry[] = [
   { id: "updates", to: "/settings?tab=updates", icon: Download, label: "Updates" },
 ];
 
+/**
+ * The Settings gear's menu: the Settings tabs about Condor itself and the
+ * person using it. None of them is in More. Each `to` is a Settings tab.
+ * (Ids carry a prefix because "agents" is also a rail door.)
+ */
+export const SETTINGS_ITEMS: readonly NavEntry[] = [
+  { id: "set-agents", to: "/settings?tab=agents", icon: Brain, label: "Agents" },
+  { id: "set-llm", to: "/settings?tab=llm", icon: Sparkles, label: "LLM Endpoints" },
+  { id: "set-voice", to: "/settings?tab=voice", icon: Mic, label: "Voice & AI" },
+  { id: "set-appearance", to: "/settings?tab=appearance", icon: Palette, label: "Appearance" },
+  { id: "set-privacy", to: "/settings?tab=privacy", icon: Shield, label: "Privacy" },
+];
+
 export const REPORT_ISSUE = { label: "Report an Issue", icon: Bug } as const;
 
-/** The gear at the foot of the rail. It opens the More menu; it is not a link. */
-export const MORE_ICON = Settings;
+/** The three dots in the main group. It opens the More menu; it is not a link. */
+export const MORE_ICON = MoreHorizontal;
+
+/** The gear at the foot of the rail. It opens the Settings menu; it is not a link. */
+export const SETTINGS_ICON = Settings;
 
 /** The chat home only. The Hub and an agent's page belong to Agents now. */
 export function isDashboardActive(pathname: string): boolean {
@@ -98,17 +122,37 @@ export function isLabsActive(pathname: string): boolean {
   return pathname === "/labs" || pathname.startsWith("/labs/");
 }
 
-/** True on any Settings page, so the gear stays lit while More's pages are open. */
-export function isMoreActive(pathname: string): boolean {
+function onSettingsPage(pathname: string): boolean {
   return pathname === "/settings" || pathname.startsWith("/settings/");
 }
 
-/** The More entry whose Settings tab is on screen. `/settings` alone opens Servers. */
+/** The Settings tab on screen. `/settings` alone opens Servers. */
+function settingsTab(search: string): string {
+  return new URLSearchParams(search).get("tab") ?? "servers";
+}
+
+function tabOf(entry: NavEntry): string | null {
+  return new URL(entry.to, "http://x").searchParams.get("tab");
+}
+
+/** True when the open Settings tab is one of More's, so the dots stay lit. */
+export function isMoreActive(pathname: string, search = ""): boolean {
+  return onSettingsPage(pathname) && MORE_ITEMS.some((e) => tabOf(e) === settingsTab(search));
+}
+
+/** The More entry whose Settings tab is on screen. */
 export function isMoreEntryActive(entry: NavEntry, pathname: string, search: string): boolean {
-  if (!isMoreActive(pathname)) return false;
-  const want = new URL(entry.to, "http://x").searchParams.get("tab");
-  const have = new URLSearchParams(search).get("tab") ?? "servers";
-  return want === have;
+  return onSettingsPage(pathname) && tabOf(entry) === settingsTab(search);
+}
+
+/** True on any other Settings tab (the five in the gear menu, Notifications, Admin). */
+export function isSettingsActive(pathname: string, search = ""): boolean {
+  return onSettingsPage(pathname) && !isMoreActive(pathname, search);
+}
+
+/** The gear-menu entry whose Settings tab is on screen. */
+export function isSettingsEntryActive(entry: NavEntry, pathname: string, search: string): boolean {
+  return onSettingsPage(pathname) && tabOf(entry) === settingsTab(search);
 }
 
 export function isRailEntryActive(id: string, pathname: string, search: string): boolean {
@@ -120,10 +164,14 @@ export function isRailEntryActive(id: string, pathname: string, search: string):
     case "labs":
       return isLabsActive(pathname);
     case "more":
-      return isMoreActive(pathname);
+      return isMoreActive(pathname, search);
+    case "settings":
+      return isSettingsActive(pathname, search);
     default: {
-      const entry = MORE_ITEMS.find((item) => item.id === id);
-      return entry ? isMoreEntryActive(entry, pathname, search) : false;
+      const more = MORE_ITEMS.find((item) => item.id === id);
+      if (more) return isMoreEntryActive(more, pathname, search);
+      const setting = SETTINGS_ITEMS.find((item) => item.id === id);
+      return setting ? isSettingsEntryActive(setting, pathname, search) : false;
     }
   }
 }
