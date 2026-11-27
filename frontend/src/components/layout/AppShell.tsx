@@ -108,10 +108,7 @@ function AppShellBody() {
           currently mounts it inside `main`; expect that conflict. */}
       <SideRail onReport={() => setReportOpen(true)} />
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Server, Gateway, currency, bell and theme, until the avatar menu
-            takes them. Inside the ChatProvider on purpose: the bell reads the
-            same react-query cache the chat socket pushes live notifications
-            into (FEAT-048). */}
+        {/* Server, Gateway status and Switch Mode (light/dark). */}
         <ShellControls />
 
         {/* An update landed but this process is still the old one, so the bundle
