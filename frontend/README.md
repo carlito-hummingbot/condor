@@ -1,5 +1,13 @@
 # React + TypeScript + Vite
 
+## Dev server
+
+`npm run dev` serves the UI and proxies `/api` (HTTP and WebSocket, including the chat socket) to the Condor on `http://localhost:8088`. The chat socket dials the page's own host, so it goes through that proxy.
+
+- `VITE_API_TARGET=http://127.0.0.1:8110 npm run dev` proxies to a backend on another address or port instead (dev-time only; the production build does not read it).
+- `npm run dev -- --host 127.0.0.1 --port 5201` moves the dev server itself. It listens on localhost only unless `--host` says otherwise.
+- `VITE_CHAT_WS_HOST=host:port` (optional, build-time) sends the chat socket to a different host than the page's.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
