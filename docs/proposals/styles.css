@@ -57,3 +57,5 @@ th { background: var(--card); }
 .callout p { margin: 0.3rem 0; }
 code { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; font-size: 0.9em; }
 .sources { font-size: 0.9rem; color: var(--muted); }
+/* Wizard form screenshots: cropped to the card at 2x, shown near their on-screen size */
+figure.form img { max-width: 520px; width: 100%; }

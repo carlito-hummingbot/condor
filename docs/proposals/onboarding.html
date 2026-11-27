@@ -15,14 +15,14 @@
 <nav class="top"><a href="index.html">All proposals</a></nav>
 
 <h1>Guided first-run onboarding</h1>
-<p class="meta">Status: <strong>in review</strong> &middot; PRs #2, #9, #11, #12, #14 into <code>ui-redesign</code> &middot; Last updated: 2026-11-26 &middot; Branches reviewed on rn5 against an empty preview Condor</p>
+<p class="meta">Status: <strong>in review</strong> &middot; PRs #2, #9, #11, #12, #14 into <code>ui-redesign</code> &middot; Last updated: 2026-11-27 &middot; Branches reviewed on rn5 against an empty preview Condor</p>
 <p class="lede">Replace the blocking "Connect an Exchange or Wallet" overlay with a short, skippable setup that greets traders by name, confirms what <code>make setup</code> already configured, and leaves a gentle reminder instead of a wall. The look stays the same. Only the workflow changes.</p>
 
 <h2 id="why">Why</h2>
 <p>A new Condor install opens on a wall: a modal that blocks Portfolio, Trade, DEX and Bots until an API key exists. The first thing a trader learns is what they cannot do yet. A short guided setup flips that. It confirms what setup already did, asks only for what Condor needs, lets people skip what they are not ready for, and lands them in a dashboard that already feels like theirs.</p>
 <ul>
-  <li><strong>Setup, not a tour.</strong> The wizard collects settings (name, model, keys, look, alerts) and never explains the interface. This follows the Nielsen Norman Group guidance that onboarding fits apps that need user information to start, and that push tutorials interrupt people.</li>
-  <li><strong>Short and visible.</strong> A readiness summary first, then five to seven steps with progress dots; every step except the name is skippable.</li>
+  <li><strong>Setup, not a tour.</strong> The wizard collects settings (name, model, keys, look) and never explains the interface. This follows the Nielsen Norman Group guidance that onboarding fits apps that need user information to start, and that push tutorials interrupt people.</li>
+  <li><strong>Short and visible.</strong> A readiness summary first, then four to six steps with progress dots; every step except the name is skippable.</li>
   <li><strong>No dead end.</strong> Skipping leaves a one-line reminder on trading pages, not a modal.</li>
 </ul>
 <p class="sources">Sources carried over from the first version of this proposal (not re-checked in this revision):
@@ -41,7 +41,7 @@
 </div>
 
 <h2 id="after">After</h2>
-<p>A frosted wizard that starts with a readiness summary and then shows only the steps this install still needs (five to seven dots). Name is required; everything else can be skipped. An install that already has keys, a wallet, a conversation or a bot is marked complete and never sees it. Run setup again lives in the avatar menu and in Settings, Appearance.</p>
+<p>A frosted wizard that starts with a readiness summary and then shows only the steps this install still needs (four to six dots). Name is required; everything else can be skipped. An install that already has keys, a wallet, a conversation or a bot is marked complete and never sees it. Run setup again lives in the avatar menu and in Settings, Appearance.</p>
 
 <h3>Server fallback (only when setup leaves no server)</h3>
 <p>Setup normally creates a server named <code>local</code> (<code>localhost:8000</code>) and asks for its API username and password, so most installs go straight to the readiness check. The saved server is not tested on save, so the wizard checks its status after.</p>
@@ -81,7 +81,6 @@
     <tr><td>Exchange keys</td><td><code>GET /settings/credentials?server=</code> (empty list)</td><td>Show the connectors found</td><td>"Add an exchange key" &rarr; Settings, API Keys. Skippable</td></tr>
     <tr><td>AI model</td><td><code>GET /sessions/options</code> (ready, unverified or missing)</td><td>Name the ready model</td><td>"Chat needs a model" with the command or picker. Skippable</td></tr>
     <tr><td>Gateway (DEX)</td><td><code>GET /settings/gateway/status</code></td><td>Hidden</td><td>Optional; only shown if the user opts into DEX</td></tr>
-    <tr><td>Telegram</td><td>Local mode has no token</td><td>Hidden in local mode</td><td>Read-only note in Telegram mode</td></tr>
   </tbody>
 </table>
 <p>Evidence from a clean install on the rn5 test machine (read-only inspection, no secrets): the install ended with server <code>local</code> online and accepted, no first-run preferences saved, no exchange key added by the user, Gateway not installed, and a model that was skipped in setup but still set as the default, so chat failed until a model was logged in. A wizard built on the signals above would have shown: server connected, keys to add, model needs setup.</p>
@@ -95,39 +94,38 @@
 
 <h3>Your setup (new first step, always shown)</h3>
 <p>The wizard opens with a summary of what setup already did, read from the install, so nothing is asked twice. Only the items marked <em>Needs you</em> lead to a step. Prototype built on branch <code>ui/onboarding-readiness</code> (PR #14, stacked on #12), seen on the rn5 preview with a stand-in Hummingbot API.</p>
-<div class="pair">
-  <figure><img src="assets/readiness-1-needs-model-and-key.png" alt="Here is your setup: server ready, AI model needs you, exchange or wallet needs you, DEX gateway optional"><figcaption>Matches the clean install described above: server ready, no usable model, no exchange key. Seven steps follow.</figcaption></figure>
-  <figure><img src="assets/readiness-2-key-present.png" alt="Same summary with the exchange row Ready"><figcaption>An exchange key is already present, so the "Connect where you trade" step drops out (six steps).</figcaption></figure>
-</div>
-<figure><img src="assets/readiness-3-server-offline.png" alt="Summary with the server row Needs you and a Check again button"><figcaption>Server configured but not answering: the row says so, the exchange row reads "Not checked" (a failed read is never treated as missing), and "Check again" re-reads everything.</figcaption></figure>
+<p class="sources">The screenshots in this section show only the form (the app behind it is cropped out), at twice the pixel density, so the text reads at the size it has on screen.</p>
+<figure class="form"><img src="assets/readiness-1-needs-model-and-key.png" alt="Here is your setup, step 1 of 6: server ready, AI model needs you, exchange or wallet needs you, DEX gateway optional"><figcaption>Matches the clean install described above: server ready, no usable model, no exchange key. Five steps follow.</figcaption></figure>
+<figure class="form"><img src="assets/readiness-2-key-present.png" alt="Same summary, step 1 of 5, with the exchange row Ready"><figcaption>An exchange key is already present, so the "Connect where you trade" step drops out (five steps in all).</figcaption></figure>
+<figure class="form"><img src="assets/readiness-3-server-offline.png" alt="Summary, step 1 of 4, with the server row Needs you and a Check again button"><figcaption>Server configured but not answering: the row says so, the exchange row reads "Not checked" (a failed read is never treated as missing), and "Check again" re-reads everything. Here the model is ready, so only the name and look steps follow.</figcaption></figure>
 <ul>
-  <li><strong>What the user is asked:</strong> name (always), AI model only if no model is ready, exchange or wallet only if none is connected, then look and alerts (preferences that cannot be detected). DEX Gateway is optional and never a step.</li>
+  <li><strong>What the user is asked:</strong> name (always), AI model only if no model is ready, exchange or wallet only if none is connected, then look and units (a preference that cannot be detected). DEX Gateway is optional and never a step.</li>
   <li><strong>The list freezes</strong> when the user presses Continue, so connecting a key mid-run does not remove a step under them.</li>
   <li><strong>Checks never trap the user.</strong> A read still pending after 6 seconds shows "Not checked" and Continue works.</li>
   <li><strong>The name step no longer repeats</strong> the server and model status line.</li>
   <li><strong>Resume:</strong> reopening the wizard starts at the summary, which re-reads the install, instead of the last step.</li>
 </ul>
-<p class="sources">Checked: types, lint, 43 unit tests (the logic that picks the steps), and the screens above. Not captured: the "everything ready" summary, because the preview machine has no usable AI model to show as ready; that case is covered by a unit test only.</p>
+<p class="sources">Checked: types, lint, 43 unit tests (the logic that picks the steps), and the screens above. Not captured: the "everything ready" summary; that case is covered by a unit test only.</p>
 
-<p class="sources">All step screenshots below were retaken from the PR #14 build (summary first, so a full run is 7 steps; steps 3 to 7 shown). A real run shows fewer dots when the install already has a model or a key.</p>
+<p class="sources">All step screenshots below show only the form, retaken from the current build on the rn5 preview (summary first, so a full run is 6 steps). A real run shows fewer dots when the install already has a model or a key. The "After skipping" screenshot keeps the page around it on purpose.</p>
 
 <h3>Make it yours (always)</h3>
-<figure><img src="assets/readiness-4-name-step.png" alt="Make it yours step, step 2 of 7, with the name field prefilled Algo Trader and no status line"><figcaption>Name (required, prefilled "Algo Trader" when nothing is saved) and dashboard title (optional, per user, up to 40 characters; longer titles are shortened in the top bar). Step 2 of 7 because the summary is step 1, and the status line is gone. PRs #2 and #14.</figcaption></figure>
+<figure class="form"><img src="assets/readiness-4-name-step.png" alt="Make it yours step, step 2 of 6, with the name field prefilled Algo Trader and no status line"><figcaption>Name (required, prefilled "Algo Trader" when nothing is saved) and dashboard title (optional, per user, up to 40 characters; longer titles are shortened in the top bar). Step 2 of 6 because the summary is step 1, and the status line is gone. PRs #2 and #14.</figcaption></figure>
 
 <h3>AI model (only if no model is ready)</h3>
-<figure><img src="assets/onboarding-2-ai-model.png" alt="AI model step, step 3 of 7, listing agent CLIs, all not installed"><figcaption>Confirms the model setup chose, or lets you pick one. On this test machine every row reads "not installed". PR #11.</figcaption></figure>
+<p>The step now looks at what this machine can already run and lists it first, each with a <strong>Connect</strong> button. Connect chooses that model and moves on. Everything else (not installed, not reachable, OpenRouter, custom endpoints) sits under <em>Other options</em>, so the list is no longer a wall of "not installed" lines. If nothing usable is found, the full list shows as before, with the command that fixes each row.</p>
+<figure class="form"><img src="assets/onboarding-2b-ai-model-found.png" alt="AI model step, step 3 of 6: ChatGPT Codex found, installed and logged in, with a Connect button and an Other options fold"><figcaption>A usable model was found on the machine (here a stand-in Codex setup on the preview machine, so test data): one row, one Connect button, the rest folded.</figcaption></figure>
+<figure class="form"><img src="assets/onboarding-2-ai-model.png" alt="AI model step, step 3 of 6, nothing found: the full list of agent CLIs, all not installed"><figcaption>Nothing found: the full list stays, each blocked row naming its command. Skip leaves the chat quiet.</figcaption></figure>
+<p><strong>What it detects.</strong> Condor's backend already checks this machine for the Claude, Gemini, Copilot and Codex command-line tools (installed, and a login file where the tool keeps one), and for Ollama and LM Studio servers that answer. OpenRouter counts as available when its key is set. <strong>What Connect does not do:</strong> it cannot log a command-line tool in or install it, because those are interactive steps on the machine; a row that is installed but whose login cannot be proven shows its sentence ("run <code>claude</code> once and log in") and can still be connected. A cloud key entered in the browser would need a new backend call, which is not part of this change.</p>
 
 <h3>Connect where you trade (only if nothing is connected)</h3>
-<figure><img src="assets/onboarding-3-connect.png" alt="Connect where you trade step, step 4 of 7, with exchange key, Hyperliquid and DEX wallet options"><figcaption>Exchange API key, Hyperliquid wallet or DEX wallet. Skippable. PR #9.</figcaption></figure>
+<figure class="form"><img src="assets/onboarding-3-connect.png" alt="Connect where you trade step, step 4 of 6, with exchange key, Hyperliquid and DEX wallet options"><figcaption>Exchange API key, Hyperliquid wallet or DEX wallet. Skippable. PR #9.</figcaption></figure>
 
 <h3>Look and units</h3>
-<figure><img src="assets/onboarding-4-look.png" alt="Look and units step, step 5 of 7, with theme, colour-blind mode and display currency"><figcaption>Theme, colour-blind mode, display currency. Applied live. PR #12.</figcaption></figure>
-
-<h3>Stay in the loop</h3>
-<figure><img src="assets/onboarding-5-alerts.png" alt="Stay in the loop step, step 6 of 7, with push alerts, Telegram status and usage summaries"><figcaption>Push alerts, Telegram status (read-only) and the usage-summaries choice. PR #12.</figcaption></figure>
+<figure class="form"><img src="assets/onboarding-4-look.png" alt="Look and units step, step 5 of 6, with theme, colour-blind mode and display currency"><figcaption>Theme, colour-blind mode, display currency. Applied live. PR #12.</figcaption></figure>
 
 <h3>You're set</h3>
-<figure><img src="assets/onboarding-6-youre-set.png" alt="You're set summary, step 7 of 7, with Deploy a bot and Browse agents shortcuts"><figcaption>What was set or skipped, plus two shortcuts. PR #2.</figcaption></figure>
+<figure class="form"><img src="assets/onboarding-5-youre-set.png" alt="You're set summary, step 6 of 6, with a recap of name, dashboard, server, skipped steps and model, and a Finish button"><figcaption>What was set or skipped, then Finish. There are no shortcuts: a new user looks around first, and Finish closes setup on the page they were on. The "Deploy a bot" and "Browse agents" cards were removed. PR #2.</figcaption></figure>
 
 <h3>After skipping: a reminder, not a wall</h3>
 <figure><img src="assets/onboarding-keys-reminder.png" alt="Portfolio page with a one-line Connect an exchange or wallet banner at the top"><figcaption>The page stays usable; a banner offers "Connect keys". PR #2.</figcaption></figure>
@@ -139,15 +137,18 @@
     <tr><td>#2</td><td><code>ui/onboarding-shell</code></td><td>Wizard shell, server gate, name step, You're set, keys reminder; removes the overlay</td><td class="s ok">Built, works</td></tr>
     <tr><td>#9</td><td><code>ui/onboarding-connect</code></td><td>Connect where you trade step</td><td class="s ok">Built, works</td></tr>
     <tr><td>#11</td><td><code>ui/onboarding-model</code></td><td>AI model step</td><td class="s tweak">Works, tweak below</td></tr>
-    <tr><td>#12</td><td><code>ui/onboarding-look</code></td><td>Look and units, Stay in the loop</td><td class="s ok">Built, works</td></tr>
+    <tr><td>#12</td><td><code>ui/onboarding-look</code></td><td>Look and units (the Stay in the loop step it also built is removed in the follow-ups below)</td><td class="s ok">Built, works</td></tr>
     <tr><td>#14</td><td><code>ui/onboarding-readiness</code></td><td>"Your setup" readiness summary first; only missing steps follow; name step drops the status line</td><td class="s ok">Built, works</td></tr>
+    <tr><td>pending</td><td><code>ui/onboarding-no-alerts</code></td><td>Removes the Stay in the loop step (code, dots, tests)</td><td class="s ok">Built, tested</td></tr>
+    <tr><td>pending</td><td><code>ui/onboarding-done-simple</code></td><td>You're set: removes the Deploy a bot and Browse agents cards</td><td class="s ok">Built, tested</td></tr>
+    <tr><td>pending</td><td><code>ui/onboarding-model-connect</code></td><td>AI model step: found models first, each with Connect</td><td class="s tweak">Built, tested; see open point 1</td></tr>
   </tbody>
 </table>
 <p>Stacked PRs, merge in order. Frontend only; the API and routes are unchanged. This proposal and the <a href="side-rail.html">side-rail proposal</a> both touch <code>AppShell.tsx</code>: merge the rail first, then rebase onboarding.</p>
 
 <h2 id="open">Open points from review</h2>
 <ol>
-  <li><strong>Model step (#11).</strong> When no agent tool is installed, the list is a wall of "not installed &mdash; npm install ..." lines. Consider showing the ready or recommended option first and folding the rest.</li>
+  <li><strong>Model step (#11).</strong> Addressed in the follow-up: found models first with Connect, the rest folded. Still open: the backend reports one "usable" flag, so a tool that is installed but not logged in looks the same as a logged-in one (its sentence differs). Sending the three states it already computes (ready, unverified, missing) would let the screen say "Installed, log in once" instead of offering Connect.</li>
   <li><strong>Server fallback.</strong> The current screen is a full form for the no-server case and ignores the <code>local</code> server that setup creates. Replace it with a readiness check that shows only what is missing (see "Better: a readiness check"), with the four server states as the fallback. Open: whether a test-connection call is added on the backend, how the wizard shows "starting" for a container that is still coming up, and whether the readiness check replaces steps 2 and 3 or sits in front of them.</li>
   <li><strong>Header noise.</strong> A red "Gateway" pill sits in the top bar behind the wizard on a fresh install. It is not actionable at that moment.</li>
   <li><strong>Resume behaviour.</strong> Fixed in #14: reopening the wizard starts at the summary, which re-reads the install, instead of the last step.</li>
@@ -155,13 +156,14 @@
 <p>Not checked yet: light theme and colour-blind mode inside the wizard, a real phone, and the wizard on an install that already has keys.</p>
 
 <h2 id="decision">Decision requested</h2>
-<div class="callout"><p>Approve the wizard (readiness summary, then five to seven steps) and the non-blocking reminder, shipped as PRs #2, #9, #11, #12 and #14 into <code>ui-redesign</code>, subject to the open points above.</p></div>
+<div class="callout"><p>Approve the wizard (readiness summary, then four to six steps) and the non-blocking reminder, shipped as PRs #2, #9, #11, #12 and #14 into <code>ui-redesign</code>, subject to the open points above.</p></div>
 
 <h2 id="log">Refinement log</h2>
 <p>Newest first. Add a row for every change that comes out of review.</p>
 <table>
   <thead><tr><th>Date</th><th>Change</th><th>Reason / source</th><th>PR</th></tr></thead>
   <tbody>
+    <tr><td>2026-11-27</td><td>Wizard screenshots now show only the form at twice the pixel density; removed the Stay in the loop step and its screenshot (dots 7 to 6); "You're set" no longer offers Deploy a bot or Browse agents; AI model step detects what the machine can run and shows Connect; retook every step screenshot except "After skipping"</td><td>User review of the proposal. Code: <code>ui/onboarding-no-alerts</code>, <code>ui/onboarding-done-simple</code>, <code>ui/onboarding-model-connect</code> (PR numbers pending). Telemetry consent is no longer asked in the wizard; the existing notice strip covers it after setup</td><td>pending</td></tr>
     <tr><td>2026-11-26</td><td>Retook the AI model, connect, look, alerts and You're set screenshots from the PR #14 build so the dots count the summary step (steps 3 to 7 of 7)</td><td>Preview on rn5 on the readiness branch; the old shots read "of 6"</td><td>#13</td></tr>
     <tr><td>2026-11-26</td><td>Synced with the open PRs: added #14 to the rollout, refreshed the name-step screenshot and caption (summary first, title capped at 40 characters), marked resume as fixed, and noted that the other step screenshots predate the summary</td><td>Standing rule: the doc follows the real UI in the same step</td><td>#13</td></tr>
     <tr><td>2026-11-26</td><td>Decision: summary first, then only the missing steps. Built "Your setup" check (<code>ui/onboarding-readiness</code>), 43 unit tests, screenshots of three states; name step no longer repeats status; 6 s read deadline</td><td>Refinement session. Finding: Condor caches a server's online flag, so a server that just went down can read "Connected" until its cache refreshes (backend behaviour, not changed)</td><td>#14</td></tr>
