@@ -554,16 +554,36 @@ export function withActiveAgentKey(
 }
 
 /**
- * Split the model catalogue for the setup screen. "found" is what this machine
- * can run right now (`ready` is true: a CLI that is installed, a local server
- * that answers, a key that is set). A row the backend could not probe has no
- * `ready` and is not called found. Pickers (OpenRouter, custom) open a list and
- * are never a one-click connection, so they stay in "other".
+ * Whether the backend proved this model is usable here: installed and logged in
+ * (`state: "ready"`). An installed tool whose login cannot be proven is
+ * `"unverified"` and is not detected, even though `ready` is true for it. A
+ * backend that does not send `state` (older, or the probe failed) falls back to
+ * `ready`, which is the looser flag.
  */
-export function splitModelOptions<T extends { ready?: boolean; picker?: boolean }>(
-  agents: readonly T[],
-): { found: T[]; other: T[] } {
-  const found = agents.filter((agent) => !agent.picker && agent.ready === true);
+export function isDetected(agent: {
+  ready?: boolean;
+  state?: "ready" | "unverified" | "missing";
+  picker?: boolean;
+}): boolean {
+  if (agent.picker) return false;
+  return agent.state !== undefined ? agent.state === "ready" : agent.ready === true;
+}
+
+/**
+ * Split the model catalogue for the setup screen. "found" is what this machine
+ * can run right now and the backend proved it (see `isDetected`). A row the
+ * backend could not probe, or could not prove, is not called found. Pickers
+ * (OpenRouter, custom) open a list and are never a one-click connection, so they
+ * stay in "other".
+ */
+export function splitModelOptions<
+  T extends {
+    ready?: boolean;
+    state?: "ready" | "unverified" | "missing";
+    picker?: boolean;
+  },
+>(agents: readonly T[]): { found: T[]; other: T[] } {
+  const found = agents.filter(isDetected);
   const other = agents.filter((agent) => !found.includes(agent));
   return { found, other };
 }
@@ -584,16 +604,25 @@ export interface MissingModelRow {
 }
 
 /**
- * Rows that are not found, one per provider. Four Claude models that all say
+ * Rows that are not detected, one per provider. Four Claude models that all say
  * "not installed" are one row, named for the provider rather than for the model.
- * A row the backend could not probe says so instead of showing an empty line.
+ * An installed tool whose login is unproven is here too, with its own sentence
+ * ("run claude once and log in"). A row the backend could not probe says so
+ * instead of showing an empty line.
  */
 export function groupMissingModels<
-  T extends { key: string; label: string; ready?: boolean; picker?: boolean; detail?: string },
+  T extends {
+    key: string;
+    label: string;
+    ready?: boolean;
+    state?: "ready" | "unverified" | "missing";
+    picker?: boolean;
+    detail?: string;
+  },
 >(agents: readonly T[]): MissingModelRow[] {
   const groups = new Map<string, T[]>();
   for (const agent of agents) {
-    if (agent.picker || agent.ready === true) continue;
+    if (agent.picker || isDetected(agent)) continue;
     const base = agent.key.split(":")[0];
     groups.set(base, [...(groups.get(base) ?? []), agent]);
   }

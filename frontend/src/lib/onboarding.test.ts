@@ -15,6 +15,7 @@ import {
   readinessLoading,
   readinessRows,
   groupMissingModels,
+  isDetected,
   preferredModel,
   splitModelOptions,
   stepsForPlan,
@@ -539,5 +540,37 @@ describe("model step rows", () => {
     expect(rows.map((row) => row.label)).toEqual(["Claude Code", "Claude (ACP)", "Ollama"]);
     expect(rows[1].detail).toBe("not installed — npm i");
     expect(rows[2].detail).toBe("Could not be checked from here.");
+  });
+});
+
+describe("detected means proven ready", () => {
+  it("uses state when the backend sends it", () => {
+    expect(isDetected({ state: "ready", ready: true })).toBe(true);
+    expect(isDetected({ state: "unverified", ready: true })).toBe(false);
+    expect(isDetected({ state: "missing", ready: false })).toBe(false);
+  });
+
+  it("falls back to ready when state is absent", () => {
+    expect(isDetected({ ready: true })).toBe(true);
+    expect(isDetected({ ready: false })).toBe(false);
+    expect(isDetected({})).toBe(false);
+  });
+
+  it("never calls a picker detected", () => {
+    expect(isDetected({ state: "ready", ready: true, picker: true })).toBe(false);
+  });
+
+  it("keeps an unproven login out of found and preselect, and gives it a Connect row", () => {
+    const rows = [
+      { key: "gemini", label: "Gemini CLI", ready: true, state: "unverified" as const, detail: "installed; run `npx @google/gemini-cli` once and log in" },
+      { key: "codex", label: "ChatGPT Codex", ready: true, state: "ready" as const, detail: "installed and logged in" },
+      { key: "copilot", label: "GitHub Copilot CLI", ready: false, state: "missing" as const, detail: "not installed" },
+    ];
+    const { found } = splitModelOptions(rows);
+    expect(found.map((row) => row.key)).toEqual(["codex"]);
+    expect(preferredModel(found)?.key).toBe("codex");
+    const missing = groupMissingModels(rows);
+    expect(missing.map((row) => row.key)).toEqual(["gemini", "copilot"]);
+    expect(missing[0].detail).toContain("log in");
   });
 });
