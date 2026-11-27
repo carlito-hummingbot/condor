@@ -4,7 +4,8 @@
  * Active-state rules live in `lib/nav` and are tested there. This checks that
  * the rail actually paints them, and that More and Settings open one panel
  * beside it with their own entries. The avatar opens the account menu: the
- * name, the role and Logout, nothing else.
+ * name, the role, Account (which opens the Your account dialog) and Logout,
+ * nothing else.
  *
  * @vitest-environment jsdom
  */
@@ -17,9 +18,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ServerContext } from "@/hooks/useServer";
 
+const { updatePreferences } = vi.hoisted(() => ({
+  updatePreferences: vi.fn(async (updates: Record<string, unknown>) => ({ ...updates })),
+}));
+
 vi.mock("@/lib/api", () => ({
   api: {
     getPreferences: async () => ({ profile: { display_name: "Algo Trader" } }),
+    updatePreferences,
     getServers: async () => [
       { name: "local", host: "h", port: 8000, online: true, permission: "owner", is_default: true },
     ],
@@ -242,7 +248,7 @@ describe("SideRail", () => {
     const items = [...document.body.querySelectorAll('[role="menuitem"]')].map((el) =>
       el.textContent?.trim(),
     );
-    expect(items).toEqual(["Logout"]);
+    expect(items).toEqual(["Account", "Logout"]);
     for (const gone of [
       "API Servers",
       "Display Currency",
@@ -431,13 +437,65 @@ describe("SideRail", () => {
         expect(accountMenu()).toBeUndefined();
       });
 
+      const dialog = () => document.body.querySelector('[role="dialog"]') as HTMLElement | null;
+      const accountRow = () =>
+        [...document.body.querySelectorAll('[role="menuitem"]')].find(
+          (el) => el.textContent?.trim() === "Account",
+        ) as HTMLElement;
+
+      it("opens the Your account dialog from the Account row and closes the popup", async () => {
+        renderAt("/");
+        await flush();
+        await click(avatar());
+        expect(accountMenu()).toBeDefined();
+        expect(dialog()).toBeNull();
+
+        await click(accountRow());
+        expect(accountMenu()).toBeUndefined();
+        expect(avatar().getAttribute("aria-expanded")).toBe("false");
+        expect(avatar().className).not.toContain("ring-2");
+        expect(dialog()).not.toBeNull();
+        expect(dialog()?.textContent).toContain("Your account");
+        // Prefilled with the name the rail shows.
+        const nameField = dialog()!.querySelector("input") as HTMLInputElement;
+        expect(nameField.value).toBe("Algo Trader");
+        expect(accountRow()).toBeUndefined();
+      });
+
+      it("closes the dialog on Escape first and puts focus back on the avatar", async () => {
+        renderAt("/");
+        await flush();
+        await click(avatar());
+        await click(accountRow());
+        expect(dialog()).not.toBeNull();
+
+        await act(async () => {
+          window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+        });
+        await flush();
+        expect(dialog()).toBeNull();
+        expect(updatePreferences).not.toHaveBeenCalled();
+        expect(document.activeElement).toBe(avatar());
+        // The rail is as it was: route item lit, no overlay.
+        expect(avatar().getAttribute("aria-expanded")).toBe("false");
+      });
+
+      it("keeps the dialog open when a panel is opened behind it", async () => {
+        renderAt("/");
+        await flush();
+        await click(avatar());
+        await click(accountRow());
+        await click(button("Settings"));
+        expect(dialog()).not.toBeNull();
+      });
+
       it("has no panel content inside it", async () => {
         renderAt("/");
         await flush();
         await click(avatar());
         expect(panel()).toBeNull();
         const text = accountMenu()?.textContent ?? "";
-        expect(text).toBe("Algo TraderAdminLogout");
+        expect(text).toBe("Algo TraderAdminAccountLogout");
       });
     });
   });

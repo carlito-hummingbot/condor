@@ -13,6 +13,7 @@ import {
   type RailPanelId,
 } from "@/lib/nav";
 import { useServerRoster } from "@/hooks/useServerRoster";
+import { AccountDialog } from "./AccountDialog";
 import { AccountMenu } from "./AccountMenu";
 import { RailPanel } from "./RailPanel";
 
@@ -62,6 +63,9 @@ export function SideRail({ onReport }: { onReport: () => void }) {
   const [overlay, setOverlay] = useState<RailOverlayId | null>(null);
   const [accountAnchor, setAccountAnchor] = useState<HTMLElement | null>(null);
   const accountOpen = overlay === "account";
+  // The Account dialog is a modal above the rail, not an overlay of it: it
+  // never touches `overlay`, and the menu that opens it has closed already.
+  const [accountDialog, setAccountDialog] = useState(false);
   // Also keeps a deleted server from staying selected while the menu is closed.
   const { current } = useServerRoster();
   const serverOffline = !!current && !current.online;
@@ -163,6 +167,12 @@ export function SideRail({ onReport }: { onReport: () => void }) {
         anchor={accountAnchor}
         open={accountOpen}
         onClose={() => setOverlay(null)}
+        onAccount={() => setAccountDialog(true)}
+      />
+      <AccountDialog
+        open={accountDialog}
+        onOpenChange={setAccountDialog}
+        returnFocusTo={accountAnchor}
       />
     </nav>
   );

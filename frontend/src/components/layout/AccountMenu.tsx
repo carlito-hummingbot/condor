@@ -1,21 +1,25 @@
-import { LogOut } from "lucide-react";
+import { LogOut, UserRound } from "lucide-react";
 
 import { AnchoredMenu } from "@/components/ui/AnchoredMenu";
 import { useDisplayName } from "@/hooks/useDisplayName";
 import { useAuth } from "@/lib/auth";
 
 /**
- * What the avatar opens: who is signed in, and Logout. User functions only;
- * server, currency, theme and setup live elsewhere.
+ * What the avatar opens: who is signed in, an Account link (name and Dashboard
+ * title, in `AccountDialog`) and Logout. User functions only; server, currency,
+ * theme and setup live elsewhere.
  */
 export function AccountMenu({
   anchor,
   open,
   onClose,
+  onAccount,
 }: {
   anchor: HTMLElement | null;
   open: boolean;
   onClose: () => void;
+  /** Opens the Account dialog. The menu closes first. */
+  onAccount: () => void;
 }) {
   const name = useDisplayName();
   const { user, logout } = useAuth();
@@ -38,7 +42,19 @@ export function AccountMenu({
           </div>
         )}
       </div>
-      <div className="mx-3 border-t border-[var(--color-border)]" />
+      <button
+        type="button"
+        role="menuitem"
+        onClick={() => {
+          onClose();
+          onAccount();
+        }}
+        className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)]"
+      >
+        <UserRound className="h-4 w-4 shrink-0" />
+        Account
+      </button>
+      <div className="mx-3 my-1 border-t border-[var(--color-border)]" />
       <button
         type="button"
         role="menuitem"
