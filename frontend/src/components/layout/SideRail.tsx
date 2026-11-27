@@ -1,12 +1,19 @@
-import { useState } from "react";
+import { useId, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 import { Tooltip } from "@/components/ui/Tooltip";
 import { initialsFrom, useDashboardTitle, useDisplayName } from "@/hooks/useDisplayName";
-import { MORE_ICON, RAIL_TOP, isRailEntryActive, type NavEntry } from "@/lib/nav";
+import {
+  MORE_ICON,
+  RAIL_TOP,
+  SETTINGS_ICON,
+  isRailEntryActive,
+  type NavEntry,
+  type RailPanelId,
+} from "@/lib/nav";
 import { useServerRoster } from "@/hooks/useServerRoster";
 import { AccountMenu } from "./AccountMenu";
-import { MoreMenu } from "./MoreMenu";
+import { RailPanel } from "./RailPanel";
 
 /**
  * The 64px rail that replaces the top bar.
@@ -15,10 +22,11 @@ import { MoreMenu } from "./MoreMenu";
  * right), so nothing depends on a hover. The logo and the avatar are the two
  * items without a text label and keep a tooltip. The avatar opens the account
  * menu (name, role, Logout); a red dot on it means the selected server is
- * offline.
+ * offline. The account menu and the panel are never open together.
  *
- * Three doors on top (Dashboard, Agents, Labs), then the More gear and the
- * avatar at the foot. There is no bell in the rail.
+ * Dashboard, Agents, Labs and More (three dots) on top. The Settings gear and
+ * the avatar sit at the foot. More and Settings open one panel beside the
+ * rail (`RailPanel`) with their own list. There is no bell in the rail.
  */
 function itemClass(active: boolean): string {
   return `flex h-12 w-14 flex-col items-center justify-center gap-0.5 rounded-md transition-colors ${
@@ -47,15 +55,33 @@ export function SideRail({ onReport }: { onReport: () => void }) {
   const { pathname, search } = useLocation();
   const title = useDashboardTitle();
   const name = useDisplayName();
-  const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null);
-  const [moreOpen, setMoreOpen] = useState(false);
+  const [panel, setPanel] = useState<RailPanelId | null>(null);
+  const panelId = useId();
+  const moreRef = useRef<HTMLButtonElement>(null);
+  const settingsRef = useRef<HTMLButtonElement>(null);
+  const buttons = { more: moreRef, settings: settingsRef };
   const [accountAnchor, setAccountAnchor] = useState<HTMLElement | null>(null);
   const [accountOpen, setAccountOpen] = useState(false);
-  const moreActive = isRailEntryActive("more", pathname, search);
-  const MoreIcon = MORE_ICON;
   // Also keeps a deleted server from staying selected while the menu is closed.
   const { current } = useServerRoster();
   const serverOffline = !!current && !current.online;
+  const toggle = (id: RailPanelId) => {
+    setAccountOpen(false);
+    setPanel((open) => (open === id ? null : id));
+  };
+  const toggleAccount = () => {
+    setPanel(null);
+    setAccountOpen((open) => !open);
+  };
+  const close = (restoreFocus: boolean) => {
+    const was = panel;
+    setPanel(null);
+    if (restoreFocus && was) buttons[was].current?.focus();
+  };
+  const moreActive = isRailEntryActive("more", pathname, search);
+  const settingsActive = isRailEntryActive("settings", pathname, search);
+  const MoreIcon = MORE_ICON;
+  const SettingsIcon = SETTINGS_ICON;
 
   return (
     <nav
@@ -72,20 +98,39 @@ export function SideRail({ onReport }: { onReport: () => void }) {
         <RailLink key={item.id} item={item} />
       ))}
 
+      <Tooltip label="More">
+        <button
+          ref={moreRef}
+          type="button"
+          aria-expanded={panel === "more"}
+          aria-controls={panel === "more" ? panelId : undefined}
+          aria-haspopup="menu"
+          aria-current={moreActive ? "page" : undefined}
+          onClick={() => toggle("more")}
+          className={itemClass(moreActive || panel === "more")}
+        >
+          <MoreIcon className="h-5 w-5" />
+          <span className="text-[10px] font-medium leading-none">More</span>
+        </button>
+      </Tooltip>
+
       <div className="flex-1" />
 
-      <button
-        ref={setMoreAnchor}
-        type="button"
-        aria-expanded={moreOpen}
-        aria-haspopup="menu"
-        aria-current={moreActive ? "page" : undefined}
-        onClick={() => setMoreOpen((open) => !open)}
-        className={itemClass(moreActive || moreOpen)}
-      >
-        <MoreIcon className="h-5 w-5" />
-        <span className="text-[10px] font-medium leading-none">More</span>
-      </button>
+      <Tooltip label="Settings">
+        <button
+          ref={settingsRef}
+          type="button"
+          aria-expanded={panel === "settings"}
+          aria-controls={panel === "settings" ? panelId : undefined}
+          aria-haspopup="menu"
+          aria-current={settingsActive ? "page" : undefined}
+          onClick={() => toggle("settings")}
+          className={itemClass(settingsActive || panel === "settings")}
+        >
+          <SettingsIcon className="h-5 w-5" />
+          <span className="text-[10px] font-medium leading-none">Settings</span>
+        </button>
+      </Tooltip>
 
       <Tooltip label={name}>
         <button
@@ -94,7 +139,7 @@ export function SideRail({ onReport }: { onReport: () => void }) {
           aria-label={name}
           aria-expanded={accountOpen}
           aria-haspopup="menu"
-          onClick={() => setAccountOpen((open) => !open)}
+          onClick={toggleAccount}
           className={`relative mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-primary-fill)] text-[11px] font-bold text-[var(--on-primary)] ${
             accountOpen ? "ring-2 ring-[var(--color-primary)] ring-offset-2 ring-offset-[var(--color-surface)]" : ""
           }`}
@@ -109,10 +154,11 @@ export function SideRail({ onReport }: { onReport: () => void }) {
         </button>
       </Tooltip>
 
-      <MoreMenu
-        anchor={moreAnchor}
-        open={moreOpen}
-        onClose={() => setMoreOpen(false)}
+      <RailPanel
+        panel={panel}
+        id={panelId}
+        buttons={buttons}
+        onClose={close}
         onReport={onReport}
       />
       <AccountMenu
