@@ -1,32 +1,31 @@
-import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 import { initialsFrom, useDisplayName } from "@/hooks/useDisplayName";
-import { NOTIFICATIONS_KEY } from "@/hooks/useChatSocket";
-import { api } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
+import { useServerRoster } from "@/hooks/useServerRoster";
 import { MORE_ICON, RAIL_TOP, isRailEntryActive } from "@/lib/nav";
 import { AccountMenu } from "./AccountMenu";
 import { MoreMenu } from "./MoreMenu";
 
 /**
- * The phone's nav. Below `md` the rail is hidden and these five tabs sit at
- * the bottom, with labels under the icons — there is no hover on a touch
- * screen. More and the avatar open as sheets. Settings and the bell live in
- * the avatar sheet; the unread count stays on the avatar tab.
+ * Drop the Account tab (and its sheet) by setting this to false. It is the
+ * rail's avatar: the only place on a phone that shows who is signed in and
+ * holds Logout. Kept until the product owner decides whether a phone needs it.
+ */
+const SHOW_ACCOUNT_TAB = true;
+
+/**
+ * The phone's nav. Below `md` the rail is hidden and its doors sit at the
+ * bottom, with labels under the icons — there is no hover on a touch screen.
+ * The doors and the More list come from `lib/nav`, the same source as the
+ * rail. More opens a sheet; so does Account (name, role, Logout), where a red
+ * dot means the selected server is offline.
  */
 export function MobileTabBar({ onReport }: { onReport: () => void }) {
   const { pathname, search } = useLocation();
   const name = useDisplayName();
-  const { token } = useAuth();
-  const { data } = useQuery({
-    queryKey: NOTIFICATIONS_KEY,
-    queryFn: () => api.getNotifications(50),
-    enabled: !!token,
-    staleTime: 60_000,
-  });
-  const unread = data?.unread ?? 0;
+  const { current } = useServerRoster();
+  const serverOffline = !!current && !current.online;
   const [moreOpen, setMoreOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const MoreIcon = MORE_ICON;
@@ -104,33 +103,36 @@ export function MobileTabBar({ onReport }: { onReport: () => void }) {
           </span>
         </button>
 
-        <button
-          type="button"
-          aria-label={name}
-          aria-expanded={accountOpen}
-          aria-haspopup="dialog"
-          onClick={() => {
-            setMoreOpen(false);
-            setAccountOpen((open) => !open);
-          }}
-          className="relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5"
-        >
-          <span
-            className={`flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-primary-fill)] text-[10px] font-bold text-[var(--on-primary)] ${
-              accountOpen ? "ring-2 ring-[var(--color-primary)]" : ""
-            }`}
+        {SHOW_ACCOUNT_TAB && (
+          <button
+            type="button"
+            aria-label={name}
+            aria-expanded={accountOpen}
+            aria-haspopup="dialog"
+            onClick={() => {
+              setMoreOpen(false);
+              setAccountOpen((open) => !open);
+            }}
+            className="relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5"
           >
-            {initialsFrom(name)}
-          </span>
-          {unread > 0 && (
-            <span className="absolute right-[calc(50%-18px)] top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[var(--color-red)] px-1 text-[9px] font-bold leading-none text-white">
-              {unread > 9 ? "9+" : unread}
+            <span
+              className={`flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-primary-fill)] text-[10px] font-bold text-[var(--on-primary)] ${
+                accountOpen ? "ring-2 ring-[var(--color-primary)]" : ""
+              }`}
+            >
+              {initialsFrom(name)}
             </span>
-          )}
-          <span className="truncate text-[10px] font-medium text-[var(--color-text-muted)]">
-            Account
-          </span>
-        </button>
+            {serverOffline && (
+              <span
+                className="absolute right-[calc(50%-18px)] top-1 h-2.5 w-2.5 rounded-full border border-[var(--color-surface)] bg-[var(--color-red)]"
+                aria-label="Server offline"
+              />
+            )}
+            <span className="truncate text-[10px] font-medium text-[var(--color-text-muted)]">
+              Account
+            </span>
+          </button>
+        )}
       </nav>
 
       <MoreMenu
@@ -139,11 +141,13 @@ export function MobileTabBar({ onReport }: { onReport: () => void }) {
         onClose={() => setMoreOpen(false)}
         onReport={onReport}
       />
-      <AccountMenu
-        variant="sheet"
-        open={accountOpen}
-        onClose={() => setAccountOpen(false)}
-      />
+      {SHOW_ACCOUNT_TAB && (
+        <AccountMenu
+          variant="sheet"
+          open={accountOpen}
+          onClose={() => setAccountOpen(false)}
+        />
+      )}
     </>
   );
 }
