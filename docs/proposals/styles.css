@@ -61,4 +61,4 @@ code { background: var(--card); border: 1px solid var(--line); border-radius: 4p
 figure.form img { max-width: 520px; width: 100%; }
 /* Before screenshots: one per row. Desktop uses the full column; the phone screen keeps its own width */
 figure.wide img { width: 100%; max-width: 100%; }
-figure.phone img { max-width: 390px; width: 100%; }
+figure.phone img { max-width: 353px; width: 100%; }
