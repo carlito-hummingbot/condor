@@ -1,15 +1,13 @@
-import { Bug } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 import { AnchoredMenu } from "@/components/ui/AnchoredMenu";
-import { MORE_ITEMS, isRailEntryActive } from "@/lib/nav";
+import { MORE_ITEMS, REPORT_ISSUE, isMoreEntryActive } from "@/lib/nav";
 
 /**
- * The rail's ⋯ menu: the pages that left the top bar and still need a door.
+ * The rail's More menu: the Settings tabs people reach for most, then Report
+ * an Issue, which opens the existing dialog rather than navigating.
  *
- * Rows have an icon and a label — the menu has the room the rail does not.
- * Report an issue sits under a divider; it opens the existing dialog rather
- * than navigating.
+ * Rows have an icon and a label: the menu has the room the rail does not.
  */
 export function MoreMenu({
   anchor,
@@ -23,7 +21,7 @@ export function MoreMenu({
   onReport: () => void;
 }) {
   const { pathname, search } = useLocation();
-  const current = MORE_ITEMS.find((item) => isRailEntryActive(item.id, pathname, search));
+  const ReportIcon = REPORT_ISSUE.icon;
 
   return (
     <AnchoredMenu
@@ -34,17 +32,13 @@ export function MoreMenu({
       role="menu"
       className="min-w-[220px] py-1"
     >
-      {current && (
-        <div className="px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider text-[var(--color-text-muted)]">
-          {current.label}
-        </div>
-      )}
-      {MORE_ITEMS.map(({ id, to, icon: Icon, label }) => {
-        const active = isRailEntryActive(id, pathname, search);
+      {MORE_ITEMS.map((entry) => {
+        const Icon = entry.icon;
+        const active = isMoreEntryActive(entry, pathname, search);
         return (
           <Link
-            key={id}
-            to={to}
+            key={entry.id}
+            to={entry.to}
             role="menuitem"
             onClick={onClose}
             aria-current={active ? "page" : undefined}
@@ -53,7 +47,7 @@ export function MoreMenu({
             }`}
           >
             <Icon className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" />
-            {label}
+            {entry.label}
           </Link>
         );
       })}
@@ -67,8 +61,8 @@ export function MoreMenu({
         }}
         className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)]"
       >
-        <Bug className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" />
-        Report an issue
+        <ReportIcon className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" />
+        {REPORT_ISSUE.label}
       </button>
     </AnchoredMenu>
   );

@@ -2,9 +2,9 @@
  * The rail's active item and the More menu.
  *
  * Active-state rules live in `lib/nav` and are tested there. This checks that
- * the rail actually paints them, and that More opens onto the parked pages
- * plus Report an issue. The avatar opens the account menu: the name, the role
- * and Logout, nothing else.
+ * the rail actually paints them, and that More opens onto its six entries.
+ * The avatar opens the account menu: the name, the role and Logout, nothing
+ * else.
  *
  * @vitest-environment jsdom
  */
@@ -93,27 +93,31 @@ afterEach(() => {
 });
 
 describe("SideRail", () => {
-  it("lights Dashboard on an agent workspace and not on Bots", async () => {
+  it("lights Dashboard on the home only", async () => {
+    renderAt("/");
+    await flush();
+    expect(currentLabels()).toEqual(["Dashboard"]);
+  });
+
+  it("lights Agents on the Hub and on an agent workspace, not on Dashboard", async () => {
     renderAt("/agents/alpha");
     await flush();
-    expect(currentLabels()).toContain("Dashboard");
-    expect(currentLabels()).not.toContain("Bots");
-  });
-
-  it("lights Bots on a bot detail", async () => {
-    renderAt("/bots/grid-1");
+    expect(currentLabels()).toEqual(["Agents"]);
+    act(() => root.unmount());
+    root = createRoot(container);
+    renderAt("/hub");
     await flush();
-    expect(currentLabels()).toEqual(["Bots"]);
+    expect(currentLabels()).toEqual(["Agents"]);
   });
 
-  it("lights Strategies when the home has the loops panel open", async () => {
-    renderAt("/?panel=loops");
+  it("lights Labs on /labs", async () => {
+    renderAt("/labs");
     await flush();
-    expect(currentLabels()).toContain("Strategies");
+    expect(currentLabels()).toEqual(["Labs"]);
   });
 
-  it("lights More on a parked page and lists every door, including Agent Hub", async () => {
-    renderAt("/dex/solana/abc");
+  it("lights More on a Settings page and marks the open tab in the menu", async () => {
+    renderAt("/settings?tab=gateway");
     await flush();
     expect(currentLabels()).toContain("More");
 
@@ -125,29 +129,55 @@ describe("SideRail", () => {
     });
     await flush();
 
-    const items = [...document.body.querySelectorAll('[role="menuitem"]')].map(
-      (el) => el.textContent?.trim(),
-    );
-    expect(items).toEqual([
-      "Portfolio",
-      "Trade",
-      "DEX",
-      "Routines",
-      "Agent Hub",
-      "Report an issue",
+    const rows = [...document.body.querySelectorAll('[role="menuitem"]')];
+    expect(rows.map((el) => el.textContent?.trim())).toEqual([
+      "Hummingbot API",
+      "Gateway",
+      "Keys and Wallets",
+      "Servers",
+      "Updates",
+      "Report an Issue",
     ]);
-    const dex = [...document.body.querySelectorAll('[role="menuitem"]')].find(
-      (el) => el.textContent?.includes("DEX"),
-    );
-    expect(dex?.getAttribute("aria-current")).toBe("page");
+    const lit = rows.filter((el) => el.getAttribute("aria-current") === "page");
+    expect(lit.map((el) => el.textContent?.trim())).toEqual(["Gateway"]);
   });
 
-  it("prints a text label under every rail icon", async () => {
+  it("opens the report dialog from the last More row", async () => {
+    const onReport = vi.fn();
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    act(() => {
+      root.render(
+        <QueryClientProvider client={client}>
+          <MemoryRouter initialEntries={["/"]}>
+            <SideRail onReport={onReport} />
+          </MemoryRouter>
+        </QueryClientProvider>,
+      );
+    });
+    await flush();
+    const more = [...container.querySelectorAll("button")].find(
+      (el) => el.textContent?.trim() === "More",
+    ) as HTMLButtonElement;
+    await act(async () => {
+      more.click();
+    });
+    await flush();
+    const report = [...document.body.querySelectorAll('[role="menuitem"]')].find(
+      (el) => el.textContent?.trim() === "Report an Issue",
+    ) as HTMLElement;
+    await act(async () => {
+      report.click();
+    });
+    expect(onReport).toHaveBeenCalledOnce();
+  });
+
+  it("prints a text label under every rail icon, and has no bell", async () => {
     renderAt("/");
     await flush();
     const nav = container.querySelector('nav[aria-label="Primary"]')!;
     const labels = [...nav.querySelectorAll("a span, button span")].map((el) => el.textContent);
-    expect(labels).toEqual(["Dashboard", "Bots", "Strategies", "More", "Alerts", "Settings"]);
+    expect(labels).toEqual(["Dashboard", "Agents", "Labs", "More"]);
+    expect(nav.querySelector('[aria-label*="otification"]')).toBeNull();
   });
 
   it("shows Algo Trader's initials and opens the account menu", async () => {

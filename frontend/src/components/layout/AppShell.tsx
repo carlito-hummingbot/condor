@@ -15,6 +15,7 @@ import { useServer } from "@/hooks/useServer";
 import { FULL_BLEED_ROUTES } from "@/lib/nav";
 import { routeFacts } from "@/lib/pageFacts";
 import { useViewFacts } from "@/lib/viewFacts";
+import { ShellControls } from "./ShellControls";
 import { SideRail } from "./SideRail";
 
 /**
@@ -107,6 +108,9 @@ function AppShellBody() {
           currently mounts it inside `main`; expect that conflict. */}
       <SideRail onReport={() => setReportOpen(true)} />
       <div className="flex min-w-0 flex-1 flex-col">
+        {/* Server, Gateway status and Switch Mode (light/dark). */}
+        <ShellControls />
+
         {/* An update landed but this process is still the old one, so the bundle
             in the browser is ahead of the API answering it. Above `main` for the
             same reason the consent strip is: every page needs it, and the chat
