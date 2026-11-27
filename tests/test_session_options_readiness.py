@@ -81,6 +81,16 @@ def test_an_unproven_login_stays_pickable(client):
     assert rows["claude-acp:opus"]["ready"] is True, "the suffix probes as its base"
 
 
+def test_each_row_carries_the_probes_state_next_to_ready(client):
+    """``ready`` stays loose (UNVERIFIED is pickable); ``state`` is the verdict."""
+    rows = _rows(client)
+    assert rows["claude-acp:opus"]["state"] == "ready"
+    assert rows["gemini"]["state"] == "unverified"
+    assert rows["copilot"]["state"] == "missing"
+    assert rows["gemini"]["ready"] is True, "ready is unchanged by the new field"
+    assert rows["copilot"]["ready"] is False
+
+
 def test_a_probe_that_fails_leaves_every_row_offered(client, monkeypatch):
     async def boom(bases, env=None):
         raise OSError("no npm, no sockets")
@@ -89,7 +99,7 @@ def test_a_probe_that_fails_leaves_every_row_offered(client, monkeypatch):
     monkeypatch.setattr(routes, "_readiness_cache", (0.0, {}))
 
     rows = _rows(client)
-    assert all("ready" not in r for r in rows.values()), (
+    assert all("ready" not in r and "state" not in r for r in rows.values()), (
         "unannotated reads as 'offer it' — a picker that cannot probe is not "
         "a picker with nothing in it"
     )

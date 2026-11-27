@@ -2680,6 +2680,12 @@ export interface ChatAgentOption {
    *  installed CLI bridge are both false. Absent when the backend could not
    *  probe, which reads as "offer it" — never as "unavailable". */
   ready?: boolean;
+  /** The probe's verdict behind `ready`: "ready" is proven installed and
+   *  logged in, "unverified" is installed but the login could not be proven
+   *  (still pickable, so `ready` is true), "missing" is not runnable. Absent
+   *  when the backend could not probe. Use this, not `ready`, to say
+   *  "Detected". */
+  state?: "ready" | "unverified" | "missing";
   /** The sentence behind `ready`, naming the fix ("not installed — npm
    *  install -g @github/copilot"). Shown on the row that cannot be picked. */
   detail?: string;
