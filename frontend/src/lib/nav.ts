@@ -46,8 +46,8 @@ import {
  * The top bar is a left icon rail now, with four doors: Dashboard, Agents,
  * Labs and More. Dashboard is `/` (the chat home until the stats page lands).
  * Agents is `/hub`, the Agents workspace, and stays lit on an agent's own
- * page. Labs is `/labs`, built in a later change; until then it shows the
- * ordinary not-found page inside the shell. More is the gear at the foot of
+ * page. Labs is `/labs`, a placeholder page for now (Design, Backtest and
+ * Test Run come later); `/strategies` redirects to it. More is the gear at the foot of
  * the rail and opens the Settings tabs people reach for most. Portfolio,
  * Trade, DEX, Routines and Bots have no door in the nav for now; their routes
  * still work by address.
