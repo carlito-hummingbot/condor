@@ -25,7 +25,7 @@ status, and keep a log of refinements, so the team can see how a design changed 
 ## Screenshots
 
 - Take them from the PR branch build, not from mock-ups. Name them by what they show
-  (`rail-more-menu.png`, `onboarding-3-connect.png`).
+  (`rail-2-more-menu.png`, `onboarding-3-connect.png`).
 - Show the "before" from the `ui-redesign` baseline.
 - Phone views: render the app in a 390 px wide frame.
 - Never include real balances, keys, addresses or server names. Use an empty or stub backend.
