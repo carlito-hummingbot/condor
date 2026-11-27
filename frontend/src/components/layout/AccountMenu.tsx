@@ -3,30 +3,33 @@ import { LogOut } from "lucide-react";
 import { AnchoredMenu } from "@/components/ui/AnchoredMenu";
 import { useDisplayName } from "@/hooks/useDisplayName";
 import { useAuth } from "@/lib/auth";
-import { BottomSheet } from "./BottomSheet";
 
 /**
  * What the avatar opens: who is signed in, and Logout. User functions only;
  * server, currency, theme and setup live elsewhere.
  */
 export function AccountMenu({
-  anchor = null,
+  anchor,
   open,
   onClose,
-  variant = "popover",
 }: {
-  anchor?: HTMLElement | null;
+  anchor: HTMLElement | null;
   open: boolean;
   onClose: () => void;
-  /** Side popover on the rail; a bottom sheet from the phone tab bar. */
-  variant?: "popover" | "sheet";
 }) {
   const name = useDisplayName();
   const { user, logout } = useAuth();
   const role = user?.role === "admin" ? "Admin" : user?.role === "user" ? "User" : user?.role;
 
-  const body = (
-    <>
+  return (
+    <AnchoredMenu
+      anchor={anchor}
+      open={open}
+      onClose={onClose}
+      align="left"
+      role="menu"
+      className="min-w-[240px] py-1"
+    >
       <div className="px-3 py-2">
         <div className="truncate text-sm font-medium text-[var(--color-text)]">{name}</div>
         {role && (
@@ -48,27 +51,6 @@ export function AccountMenu({
         <LogOut className="h-4 w-4 shrink-0" />
         Logout
       </button>
-    </>
-  );
-
-  if (variant === "sheet") {
-    return (
-      <BottomSheet open={open} onClose={onClose} label="Account">
-        <div className="py-1">{body}</div>
-      </BottomSheet>
-    );
-  }
-
-  return (
-    <AnchoredMenu
-      anchor={anchor}
-      open={open}
-      onClose={onClose}
-      align="left"
-      role="menu"
-      className="min-w-[240px] py-1"
-    >
-      {body}
     </AnchoredMenu>
   );
 }

@@ -17,12 +17,15 @@ import {
   FULL_BLEED_ROUTES,
   MORE_ITEMS,
   RAIL_TOP,
+  SETTINGS_ITEMS,
   isAgentsActive,
   isDashboardActive,
   isLabsActive,
   isMoreActive,
   isMoreEntryActive,
   isRailEntryActive,
+  isSettingsActive,
+  isSettingsEntryActive,
 } from "@/lib/nav";
 
 const destinations = [...RAIL_TOP, ...MORE_ITEMS];
@@ -48,6 +51,18 @@ describe("the nav", () => {
       "Updates",
     ]);
     expect(MORE_ITEMS.every((item) => item.to.startsWith("/settings?tab="))).toBe(true);
+  });
+
+  it("has exactly five Settings tabs behind the gear, none of them in More", () => {
+    expect(SETTINGS_ITEMS.map((item) => item.label)).toEqual([
+      "Agents",
+      "LLM Endpoints",
+      "Voice & AI",
+      "Appearance",
+      "Privacy",
+    ]);
+    const more = new Set(MORE_ITEMS.map((item) => item.to));
+    expect(SETTINGS_ITEMS.some((item) => more.has(item.to))).toBe(false);
   });
 
   it("gives every entry a distinct address and label", () => {
@@ -77,11 +92,24 @@ describe("active state", () => {
     expect(isLabsActive("/laboratory")).toBe(false);
   });
 
-  it("lights More on every Settings page", () => {
-    expect(isMoreActive("/settings")).toBe(true);
-    expect(isMoreActive("/settings/extra")).toBe(true);
-    expect(isMoreActive("/portfolio")).toBe(false);
-    expect(isRailEntryActive("more", "/settings", "?tab=keys")).toBe(true);
+  it("lights More on its own tabs, and Servers when no tab is given", () => {
+    expect(isMoreActive("/settings", "")).toBe(true);
+    expect(isMoreActive("/settings", "?tab=keys")).toBe(true);
+    expect(isMoreActive("/settings", "?tab=appearance")).toBe(false);
+    expect(isMoreActive("/portfolio", "?tab=keys")).toBe(false);
+    expect(isRailEntryActive("more", "/settings", "?tab=updates")).toBe(true);
+  });
+
+  it("lights Settings on every other Settings tab, never both together", () => {
+    for (const tab of ["agents", "llm", "voice", "appearance", "privacy", "notifications", "admin"]) {
+      expect(isSettingsActive("/settings", `?tab=${tab}`)).toBe(true);
+      expect(isMoreActive("/settings", `?tab=${tab}`)).toBe(false);
+    }
+    expect(isSettingsActive("/settings", "")).toBe(false);
+    expect(isSettingsActive("/hub", "?tab=privacy")).toBe(false);
+    const privacy = SETTINGS_ITEMS.find((i) => i.id === "set-privacy")!;
+    expect(isSettingsEntryActive(privacy, "/settings", "?tab=privacy")).toBe(true);
+    expect(isSettingsEntryActive(privacy, "/settings", "?tab=voice")).toBe(false);
   });
 
   it("lights the More entry whose tab is open, and Servers when no tab is given", () => {
