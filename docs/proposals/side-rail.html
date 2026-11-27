@@ -15,7 +15,7 @@
 <nav class="top"><a href="index.html">All proposals</a></nav>
 
 <h1>A left icon rail instead of the top nav</h1>
-<p class="meta">Status: <strong>in review</strong> &middot; PRs #3, #4, #6, #7, #8 into <code>ui-redesign</code> &middot; Last updated: 2026-11-26 &middot; Branches reviewed on rn5 against an empty preview Condor</p>
+<p class="meta">Status: <strong>in review</strong> &middot; PRs #3, #4, #6, #7, #8 into <code>ui-redesign</code> &middot; Last updated: 2026-11-27 &middot; Branches reviewed on rn5 against an empty preview Condor</p>
 <p class="lede">Move Condor's navigation from the crowded top bar into a slim left icon rail, with secondary pages under More, account controls behind an initials avatar, and a bottom tab bar on phones. The look stays the same. Only the layout changes.</p>
 
 <h2 id="why">Why</h2>
@@ -32,10 +32,8 @@
 
 <h2 id="before">Before</h2>
 <p>Seven links and six controls share one top strip. Server, Gateway, currency, bell, report and theme controls crowd the same bar. On a phone the page links are gone and the controls overflow.</p>
-<div class="pair">
-  <figure><img src="assets/before-home-desktop.png" alt="Condor home with the full top navigation bar, desktop"><figcaption>Desktop, <code>ui-redesign</code> baseline.</figcaption></figure>
-  <figure><img src="assets/before-keys-overlay-phone.png" alt="Condor on a 390 px phone: top bar shows controls but no page links"><figcaption>Phone (390 px frame): no navigation links at all.</figcaption></figure>
-</div>
+<figure class="wide"><img src="assets/before-topnav-desktop.png" alt="Condor home on the ui-redesign build: the full top navigation bar with seven page links, server, Gateway, currency, bell, report and theme controls, above the three-panel chat layout"><figcaption>Desktop, <code>ui-redesign</code> baseline (full screen, 1280 px wide): seven page links and six controls share one strip across the top.</figcaption></figure>
+<figure class="phone"><div class="phone-frame"><img src="assets/before-topnav-phone.png" alt="A phone showing the same Condor home: the top bar holds only the controls, with no page links"></div><figcaption>Phone (360 px wide screen, shown at its own size): no navigation links at all. The top bar holds only the controls.</figcaption></figure>
 
 <h2 id="after">After</h2>
 <p>A 56 px rail, a list panel, then the main area. Rail items: logo and Dashboard, Bots, Strategies, More, then bell, Settings and an initials avatar at the bottom.</p>
@@ -87,6 +85,7 @@
 <table>
   <thead><tr><th>Date</th><th>Change</th><th>Reason / source</th><th>PR</th></tr></thead>
   <tbody>
+    <tr><td>2026-11-27</td><td>"Before" images retaken from the old top-nav build, one per row: the full desktop screen at 1280 px, and the phone screen inside a CSS phone frame (same treatment as the onboarding page). The old phone image showed the keys overlay, not the top bar. "After" images unchanged</td><td>User review: larger Before images so the text is readable</td><td>#13</td></tr>
     <tr><td>2026-11-26</td><td>Page rebuilt as editable HTML in <code>docs/proposals/</code>; screenshots retaken from the PR branches</td><td>Previous version was a generated page that could not be edited by every agent</td><td>docs</td></tr>
     <tr><td>2026-11-26</td><td>Review notes added: hover-only labels, panel rail and More menu on phones, filter overlap</td><td>Review of PRs #3, #4, #6, #7, #8 built on rn5</td><td>&mdash;</td></tr>
   </tbody>
