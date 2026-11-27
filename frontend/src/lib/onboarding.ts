@@ -589,11 +589,11 @@ export function splitModelOptions<
 }
 
 /** The model Condor suggests when several are found, if it is among them. */
-export const RECOMMENDED_MODEL_KEY = "claude-acp:sonnet";
+export const RECOMMENDED_MODEL_ID = "claude-acp:sonnet";
 
 /** Which found model the primary button names: the recommended one, else the first. */
 export function preferredModel<T extends { key: string }>(found: readonly T[]): T | null {
-  return found.find((row) => row.key === RECOMMENDED_MODEL_KEY) ?? found[0] ?? null;
+  return found.find((row) => row.key === RECOMMENDED_MODEL_ID) ?? found[0] ?? null;
 }
 
 export interface MissingModelRow {
