@@ -13,6 +13,7 @@ import { useAuth } from "@/lib/auth";
 import { addUsage } from "@/lib/usage";
 import { INTERRUPTED_STATUS, namesATool, toolCallState } from "@/lib/formatters";
 import { collectViewFacts, renderViewBlock } from "@/lib/viewFacts";
+import { chatSocketUrl } from "@/lib/chatSocketUrl";
 import { WS_AUTH_SUBPROTOCOL } from "@/lib/websocket";
 
 export interface ToolCall {
@@ -1304,9 +1305,7 @@ export function useChatSocket() {
     // cases the old one is replaced rather than reused.
     closeSocket();
 
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const host = import.meta.env.DEV ? "localhost:8088" : window.location.host;
-    const url = `${protocol}//${host}/api/v1/ws/chat`;
+    const url = chatSocketUrl();
 
     // Pass the JWT via the Sec-WebSocket-Protocol subprotocol header instead of
     // the URL query string, so it never leaks via proxy logs or history.
