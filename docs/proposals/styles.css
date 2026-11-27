@@ -67,3 +67,8 @@ figure.phone figcaption { text-align: center; }
 .phone-frame::before { content: ""; position: absolute; top: 12px; left: 50%; width: 56px; height: 6px; margin-left: -28px; background: #26262b; border-radius: 3px; }
 .phone-frame::after { content: ""; position: absolute; bottom: 9px; left: 50%; width: 96px; height: 4px; margin-left: -48px; background: #3b3b42; border-radius: 2px; }
 figure.phone .phone-frame img { border: 0; border-radius: 28px; width: 100%; max-width: 100%; display: block; }
+/* Side-rail After images are full screens at 2x: let them run wider than the text column so the rail labels stay readable */
+figure.breakout { position: relative; left: 50%; width: min(1240px, calc(100vw - 40px)); transform: translateX(-50%); }
+figure.breakout img { width: 100%; max-width: 100%; }
+/* A 2x phone screen (780 px wide) is shown at its own 390 px size */
+.phone-frame.x2 { width: 390px; }

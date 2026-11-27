@@ -39,17 +39,19 @@
 <p>A slim rail, a list panel, then the main area. Rail items: the logo, then Dashboard, Agents and Labs, and at the bottom More (the gear) and an initials avatar. The right side of the top bar shows only Local (the server), Gateway status and Switch Mode.</p>
 
 <h3>The rail (PR #3)</h3>
-<figure><img src="assets/rail-1-rail.png" alt="Condor with the left icon rail: Dashboard, Agents, Labs, More and the user initials; the page body is blurred. The top bar shows Local, Gateway status and Switch Mode"><figcaption>Labels appear on hover and keyboard focus. Left rail shows: Dashboard, Agents, Labs, Settings, User Initial.</figcaption></figure>
-<figure><img src="assets/rail-2-more-menu.png" alt="The rail with the More dropdown open: Hummingbot API, Gateway, Keys and Wallets, Servers, Updates, Report an Issue; the page body is blurred"><figcaption>The More dropdown holds Hummingbot API, Gateway, Keys and Wallets, Servers, Updates and Report an Issue. The first five open the matching Settings tab.</figcaption></figure>
+<figure class="breakout"><img src="assets/rail-1-rail.png" alt="Condor with the left icon rail: Dashboard, Agents, Labs, More and the user initials; the page body is blurred. The top bar shows Local, Gateway status and Switch Mode"><figcaption>Labels appear on hover and keyboard focus. Left rail shows: Dashboard, Agents, Labs, Settings, User Initial.</figcaption></figure>
+<figure class="breakout"><img src="assets/rail-2-more-menu.png" alt="The rail with the More dropdown open: Hummingbot API, Gateway, Keys and Wallets, Servers, Updates, Report an Issue; the page body is blurred"><figcaption>The More dropdown holds Hummingbot API, Gateway, Keys and Wallets, Servers, Updates and Report an Issue. The first five open the matching Settings tab.</figcaption></figure>
 
 <h3>The avatar menu (PR #4)</h3>
-<figure><img src="assets/avatar-menu.png" alt="Avatar menu showing the user name with the ADMIN role, and Logout"><figcaption>The popup shows only the user name with the ADMIN role, and Logout.</figcaption></figure>
+<figure class="breakout"><img src="assets/avatar-1-menu.png" alt="The rail with the avatar popup open: the user name Algo Trader with the ADMIN role, and Logout; the page body is blurred"><figcaption>The popup shows only the user name with the ADMIN role, and Logout.</figcaption></figure>
 
 <h3>Phones (PR #6)</h3>
-<figure><img src="assets/phone-tab-bar.png" alt="Two 390 px phone frames showing the bottom tab bar; the right one has the More menu open"><figcaption>Bottom tab bar (Dashboard, Bots, Strategies, More, Account) below 768 px. Right: the More menu open.</figcaption></figure>
+<p>Below 768 px the left rail is replaced by a bottom tab bar with the same doors: Dashboard, Agents, Labs and More, plus an Account tab (the user's initials). More opens a sheet with the same six entries as the desktop menu: Hummingbot API, Gateway, Keys and Wallets, Servers, Updates and Report an Issue. The Account tab opens a sheet with the user name, Admin and Logout. There is no bell. A red dot on the Account tab means the selected server is offline.</p>
+<figure class="phone"><div class="phone-frame x2"><img src="assets/phone-1-tabbar.png" alt="A phone screen with the bottom tab bar: Dashboard, Agents, Labs, More and Account; the page body is blurred"></div><figcaption>The bottom tab bar: Dashboard, Agents, Labs, More and Account. The page body is blurred.</figcaption></figure>
+<figure class="phone"><div class="phone-frame x2"><img src="assets/phone-2-more.png" alt="A phone screen with the More sheet open: Hummingbot API, Gateway, Keys and Wallets, Servers, Updates, Report an Issue"></div><figcaption>The More sheet, with its six entries.</figcaption></figure>
 
 <h3>Labs page (PR #7)</h3>
-<figure><img src="assets/strategies-page.png" alt="Labs page, with the page body blurred"><figcaption>New <code>/labs</code> page. It will hold three tools: Design, Backtest and Test Run. The page content is a placeholder for now and is blurred in the image. The old <code>/strategies</code> address redirects to <code>/labs</code>.</figcaption></figure>
+<figure class="breakout"><img src="assets/labs-1-page.png" alt="The Labs page: the Labs door in the rail is lit and the page body is blurred"><figcaption>New <code>/labs</code> page. It will hold three tools: Design, Backtest and Test Run. The page content is a placeholder for now and is blurred in the image. The old <code>/strategies</code> address redirects to <code>/labs</code>.</figcaption></figure>
 
 <h2 id="rollout">Rollout</h2>
 <table>
@@ -57,7 +59,7 @@
   <tbody>
     <tr><td>#3</td><td><code>ui/side-rail</code></td><td>Left icon rail replaces the top bar (Dashboard, Agents, Labs, More); top bar keeps Local, Gateway status, Switch Mode; More menu with six entries; bell removed</td><td class="s tweak">Works, tweaks 1</td></tr>
     <tr><td>#4</td><td><code>ui/account-menu</code></td><td>Avatar menu shows only the user name with role, and Logout</td><td class="s ok">Built, works</td></tr>
-    <tr><td>#6</td><td><code>ui/mobile-nav</code></td><td>Bottom tab bar on phone widths</td><td class="s tweak">Works, tweaks 2 and 3</td></tr>
+    <tr><td>#6</td><td><code>ui/mobile-nav</code></td><td>Bottom tab bar on phone widths (Dashboard, Agents, Labs, More, Account); More and Account sheets; no bell</td><td class="s tweak">Works, tweaks 2 and 3</td></tr>
     <tr><td>#7</td><td><code>ui/strategies-page</code></td><td><code>/labs</code> page (placeholder body); <code>/strategies</code> redirects to it</td><td class="s todo">Placeholder only</td></tr>
   </tbody>
 </table>
@@ -67,7 +69,9 @@
 <ol>
   <li><strong>Hover-only labels (#3).</strong> Icons have no visible text, and hover does not exist on phones. Also, the chat page now shows two rails side by side: the new left one and the existing right-hand panel rail (Layout, Agent, Portfolio, Tasks, Routines). Consider visible labels or a clearer split.</li>
   <li><strong>Panel rail on phones (#6).</strong> The right-hand panel rail still takes about 60 px of a 390 px screen, so the chat is squeezed. The proposal says the tab bar "replaces the rail"; that is true for the left rail only.</li>
-  <li><strong>More menu on phones (#6).</strong> It opens as a popover that is clipped at the left edge rather than a bottom sheet. This was seen in a 390 px frame; recheck on a real phone.</li>
+  <li><strong>Account tab (#6).</strong> Whether the phone bar has four tabs or five (with Account) is not decided. The Account tab keeps Logout reachable on a phone; dropping it is a one-line change.</li>
+  <li><strong>Labs before #7 (#3, #6).</strong> If #3 to #6 are merged without #7, the Labs door and tab open the Not Found page.</li>
+  <li><strong>Dashboard (#3).</strong> There is no stats page yet. Dashboard is still the chat home, which is why the images show it blurred.</li>
   <li><strong>Labs content (#7).</strong> The page is a placeholder. Design, Backtest and Test Run still have to be built.</li>
   <li><strong>Notifications (#3).</strong> The bell is no longer in the shell, so notifications have no entry point until a home for them is decided.</li>
 </ol>
@@ -81,6 +85,7 @@
 <table>
   <thead><tr><th>Date</th><th>Change</th><th>Reason / source</th><th>PR</th></tr></thead>
   <tbody>
+    <tr><td>2026-11-27</td><td>Final images for the rail, avatar menu, phone tab bar and Labs page, all retaken at 2x in the dark theme with the page body blurred and only the navigation sharp; phones now shown inside the phone frame, one per row; Phones section rewritten for the new tab bar (Dashboard, Agents, Labs, More, Account) and the six-entry More sheet; open points added for the Account tab, Labs before #7 and the Dashboard</td><td>User review of the proposal; PRs #3, #4, #6 and #7 merged down in order</td><td>#3, #4, #6, #7</td></tr>
     <tr><td>2026-11-27</td><td>Rail proposal revised after review: rail items are Dashboard, Agents, Labs and More; top bar right side is Local, Gateway status and Switch Mode; More lists Hummingbot API, Gateway, Keys and Wallets, Servers, Updates and Report an Issue; bell removed; avatar popup reduced to the user name with role, and Logout; the Strategies page became the Labs page; the Chat list search and filter section (PR #8) was dropped by decision. Page bodies are blurred in the new images so the navigation stands out</td><td>User review of the proposal</td><td>#3, #4, #6, #7</td></tr>
     <tr><td>2026-11-27</td><td>"Before" images retaken from the old top-nav build, one per row: the full desktop screen at 1280 px, and the phone screen inside a CSS phone frame (same treatment as the onboarding page). The old phone image showed the keys overlay, not the top bar. "After" images unchanged</td><td>User review: larger Before images so the text is readable</td><td>#13</td></tr>
     <tr><td>2026-11-26</td><td>Page rebuilt as editable HTML in <code>docs/proposals/</code>; screenshots retaken from the PR branches</td><td>Previous version was a generated page that could not be edited by every agent</td><td>docs</td></tr>
