@@ -15,7 +15,7 @@
 <nav class="top"><a href="index.html">All proposals</a></nav>
 
 <h1>A left icon rail instead of the top nav</h1>
-<p class="meta">Status: <strong>in review</strong> &middot; PRs #3, #4, #6, #7 into <code>ui-redesign</code> &middot; Last updated: 2026-11-27 &middot; Branches reviewed on rn5 against an empty preview Condor</p>
+<p class="meta">Status: <strong>in review</strong> &middot; PRs #3, #4, #6, #7 into <code>ui-redesign</code>, plus #25 and #26 as extras &middot; Last updated: 2026-11-27 &middot; Branches reviewed on rn5 against an empty preview Condor</p>
 <p class="lede">Move Condor's navigation from the crowded top bar into a slim left icon rail (Dashboard, Agents, Labs, More and Settings), keep only the server, Gateway status and the mode switch in the top bar, put the user behind an initials avatar, and add a bottom tab bar on phones. The look stays the same. Only the layout changes.</p>
 
 <h2 id="why">Why</h2>
@@ -57,7 +57,7 @@
 </div>
 
 <h3>Labs page (PR #7)</h3>
-<figure class="wide"><img src="assets/labs-1-page.png" alt="The Labs page: the Labs door in the rail is lit and the page body is blurred"><figcaption>New <code>/labs</code> page. It will hold three tools: Design, Backtest and Test Run. The page content is a placeholder for now and is blurred in the image. The old <code>/strategies</code> address redirects to <code>/labs</code>.</figcaption></figure>
+<figure class="wide"><img src="assets/labs-1-page.png" alt="The Labs page: the Labs door in the rail is lit and the page body is blurred"><figcaption>New <code>/labs</code> page. It will hold four tools: Design, Backtest, Test Run and Diagnose. The page content is a placeholder for now and is blurred in the image. The old <code>/strategies</code> address redirects to <code>/labs</code>.</figcaption></figure>
 
 <h2 id="rollout">Rollout</h2>
 <table>
@@ -67,6 +67,8 @@
     <tr><td>#4</td><td><code>ui/account-menu</code></td><td>Avatar menu shows only the user name with role, and Logout</td><td class="s ok">Built, works</td></tr>
     <tr><td>#6</td><td><code>ui/mobile-nav</code></td><td>Bottom tab bar on phone widths (Dashboard, Agents, Labs, Account); the Account sheet holds More, Settings and Logout; no bell</td><td class="s tweak">Works, tweaks 2 and 3</td></tr>
     <tr><td>#7</td><td><code>ui/strategies-page</code></td><td><code>/labs</code> page (placeholder body); <code>/strategies</code> redirects to it</td><td class="s todo">Placeholder only</td></tr>
+    <tr><td>#25</td><td><code>ui/panel-rail-v2</code></td><td>Extra: on phones the chat workspace's right-hand panel rail becomes a drawer opened by a Panels toggle (base: <code>ui/strategies-page</code>, merge after #7)</td><td class="s ok">Built, tested; phone only</td></tr>
+    <tr><td>#26</td><td><code>ui/test-no-real-ports</code></td><td>Extra: tests refuse to reach the real Condor ports 8088 and 8000 (tests only; base <code>ui-redesign</code>, independent of the rail stack)</td><td class="s ok">Built, tested</td></tr>
   </tbody>
 </table>
 <p>Stacked PRs, merge in order. Frontend only; routes, the API and panel ids are unchanged, so existing links keep working. Merge the rail first; the <a href="onboarding.html">onboarding proposal</a> rebases afterwards because both touch <code>AppShell.tsx</code>.</p>
@@ -74,25 +76,26 @@
 <h2 id="open">Open points from review</h2>
 <ol>
   <li><strong>Hover-only labels (#3).</strong> Icons have no visible text, and hover does not exist on phones. Also, the chat page now shows two rails side by side: the new left one and the existing right-hand panel rail (Layout, Agent, Portfolio, Tasks, Routines). Consider visible labels or a clearer split.</li>
-  <li><strong>Panel rail on phones (#6).</strong> The right-hand panel rail still takes about 60 px of a 390 px screen, so the chat is squeezed. The proposal says the tab bar "replaces the rail"; that is true for the left rail only.</li>
+  <li><strong>Panel rail on phones (#6, #25).</strong> The chat workspace's own right-hand panel rail takes about 60 px of a 390 px screen, so the chat is squeezed. The tab bar replaces the left rail only. PR #25 turns that strip into a drawer below 768 px, opened by a Panels toggle in the chat bar (not merged yet; phone only).</li>
   <li><strong>Labs before #7 (#3, #6).</strong> If #3 to #6 are merged without #7, the Labs door and tab open the Not Found page.</li>
   <li><strong>Dashboard (#3).</strong> There is no stats page yet. The Dashboard door on the rail and on the phone still opens the chat home, which is why the images show it blurred.</li>
   <li><strong>Settings entries (#3).</strong> All five Settings entries (Agents, LLM Endpoints, Voice &amp; AI, Appearance, Privacy) open a real Settings tab. The Notifications and Admin tabs are no longer listed in the panels; they are reachable only from inside the Settings page.</li>
-  <li><strong>Panel quirks (#3, #4).</strong> Dashboard stays lit on the chat home while a panel is open, so two rail items can look lit. The avatar popup covers the Settings gear while it is open.</li>
-  <li><strong>Labs content (#7).</strong> The page is a placeholder. Design, Backtest and Test Run still have to be built.</li>
+  <li><strong>Avatar popup (#4).</strong> The popup covers the Settings gear while it is open.</li>
+  <li><strong>Labs content (#7).</strong> The page is a placeholder. Design, Backtest, Test Run and Diagnose still have to be built.</li>
   <li><strong>Lost entry points (#3, #4).</strong> The notification bell, the display currency and Run setup again have no place in the new layout yet. Decision: fine for now, a place is to be found later.</li>
   <li><strong>Next proposal.</strong> The Dashboard page (stats) is the next proposal to build.</li>
 </ol>
 <p>Not checked yet: light theme, colour-blind mode, a real phone, and pages that need a Hummingbot server with data (Portfolio, Bots, Trade).</p>
 
 <h2 id="decision">Decision requested</h2>
-<div class="callout"><p>Approve replacing the top nav with the left icon rail and the phone bottom tab bar, shipped as PRs #3, #4, #6 and #7 into <code>ui-redesign</code>, subject to the open points above.</p></div>
+<div class="callout"><p>Approve replacing the top nav with the left icon rail and the phone bottom tab bar, shipped as PRs #3, #4, #6 and #7 (with #25 and #26 as extras) into <code>ui-redesign</code>, subject to the open points above.</p></div>
 
 <h2 id="log">Refinement log</h2>
 <p>Newest first. Add a row for every change that comes out of review.</p>
 <table>
   <thead><tr><th>Date</th><th>Change</th><th>Reason / source</th><th>PR</th></tr></thead>
   <tbody>
+    <tr><td>2026-11-27</td><td>Labs now holds four tools: Design, Backtest, Test Run and Diagnose (the route stays <code>/labs</code>); no Settings entry is removed; the lit-state quirk is fixed in #3 (while a panel or the avatar popup is open, only its opener is lit, Dashboard is not); PR #25 (phone drawer for the chat panel rail) and PR #26 (tests refuse real ports) added to the rollout as extras</td><td>User answers; fix in PR #3 (<code>4ea4af86</code>)</td><td>#3, #7, #25, #26</td></tr>
     <tr><td>2026-11-27</td><td>Rail revised again: More is back as the three-dot item after Labs, Settings is a separate gear item with its own panel (Agents, LLM Endpoints, Voice &amp; AI, Appearance, Privacy); the phone bar has four tabs (Dashboard, Agents, Labs, Account) and the Account sheet holds More, Settings and Logout; all desktop images retaken at 1280 by 700 at 2x and shown at one width; Dashboard page noted as the next proposal</td><td>User decisions on the open questions</td><td>#3, #6</td></tr>
     <tr><td>2026-11-27</td><td>Final images for the rail, avatar menu, phone tab bar and Labs page, all retaken at 2x in the dark theme with the page body blurred and only the navigation sharp; phones now shown inside the phone frame, one per row; Phones section rewritten for the new tab bar (Dashboard, Agents, Labs, More, Account) and the six-entry More sheet; open points added for the Account tab, Labs before #7 and the Dashboard</td><td>User review of the proposal; PRs #3, #4, #6 and #7 merged down in order</td><td>#3, #4, #6, #7</td></tr>
     <tr><td>2026-11-27</td><td>Rail proposal revised after review: rail items are Dashboard, Agents, Labs and More; top bar right side is Local, Gateway status and Switch Mode; More lists Hummingbot API, Gateway, Keys and Wallets, Servers, Updates and Report an Issue; bell removed; avatar popup reduced to the user name with role, and Logout; the Strategies page became the Labs page; the Chat list search and filter section (PR #8) was dropped by decision. Page bodies are blurred in the new images so the navigation stands out</td><td>User review of the proposal</td><td>#3, #4, #6, #7</td></tr>
