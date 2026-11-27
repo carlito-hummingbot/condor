@@ -36,7 +36,10 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      "/api": "http://localhost:8088",
+      // `ws: true` so the chat socket (`/api/v1/ws/chat`) and the channel socket
+      // (`/api/v1/ws`) upgrade through the proxy; a bare string target only
+      // forwards plain HTTP, which is why the chat used to dial :8088 directly.
+      "/api": { target: "http://localhost:8088", ws: true },
       "/ws": {
         target: "ws://localhost:8088",
         ws: true,
