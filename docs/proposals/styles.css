@@ -69,3 +69,7 @@ figure.phone figcaption { text-align: center; }
 figure.phone .phone-frame img { border: 0; border-radius: 28px; width: 100%; max-width: 100%; display: block; }
 /* A 2x phone screen (780 px wide) is shown at its own 390 px size */
 .phone-frame.x2 { width: 390px; }
+/* Phone screens: two per row when they fit, otherwise one per row */
+.phone-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 24px; }
+.phone-row figure.phone { margin: 0.5rem 0 1rem; max-width: 420px; }
+.phone-row figure.phone figcaption { max-width: 390px; }
