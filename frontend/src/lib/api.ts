@@ -4,9 +4,9 @@ import type {
   FleetMap,
   FleetOwner,
 } from "@/lib/agent-attribution";
+import type { UserPreferences } from "@/lib/onboarding";
 import { controllerKey } from "@/lib/controller-identity";
 import { collectCursorPages, type WalkOutcome } from "@/lib/history-pagination";
-import type { UserPreferences } from "@/lib/preferences";
 
 import { authFetch, authHeaders } from "./auth-token";
 

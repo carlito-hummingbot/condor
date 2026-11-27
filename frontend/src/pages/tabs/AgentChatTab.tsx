@@ -14,6 +14,8 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
+import { useDisplayName } from "@/hooks/useUserPreferences";
+
 import type { KnowledgeTabId } from "@/components/agent/knowledgeTabs";
 import { AccountDock } from "@/components/chat/AccountDock";
 import {
@@ -1568,6 +1570,7 @@ function Hero({
     true,
     agent ? 4 : 3,
   );
+  const name = useDisplayName();
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-2">
@@ -1577,7 +1580,9 @@ function Hero({
         </h2>
         <p className="mt-1 text-center text-sm text-[var(--color-text-muted)]">
           {agent?.description ||
-            "Your portfolio, your bots, your positions — just ask."}
+            (name
+              ? `Hi ${name}. Your portfolio, your bots, your positions — just ask.`
+              : "Your portfolio, your bots, your positions — just ask.")}
         </p>
 
         <div className="mt-4 flex justify-center">

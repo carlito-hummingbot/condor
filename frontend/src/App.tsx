@@ -175,6 +175,9 @@ export default function App() {
                     column, so the rail and the dock stay where they were. */}
                 <Route path="/hub" element={<Agents />} />
                 <Route path="/settings" element={<Settings />} />
+                {/* First-run setup, and "Run setup again". The wizard itself
+                    is mounted by the shell; this address only forces it. */}
+                <Route path="/welcome" element={<Navigate to="/?onboarding=1" replace />} />
                 {import.meta.env.DEV && <Route path="/_design" element={<DesignSystem />} />}
                 <Route path="/market" element={<Navigate to="/trade" replace />} />
                 {/* Inside the shell on purpose: a mistyped address used to
