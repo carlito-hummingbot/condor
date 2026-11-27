@@ -7,8 +7,9 @@ import {
   MORE_ICON,
   RAIL_TOP,
   SETTINGS_ICON,
-  isRailEntryActive,
+  isRailItemLit,
   type NavEntry,
+  type RailOverlayId,
   type RailPanelId,
 } from "@/lib/nav";
 import { RailPanel } from "./RailPanel";
@@ -33,9 +34,9 @@ function itemClass(active: boolean): string {
   }`;
 }
 
-function RailLink({ item }: { item: NavEntry }) {
+function RailLink({ item, overlay }: { item: NavEntry; overlay: RailOverlayId | null }) {
   const { pathname, search } = useLocation();
-  const active = isRailEntryActive(item.id, pathname, search);
+  const active = isRailItemLit(item.id, overlay, pathname, search);
   return (
     <Link
       to={item.to}
@@ -52,19 +53,22 @@ export function SideRail({ onReport }: { onReport: () => void }) {
   const { pathname, search } = useLocation();
   const title = useDashboardTitle();
   const name = useDisplayName();
-  const [panel, setPanel] = useState<RailPanelId | null>(null);
+  // The one open overlay (see `RailOverlayId`). While it is set, only its
+  // opener is lit.
+  const [overlay, setOverlay] = useState<RailOverlayId | null>(null);
+  const panel: RailPanelId | null = overlay === "more" || overlay === "settings" ? overlay : null;
   const panelId = useId();
   const moreRef = useRef<HTMLButtonElement>(null);
   const settingsRef = useRef<HTMLButtonElement>(null);
   const buttons = { more: moreRef, settings: settingsRef };
-  const toggle = (id: RailPanelId) => setPanel((open) => (open === id ? null : id));
+  const toggle = (id: RailOverlayId) => setOverlay((open) => (open === id ? null : id));
   const close = (restoreFocus: boolean) => {
     const was = panel;
-    setPanel(null);
+    setOverlay(null);
     if (restoreFocus && was) buttons[was].current?.focus();
   };
-  const moreActive = isRailEntryActive("more", pathname, search);
-  const settingsActive = isRailEntryActive("settings", pathname, search);
+  const moreLit = isRailItemLit("more", overlay, pathname, search);
+  const settingsLit = isRailItemLit("settings", overlay, pathname, search);
   const MoreIcon = MORE_ICON;
   const SettingsIcon = SETTINGS_ICON;
 
@@ -80,7 +84,7 @@ export function SideRail({ onReport }: { onReport: () => void }) {
       </Tooltip>
 
       {RAIL_TOP.map((item) => (
-        <RailLink key={item.id} item={item} />
+        <RailLink key={item.id} item={item} overlay={overlay} />
       ))}
 
       <Tooltip label="More">
@@ -90,9 +94,9 @@ export function SideRail({ onReport }: { onReport: () => void }) {
           aria-expanded={panel === "more"}
           aria-controls={panel === "more" ? panelId : undefined}
           aria-haspopup="menu"
-          aria-current={moreActive ? "page" : undefined}
+          aria-current={moreLit && overlay === null ? "page" : undefined}
           onClick={() => toggle("more")}
-          className={itemClass(moreActive || panel === "more")}
+          className={itemClass(moreLit)}
         >
           <MoreIcon className="h-5 w-5" />
           <span className="text-[10px] font-medium leading-none">More</span>
@@ -108,9 +112,9 @@ export function SideRail({ onReport }: { onReport: () => void }) {
           aria-expanded={panel === "settings"}
           aria-controls={panel === "settings" ? panelId : undefined}
           aria-haspopup="menu"
-          aria-current={settingsActive ? "page" : undefined}
+          aria-current={settingsLit && overlay === null ? "page" : undefined}
           onClick={() => toggle("settings")}
-          className={itemClass(settingsActive || panel === "settings")}
+          className={itemClass(settingsLit)}
         >
           <SettingsIcon className="h-5 w-5" />
           <span className="text-[10px] font-medium leading-none">Settings</span>
