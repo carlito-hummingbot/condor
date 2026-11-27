@@ -3,8 +3,8 @@
  *
  * Active-state rules live in `lib/nav` and are tested there. This checks that
  * the rail actually paints them, and that More opens onto the parked pages
- * plus Report an issue. The avatar has no menu yet: it is the initials and it
- * goes to Settings.
+ * plus Report an issue. The avatar opens the account menu: the name, the role
+ * and Logout, nothing else.
  *
  * @vitest-environment jsdom
  */
@@ -164,18 +164,33 @@ describe("SideRail", () => {
     const text = document.body.textContent || "";
     expect(text).toContain("Algo Trader");
     expect(text).toContain("Admin");
-    expect(text).toContain("local");
-    expect(text).toContain("Gateway: running");
-    expect(text).toContain("USDT");
-    expect(text).toContain("Run setup again");
     expect(text).toContain("Logout");
 
-    const setup = [...document.body.querySelectorAll("a")].find((a) =>
-      a.textContent?.includes("Run setup again"),
+    // Only user functions: one action, and none of the old top-bar controls.
+    const items = [...document.body.querySelectorAll('[role="menuitem"]')].map((el) =>
+      el.textContent?.trim(),
     );
-    expect(setup?.getAttribute("href")).toBe("/welcome");
+    expect(items).toEqual(["Logout"]);
+    for (const gone of [
+      "API Servers",
+      "Display Currency",
+      "USDT",
+      "Theme",
+      "Run setup again",
+      "Gateway",
+      "local",
+    ]) {
+      expect(text).not.toContain(gone);
+    }
+    expect(document.body.querySelector('a[href="/welcome"]')).toBeNull();
+    expect(document.body.querySelector('[aria-label="Theme"]')).toBeNull();
 
-    const bell = container.querySelector('button[aria-label="Notifications"]');
-    expect(bell).not.toBeNull();
+    const logoutItem = [...document.body.querySelectorAll('[role="menuitem"]')].find((el) =>
+      el.textContent?.includes("Logout"),
+    ) as HTMLButtonElement;
+    await act(async () => {
+      logoutItem.click();
+    });
+    expect(logout).toHaveBeenCalledTimes(1);
   });
 });
