@@ -6,7 +6,7 @@ Base: origin/ui-redesign (97d9261a). Built by `git merge` only.
 Merged heads, in order:
 
 1. ui/test-no-real-ports (#26) 2b0f34ef
-2. ui/chat-socket-host (#27) b4a9157d
+2. ui/chat-socket-host (#27) 38d1ce8f (includes VITE_API_TARGET)
 3. fix/login-strictmode-probe (#15) e7b1ca18
 4. feat/test-connection-endpoint (#16) 6e80e930 (backend)
 5. fix/server-status-staleness (#17) 64fb7a75 (backend)
