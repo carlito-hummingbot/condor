@@ -770,6 +770,28 @@ class AddServerRequest(BaseModel):
     password: str
 
 
+class ConnectionCheckRequest(BaseModel):
+    """Address and credentials to try, before anything is saved."""
+
+    # A bare hostname, IPv4 address or bracketed IPv6 literal: it is spliced
+    # into ``http://host:port``, so no scheme, path, userinfo or whitespace.
+    host: str = Field(
+        min_length=1,
+        max_length=253,
+        pattern=r"^(?:[A-Za-z0-9._-]+|\[[0-9A-Fa-f:.]+\])$",
+    )
+    port: int = Field(ge=1, le=65535)
+    username: str = Field(max_length=256)
+    password: str = Field(max_length=256)
+
+
+class ConnectionCheckResult(BaseModel):
+    ok: bool
+    # online | auth_error | unreachable | timeout | error | not_configured
+    status: str
+    message: str
+
+
 class UpdateServerRequest(BaseModel):
     host: Optional[str] = None
     port: Optional[int] = None
