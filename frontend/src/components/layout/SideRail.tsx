@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 import { Tooltip } from "@/components/ui/Tooltip";
@@ -9,9 +9,9 @@ import {
   SETTINGS_ICON,
   isRailEntryActive,
   type NavEntry,
+  type RailPanelId,
 } from "@/lib/nav";
-import { MoreMenu } from "./MoreMenu";
-import { SettingsMenu } from "./SettingsMenu";
+import { RailPanel } from "./RailPanel";
 
 /**
  * The 64px rail that replaces the top bar.
@@ -22,7 +22,8 @@ import { SettingsMenu } from "./SettingsMenu";
  * it goes to Settings, and the account menu lands in the next change.
  *
  * Dashboard, Agents, Labs and More (three dots) on top. The Settings gear and
- * the avatar sit at the foot. There is no bell in the rail.
+ * the avatar sit at the foot. More and Settings open one panel beside the
+ * rail (`RailPanel`) with their own list. There is no bell in the rail.
  */
 function itemClass(active: boolean): string {
   return `flex h-12 w-14 flex-col items-center justify-center gap-0.5 rounded-md transition-colors ${
@@ -51,10 +52,17 @@ export function SideRail({ onReport }: { onReport: () => void }) {
   const { pathname, search } = useLocation();
   const title = useDashboardTitle();
   const name = useDisplayName();
-  const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null);
-  const [moreOpen, setMoreOpen] = useState(false);
-  const [settingsAnchor, setSettingsAnchor] = useState<HTMLElement | null>(null);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [panel, setPanel] = useState<RailPanelId | null>(null);
+  const panelId = useId();
+  const moreRef = useRef<HTMLButtonElement>(null);
+  const settingsRef = useRef<HTMLButtonElement>(null);
+  const buttons = { more: moreRef, settings: settingsRef };
+  const toggle = (id: RailPanelId) => setPanel((open) => (open === id ? null : id));
+  const close = (restoreFocus: boolean) => {
+    const was = panel;
+    setPanel(null);
+    if (restoreFocus && was) buttons[was].current?.focus();
+  };
   const moreActive = isRailEntryActive("more", pathname, search);
   const settingsActive = isRailEntryActive("settings", pathname, search);
   const MoreIcon = MORE_ICON;
@@ -75,33 +83,39 @@ export function SideRail({ onReport }: { onReport: () => void }) {
         <RailLink key={item.id} item={item} />
       ))}
 
-      <button
-        ref={setMoreAnchor}
-        type="button"
-        aria-expanded={moreOpen}
-        aria-haspopup="menu"
-        aria-current={moreActive ? "page" : undefined}
-        onClick={() => setMoreOpen((open) => !open)}
-        className={itemClass(moreActive || moreOpen)}
-      >
-        <MoreIcon className="h-5 w-5" />
-        <span className="text-[10px] font-medium leading-none">More</span>
-      </button>
+      <Tooltip label="More">
+        <button
+          ref={moreRef}
+          type="button"
+          aria-expanded={panel === "more"}
+          aria-controls={panel === "more" ? panelId : undefined}
+          aria-haspopup="menu"
+          aria-current={moreActive ? "page" : undefined}
+          onClick={() => toggle("more")}
+          className={itemClass(moreActive || panel === "more")}
+        >
+          <MoreIcon className="h-5 w-5" />
+          <span className="text-[10px] font-medium leading-none">More</span>
+        </button>
+      </Tooltip>
 
       <div className="flex-1" />
 
-      <button
-        ref={setSettingsAnchor}
-        type="button"
-        aria-expanded={settingsOpen}
-        aria-haspopup="menu"
-        aria-current={settingsActive ? "page" : undefined}
-        onClick={() => setSettingsOpen((open) => !open)}
-        className={itemClass(settingsActive || settingsOpen)}
-      >
-        <SettingsIcon className="h-5 w-5" />
-        <span className="text-[10px] font-medium leading-none">Settings</span>
-      </button>
+      <Tooltip label="Settings">
+        <button
+          ref={settingsRef}
+          type="button"
+          aria-expanded={panel === "settings"}
+          aria-controls={panel === "settings" ? panelId : undefined}
+          aria-haspopup="menu"
+          aria-current={settingsActive ? "page" : undefined}
+          onClick={() => toggle("settings")}
+          className={itemClass(settingsActive || panel === "settings")}
+        >
+          <SettingsIcon className="h-5 w-5" />
+          <span className="text-[10px] font-medium leading-none">Settings</span>
+        </button>
+      </Tooltip>
 
       <Tooltip label={name}>
         <Link
@@ -113,16 +127,12 @@ export function SideRail({ onReport }: { onReport: () => void }) {
         </Link>
       </Tooltip>
 
-      <MoreMenu
-        anchor={moreAnchor}
-        open={moreOpen}
-        onClose={() => setMoreOpen(false)}
+      <RailPanel
+        panel={panel}
+        id={panelId}
+        buttons={buttons}
+        onClose={close}
         onReport={onReport}
-      />
-      <SettingsMenu
-        anchor={settingsAnchor}
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
       />
     </nav>
   );

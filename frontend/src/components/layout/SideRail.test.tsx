@@ -2,7 +2,7 @@
  * The rail's active item and the More menu.
  *
  * Active-state rules live in `lib/nav` and are tested there. This checks that
- * the rail actually paints them, and that More and Settings open onto their own entries. The avatar has no menu yet: it is the initials and it
+ * the rail actually paints them, and that More and Settings open one panel beside it with their own entries. The avatar has no menu yet: it is the initials and it
  * goes to Settings.
  *
  * @vitest-environment jsdom
@@ -209,5 +209,128 @@ describe("SideRail", () => {
     const avatar = container.querySelector('a[aria-label="Algo Trader"]');
     expect(avatar?.textContent).toBe("AT");
     expect(avatar?.getAttribute("href")).toBe("/settings");
+  });
+  describe("the panel beside the rail", () => {
+    const button = (name: string) =>
+      [...container.querySelectorAll("button")].find(
+        (el) => el.textContent?.trim() === name,
+      ) as HTMLButtonElement;
+    const panel = () => document.body.querySelector("aside");
+    const click = async (el: Element) => {
+      await act(async () => {
+        (el as HTMLElement).click();
+      });
+      await flush();
+    };
+    const key = async (target: Element, k: string) => {
+      await act(async () => {
+        target.dispatchEvent(new KeyboardEvent("keydown", { key: k, bubbles: true }));
+      });
+    };
+
+    it("is closed until a rail button is pressed, and then titles itself More or Settings", async () => {
+      renderAt("/");
+      await flush();
+      expect(panel()).toBeNull();
+      expect(button("More").getAttribute("aria-expanded")).toBe("false");
+
+      await click(button("More"));
+      expect(panel()?.querySelector("h2")?.textContent).toBe("More");
+      expect(panel()?.getAttribute("aria-labelledby")).toBe(panel()?.querySelector("h2")?.id);
+      expect(panel()?.querySelector('[role="menu"]')).not.toBeNull();
+      expect(button("More").getAttribute("aria-expanded")).toBe("true");
+      expect(button("More").getAttribute("aria-controls")).toBe(panel()?.id);
+    });
+
+    it("switches its content when the other rail button is pressed", async () => {
+      renderAt("/");
+      await flush();
+      await click(button("More"));
+      await click(button("Settings"));
+      expect(panel()?.querySelector("h2")?.textContent).toBe("Settings");
+      expect(button("More").getAttribute("aria-expanded")).toBe("false");
+      expect(button("Settings").getAttribute("aria-expanded")).toBe("true");
+      expect(panel()?.querySelectorAll('[role="menuitem"]')).toHaveLength(5);
+    });
+
+    it("closes when its own button is pressed again", async () => {
+      renderAt("/");
+      await flush();
+      await click(button("More"));
+      await click(button("More"));
+      expect(panel()).toBeNull();
+    });
+
+    it("overlays the page: fixed beside the rail, under the top bar, not in the page flow", async () => {
+      renderAt("/");
+      await flush();
+      await click(button("More"));
+      const cls = panel()!.className;
+      expect(cls).toContain("fixed");
+      expect(cls).toContain("left-16");
+      expect(cls).toContain("top-10");
+      expect(cls).toContain("bottom-0");
+      expect(cls).toContain("w-60");
+    });
+
+    it("moves focus into the panel and returns it to the rail button on Escape", async () => {
+      renderAt("/");
+      await flush();
+      await click(button("Settings"));
+      const first = panel()!.querySelector('[role="menuitem"]');
+      expect(document.activeElement).toBe(first);
+
+      await key(window as unknown as Element, "Escape");
+      await flush();
+      expect(panel()).toBeNull();
+      expect(document.activeElement).toBe(button("Settings"));
+    });
+
+    it("closes on a click outside, but not on a click inside or on a rail button", async () => {
+      renderAt("/");
+      await flush();
+      await click(button("More"));
+      await act(async () => {
+        panel()!.querySelector("h2")!.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+      });
+      expect(panel()).not.toBeNull();
+      await act(async () => {
+        document.body.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+      });
+      await flush();
+      expect(panel()).toBeNull();
+    });
+
+    it("closes after an entry is chosen", async () => {
+      renderAt("/");
+      await flush();
+      await click(button("Settings"));
+      await click(panel()!.querySelectorAll('[role="menuitem"]')[3]);
+      expect(panel()).toBeNull();
+    });
+
+    it("walks the entries with the arrow keys, wrapping at both ends", async () => {
+      renderAt("/");
+      await flush();
+      await click(button("More"));
+      const items = [...panel()!.querySelectorAll('[role="menuitem"]')] as HTMLElement[];
+      expect(document.activeElement).toBe(items[0]);
+      await key(items[0], "ArrowDown");
+      expect(document.activeElement).toBe(items[1]);
+      await key(items[1], "ArrowUp");
+      await key(items[0], "ArrowUp");
+      expect(document.activeElement).toBe(items[items.length - 1]);
+      await key(items[items.length - 1], "Home");
+      expect(document.activeElement).toBe(items[0]);
+      await key(items[0], "End");
+      expect(document.activeElement).toBe(items[items.length - 1]);
+    });
+
+    it("starts on the entry whose tab is open", async () => {
+      renderAt("/settings?tab=privacy");
+      await flush();
+      await click(button("Settings"));
+      expect(document.activeElement?.textContent?.trim()).toBe("Privacy");
+    });
   });
 });

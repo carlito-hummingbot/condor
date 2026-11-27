@@ -54,9 +54,10 @@ import {
  * home until the stats page lands). Agents is `/hub`, the Agents workspace,
  * and stays lit on an agent's own page. Labs is `/labs`, built in a later
  * change; until then it shows the ordinary not-found page inside the shell.
- * More opens six entries: five Settings tabs about the server and the install,
- * and Report an Issue. The Settings gear sits at the foot of the rail, above
- * the avatar, and opens five other Settings tabs. Portfolio, Trade, DEX,
+ * More opens a panel beside the rail with six entries: five Settings tabs
+ * about the server and the install, and Report an Issue. The Settings gear
+ * sits at the foot of the rail, above the avatar, and opens the same panel
+ * with five other Settings tabs. Portfolio, Trade, DEX,
  * Routines and Bots have no door in the nav for now; their routes still work
  * by address.
  */
@@ -101,6 +102,21 @@ export const SETTINGS_ITEMS: readonly NavEntry[] = [
 ];
 
 export const REPORT_ISSUE = { label: "Report an Issue", icon: Bug } as const;
+
+/**
+ * The two lists the rail shows in its side panel, and the phone's Account
+ * sheet can show too. One source: a panel is a title plus these entries, and
+ * More ends with Report an Issue (not a route, it opens a dialog).
+ */
+export type RailPanelId = "more" | "settings";
+
+export const RAIL_PANELS: Record<
+  RailPanelId,
+  { title: string; entries: readonly NavEntry[]; report: boolean }
+> = {
+  more: { title: "More", entries: MORE_ITEMS, report: true },
+  settings: { title: "Settings", entries: SETTINGS_ITEMS, report: false },
+};
 
 /** The three dots in the main group. It opens the More menu; it is not a link. */
 export const MORE_ICON = MoreHorizontal;
