@@ -124,7 +124,8 @@ async def session_options(user: WebUser = Depends(get_current_user)):
     is a real key.
 
     Each agent row also carries whether this machine can actually run it
-    (``ready``) and the sentence saying what is missing (``detail``), so the
+    (``ready``), the probe's verdict (``state``: ``ready``, ``unverified`` or
+    ``missing``) and the sentence saying what is missing (``detail``), so the
     picker can say "not installed — npm install -g …" up front instead of
     letting the pick fail at session start. A probe that itself fails leaves the
     rows unannotated rather than hiding every model.
@@ -150,6 +151,10 @@ async def session_options(user: WebUser = Depends(get_current_user)):
             # login cannot be proven must stay pickable — the marker paths are
             # heuristics, and refusing on one would lock a working model away.
             row["ready"] = state.usable
+            # Additive: the probe's own verdict, so a client that needs "proven
+            # logged in" (the onboarding model step's Detected tag) can tell
+            # READY from UNVERIFIED. ``ready`` above is deliberately looser.
+            row["state"] = state.state
             row["detail"] = state.detail
         return row
 
