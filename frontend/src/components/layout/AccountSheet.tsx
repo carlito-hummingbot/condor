@@ -1,123 +1,128 @@
-import { ChevronLeft, ChevronRight, LogOut } from "lucide-react";
-import { useState } from "react";
+import { ChevronLeft, ChevronRight, LogOut, UserRound } from "lucide-react";
+import { Fragment, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 import { useDisplayName } from "@/hooks/useDisplayName";
 import { useAuth } from "@/lib/auth";
 import {
-  MORE_ICON,
-  RAIL_PANELS,
-  REPORT_ISSUE,
+  SETTINGS_GROUPS,
   SETTINGS_ICON,
-  isMoreActive,
-  isMoreEntryActive,
+  SETTINGS_TITLE,
+  isReportEntry,
   isSettingsActive,
   isSettingsEntryActive,
-  type NavEntry,
-  type RailPanelId,
 } from "@/lib/nav";
 import { BottomSheet } from "./BottomSheet";
 
 /**
- * The phone's Account sheet. Its first level is who is signed in and three
- * rows: More, Settings, Logout. More and Settings open a second level inside
- * the same sheet, with a back arrow, so the sheet stays one short list at a
- * time. The lists are the rail panel's (`RAIL_PANELS` in `lib/nav`), not copies.
+ * The phone's Account sheet. First level: who is signed in (name and role),
+ * then three rows: Account, Settings, Logout. Account closes the sheet and
+ * opens the shared `AccountDialog` (see `onAccount`). Settings opens a second
+ * level inside the same sheet, with a back arrow: the rail panel's list
+ * (`SETTINGS_GROUPS` in `lib/nav`, not a copy), in its three groups with a thin
+ * divider between them. The list is longer than a short phone screen, so the
+ * sheet scrolls (`BottomSheet` caps its height) and the last row stays reachable.
  */
 const ROW =
   "flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition-colors hover:bg-[var(--color-surface-hover)]";
+const LIT = "bg-[var(--color-primary-fill)]/10 text-[var(--color-primary)]";
+const PLAIN = "text-[var(--color-text)]";
 
 export function AccountSheet({
   open,
   onClose,
   onReport,
+  onAccount,
 }: {
   open: boolean;
   onClose: () => void;
   onReport: () => void;
+  /** Called after the sheet has closed itself, to open the Account dialog. */
+  onAccount: () => void;
 }) {
   // The body mounts only while open, so it always starts on the first level.
-  return open ? <AccountSheetBody onClose={onClose} onReport={onReport} /> : null;
+  return open ? <AccountSheetBody onClose={onClose} onReport={onReport} onAccount={onAccount} /> : null;
 }
 
-function AccountSheetBody({ onClose, onReport }: { onClose: () => void; onReport: () => void }) {
+function AccountSheetBody({
+  onClose,
+  onReport,
+  onAccount,
+}: {
+  onClose: () => void;
+  onReport: () => void;
+  onAccount: () => void;
+}) {
   const { pathname, search } = useLocation();
   const name = useDisplayName();
   const { user, logout } = useAuth();
   const role = user?.role === "admin" ? "Admin" : user?.role === "user" ? "User" : user?.role;
-  const [level, setLevel] = useState<RailPanelId | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const MoreIcon = MORE_ICON;
   const SettingsIcon = SETTINGS_ICON;
-  const ReportIcon = REPORT_ISSUE.icon;
 
-  if (level) {
-    const { title, entries, report } = RAIL_PANELS[level];
-    const lit = (entry: NavEntry) =>
-      level === "more"
-        ? isMoreEntryActive(entry, pathname, search)
-        : isSettingsEntryActive(entry, pathname, search);
+  if (settingsOpen) {
     return (
-      <BottomSheet open onClose={onClose} label={title}>
+      <BottomSheet open onClose={onClose} label={SETTINGS_TITLE}>
         <div className="flex items-center gap-1 px-2 pb-1 pt-2">
           <button
             type="button"
             aria-label="Back"
-            onClick={() => setLevel(null)}
+            onClick={() => setSettingsOpen(false)}
             className="flex h-9 w-9 items-center justify-center rounded-md text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
           <h2 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-            {title}
+            {SETTINGS_TITLE}
           </h2>
         </div>
-        <div role="menu" aria-label={title} className="pb-2">
-          {entries.map((entry) => {
-            const Icon = entry.icon;
-            const active = lit(entry);
-            return (
-              <Link
-                key={entry.id}
-                to={entry.to}
-                role="menuitem"
-                onClick={onClose}
-                aria-current={active ? "page" : undefined}
-                className={`${ROW} ${
-                  active ? "bg-[var(--color-primary-fill)]/10 text-[var(--color-primary)]" : "text-[var(--color-text)]"
-                }`}
-              >
-                <Icon className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" />
-                {entry.label}
-              </Link>
-            );
-          })}
-          {report && (
-            <>
-              <div className="mx-4 my-1 border-t border-[var(--color-border)]" />
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  onClose();
-                  onReport();
-                }}
-                className={`${ROW} text-[var(--color-text)]`}
-              >
-                <ReportIcon className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" />
-                {REPORT_ISSUE.label}
-              </button>
-            </>
-          )}
+        <div role="menu" aria-label={SETTINGS_TITLE} className="pb-2">
+          {SETTINGS_GROUPS.map((group, index) => (
+            <Fragment key={index}>
+              {index > 0 && (
+                <div role="separator" className="mx-4 my-1 border-t border-[var(--color-border)]" />
+              )}
+              {group.map((entry) => {
+                const Icon = entry.icon;
+                if (isReportEntry(entry)) {
+                  return (
+                    <button
+                      key={entry.id}
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        onClose();
+                        onReport();
+                      }}
+                      className={`${ROW} ${PLAIN}`}
+                    >
+                      <Icon className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" />
+                      {entry.label}
+                    </button>
+                  );
+                }
+                const active = isSettingsEntryActive(entry, pathname, search);
+                return (
+                  <Link
+                    key={entry.id}
+                    to={entry.to}
+                    role="menuitem"
+                    onClick={onClose}
+                    aria-current={active ? "page" : undefined}
+                    className={`${ROW} ${active ? LIT : PLAIN}`}
+                  >
+                    <Icon className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" />
+                    {entry.label}
+                  </Link>
+                );
+              })}
+            </Fragment>
+          ))}
         </div>
       </BottomSheet>
     );
   }
-
-  const moreLit = isMoreActive(pathname, search);
-  const settingsLit = isSettingsActive(pathname, search);
-  const rowClass = (active: boolean) =>
-    `${ROW} ${active ? "bg-[var(--color-primary-fill)]/10 text-[var(--color-primary)]" : "text-[var(--color-text)]"}`;
 
   return (
     <BottomSheet open onClose={onClose} label="Account">
@@ -131,14 +136,26 @@ function AccountSheetBody({ onClose, onReport }: { onClose: () => void; onReport
       </div>
       <div className="mx-4 border-t border-[var(--color-border)]" />
       <div role="menu" aria-label="Account" className="py-1">
-        <button type="button" role="menuitem" onClick={() => setLevel("more")} className={rowClass(moreLit)}>
-          <MoreIcon className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" />
-          <span className="flex-1">{RAIL_PANELS.more.title}</span>
-          <ChevronRight className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" />
+        <button
+          type="button"
+          role="menuitem"
+          onClick={() => {
+            onClose();
+            onAccount();
+          }}
+          className={`${ROW} ${PLAIN}`}
+        >
+          <UserRound className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" />
+          Account
         </button>
-        <button type="button" role="menuitem" onClick={() => setLevel("settings")} className={rowClass(settingsLit)}>
+        <button
+          type="button"
+          role="menuitem"
+          onClick={() => setSettingsOpen(true)}
+          className={`${ROW} ${isSettingsActive(pathname) ? LIT : PLAIN}`}
+        >
           <SettingsIcon className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" />
-          <span className="flex-1">{RAIL_PANELS.settings.title}</span>
+          <span className="flex-1">{SETTINGS_TITLE}</span>
           <ChevronRight className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" />
         </button>
         <button
@@ -148,7 +165,7 @@ function AccountSheetBody({ onClose, onReport }: { onClose: () => void; onReport
             onClose();
             logout();
           }}
-          className={`${ROW} text-[var(--color-text)] hover:text-[var(--color-red)]`}
+          className={`${ROW} ${PLAIN} hover:text-[var(--color-red)]`}
         >
           <LogOut className="h-4 w-4 shrink-0" />
           Logout

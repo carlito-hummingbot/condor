@@ -7,7 +7,6 @@ import {
   KeyRound,
   LayoutDashboard,
   Mic,
-  MoreHorizontal,
   Network,
   Palette,
   Server,
@@ -49,18 +48,16 @@ import {
  * its own sat beside Agents saying the same thing twice. Its door was the card
  * at the foot of the Agents rail.
  *
- * The top bar is a left icon rail now. Four doors in the main group:
- * Dashboard, Agents, Labs and More (three dots). Dashboard is `/` (the chat
- * home until the stats page lands). Agents is `/hub`, the Agents workspace,
- * and stays lit on an agent's own page. Labs is `/labs`, a
- * placeholder page for now (Design, Backtest, Test Run and Diagnose come later);
- * `/strategies` redirects to it.
- * More opens a panel beside the rail with six entries: five Settings tabs
- * about the server and the install, and Report an Issue. The Settings gear
- * sits at the foot of the rail, above the avatar, and opens the same panel
- * with five other Settings tabs. Portfolio, Trade, DEX,
- * Routines and Bots have no door in the nav for now; their routes still work
- * by address.
+ * The top bar is a left icon rail now. Three doors in the main group:
+ * Dashboard, Agents and Labs. Dashboard is `/` (the chat home until the stats
+ * page lands). Agents is `/hub`, the Agents workspace, and stays lit on an
+ * agent's own page. Labs is `/labs`, a placeholder page for now (Design,
+ * Backtest, Test Run and Diagnose come later); `/strategies` redirects to it.
+ * The Settings gear sits at the foot of the rail, above the avatar, and opens
+ * a panel beside the rail with every Settings tab people reach for, in three
+ * groups, and Report an Issue. Portfolio, Trade, DEX, Routines and Bots have
+ * no door in the nav for now; their routes still work by address.
+
  */
 export interface NavEntry {
   id: string;
@@ -76,61 +73,67 @@ export const RAIL_TOP: readonly NavEntry[] = [
   { id: "labs", to: "/labs", icon: FlaskConical, label: "Labs" },
 ];
 
+/** Report an Issue is not a route: it opens the existing dialog. */
+export interface ReportEntry {
+  id: "report";
+  label: string;
+  icon: LucideIcon;
+  action: "report";
+}
+
+/** One row of the Settings panel: a Settings tab, or the Report an Issue action. */
+export type PanelEntry = NavEntry | ReportEntry;
+
+export function isReportEntry(entry: PanelEntry): entry is ReportEntry {
+  return "action" in entry;
+}
+
+export const REPORT_ISSUE: ReportEntry = { id: "report", label: "Report an Issue", icon: Bug, action: "report" };
+
 /**
- * The More menu: Settings tabs, in the order a person reaches for them. Each
- * `to` is a Settings tab (`/settings?tab=...`). Report an Issue is last and is
- * not a route: it opens the existing dialog.
+ * The Settings panel, as three groups. The panel draws a thin divider between
+ * groups and no group titles. Each `to` is a Settings tab (`/settings?tab=...`).
+ * The phone's Account sheet reads this same list.
+ *
+ * Ids: "agents" is also a rail door, so the Settings one is `set-agents`.
+ * Notifications and Admin are Settings tabs with no row here: they stay
+ * reachable inside the Settings page.
  */
-export const MORE_ITEMS: readonly NavEntry[] = [
-  { id: "api", to: "/settings?tab=api", icon: ServerCog, label: "Hummingbot API" },
-  { id: "gateway", to: "/settings?tab=gateway", icon: Network, label: "Gateway" },
-  { id: "keys", to: "/settings?tab=keys", icon: KeyRound, label: "Keys and Wallets" },
-  { id: "servers", to: "/settings?tab=servers", icon: Server, label: "Servers" },
-  { id: "updates", to: "/settings?tab=updates", icon: Download, label: "Updates" },
+export const SETTINGS_GROUPS: readonly (readonly PanelEntry[])[] = [
+  [
+    { id: "api", to: "/settings?tab=api", icon: ServerCog, label: "Hummingbot API" },
+    { id: "gateway", to: "/settings?tab=gateway", icon: Network, label: "Gateway" },
+    { id: "keys", to: "/settings?tab=keys", icon: KeyRound, label: "Keys and Wallets" },
+    { id: "servers", to: "/settings?tab=servers", icon: Server, label: "Servers" },
+    { id: "updates", to: "/settings?tab=updates", icon: Download, label: "Updates" },
+  ],
+  [
+    { id: "set-agents", to: "/settings?tab=agents", icon: Brain, label: "Agents" },
+    { id: "set-llm", to: "/settings?tab=llm", icon: Sparkles, label: "LLM Endpoints" },
+    { id: "set-voice", to: "/settings?tab=voice", icon: Mic, label: "Voice & AI" },
+    { id: "set-appearance", to: "/settings?tab=appearance", icon: Palette, label: "Appearance" },
+    { id: "set-privacy", to: "/settings?tab=privacy", icon: Shield, label: "Privacy" },
+  ],
+  [REPORT_ISSUE],
 ];
 
-/**
- * The Settings gear's menu: the Settings tabs about Condor itself and the
- * person using it. None of them is in More. Each `to` is a Settings tab.
- * (Ids carry a prefix because "agents" is also a rail door.)
- */
-export const SETTINGS_ITEMS: readonly NavEntry[] = [
-  { id: "set-agents", to: "/settings?tab=agents", icon: Brain, label: "Agents" },
-  { id: "set-llm", to: "/settings?tab=llm", icon: Sparkles, label: "LLM Endpoints" },
-  { id: "set-voice", to: "/settings?tab=voice", icon: Mic, label: "Voice & AI" },
-  { id: "set-appearance", to: "/settings?tab=appearance", icon: Palette, label: "Appearance" },
-  { id: "set-privacy", to: "/settings?tab=privacy", icon: Shield, label: "Privacy" },
-];
+/** The panel's title. */
+export const SETTINGS_TITLE = "Settings";
 
-export const REPORT_ISSUE = { label: "Report an Issue", icon: Bug } as const;
-
-/**
- * The two lists the rail shows in its side panel, and the phone's Account
- * sheet can show too. One source: a panel is a title plus these entries, and
- * More ends with Report an Issue (not a route, it opens a dialog).
- */
-export type RailPanelId = "more" | "settings";
-
-export const RAIL_PANELS: Record<
-  RailPanelId,
-  { title: string; entries: readonly NavEntry[]; report: boolean }
-> = {
-  more: { title: "More", entries: MORE_ITEMS, report: true },
-  settings: { title: "Settings", entries: SETTINGS_ITEMS, report: false },
-};
+/** Just the Settings tab links of `SETTINGS_GROUPS`, in order. */
+export const SETTINGS_ENTRIES: readonly NavEntry[] = SETTINGS_GROUPS.flat().filter(
+  (entry): entry is NavEntry => !isReportEntry(entry),
+);
 
 /**
  * Whatever the rail has open beside or above itself. At most one thing at a
- * time: the More panel, the Settings panel, and (PR #4) the avatar popup,
- * which adds "account". The rail keeps this one value, so every open overlay
- * has the same lit-state rule (`isRailItemLit`).
+ * time: the Settings panel and (PR #4) the avatar popup, which adds "account".
+ * The rail keeps this one value, so every open overlay has the same lit-state
+ * rule (`isRailItemLit`).
  */
-export type RailOverlayId = RailPanelId | "account";
+export type RailOverlayId = "settings" | "account";
 
-/** The three dots in the main group. It opens the More menu; it is not a link. */
-export const MORE_ICON = MoreHorizontal;
-
-/** The gear at the foot of the rail. It opens the Settings menu; it is not a link. */
+/** The gear at the foot of the rail. It opens the Settings panel; it is not a link. */
 export const SETTINGS_ICON = Settings;
 
 /** The chat home only. The Hub and an agent's page belong to Agents now. */
@@ -160,22 +163,12 @@ function tabOf(entry: NavEntry): string | null {
   return new URL(entry.to, "http://x").searchParams.get("tab");
 }
 
-/** True when the open Settings tab is one of More's, so the dots stay lit. */
-export function isMoreActive(pathname: string, search = ""): boolean {
-  return onSettingsPage(pathname) && MORE_ITEMS.some((e) => tabOf(e) === settingsTab(search));
+/** True on every Settings page (any tab, Notifications and Admin included), so the gear stays lit. */
+export function isSettingsActive(pathname: string): boolean {
+  return onSettingsPage(pathname);
 }
 
-/** The More entry whose Settings tab is on screen. */
-export function isMoreEntryActive(entry: NavEntry, pathname: string, search: string): boolean {
-  return onSettingsPage(pathname) && tabOf(entry) === settingsTab(search);
-}
-
-/** True on any other Settings tab (the five in the gear menu, Notifications, Admin). */
-export function isSettingsActive(pathname: string, search = ""): boolean {
-  return onSettingsPage(pathname) && !isMoreActive(pathname, search);
-}
-
-/** The gear-menu entry whose Settings tab is on screen. */
+/** The panel row whose Settings tab is on screen. */
 export function isSettingsEntryActive(entry: NavEntry, pathname: string, search: string): boolean {
   return onSettingsPage(pathname) && tabOf(entry) === settingsTab(search);
 }
@@ -188,15 +181,11 @@ export function isRailEntryActive(id: string, pathname: string, search: string):
       return isAgentsActive(pathname);
     case "labs":
       return isLabsActive(pathname);
-    case "more":
-      return isMoreActive(pathname, search);
     case "settings":
-      return isSettingsActive(pathname, search);
+      return isSettingsActive(pathname);
     default: {
-      const more = MORE_ITEMS.find((item) => item.id === id);
-      if (more) return isMoreEntryActive(more, pathname, search);
-      const setting = SETTINGS_ITEMS.find((item) => item.id === id);
-      return setting ? isSettingsEntryActive(setting, pathname, search) : false;
+      const entry = SETTINGS_ENTRIES.find((item) => item.id === id);
+      return entry ? isSettingsEntryActive(entry, pathname, search) : false;
     }
   }
 }
