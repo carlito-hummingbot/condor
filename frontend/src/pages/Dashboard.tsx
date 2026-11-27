@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from "react";
 
-import { useDisplayName } from "@/hooks/useDisplayName";
+import { useDashboardTitle, useDisplayName } from "@/hooks/useDisplayName";
 import { formatDateTime } from "@/lib/formatters";
+import { DEFAULT_DASHBOARD_TITLE } from "@/lib/onboarding";
 import { BarChart, Gauge, PriceChart, Sparkline } from "./dashboard/charts";
 import { SAMPLE, type AgentCard } from "./dashboard/sampleData";
 
@@ -117,6 +118,9 @@ function AgentCardView({ agent }: { agent: AgentCard }) {
 
 export function Dashboard() {
   const name = useDisplayName();
+  const savedTitle = useDashboardTitle();
+  // The title chosen in Account or the wizard replaces the page heading; without one it reads "Condor Dashboard".
+  const heading = savedTitle === DEFAULT_DASHBOARD_TITLE ? "Condor Dashboard" : savedTitle;
   // Taken once on load: nothing on this page refreshes, so "Updated" says when it was drawn.
   const [now] = useState(() => new Date());
   const { funds, pnl, meter, btc } = SAMPLE;
@@ -125,7 +129,7 @@ export function Dashboard() {
     <div className="mx-auto w-full max-w-[1400px] text-[var(--color-text)]">
       <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
         <div>
-          <h1 className="text-[26px] font-bold leading-tight tracking-tight">Condor Dashboard</h1>
+          <h1 className="text-[26px] font-bold leading-tight tracking-tight">{heading}</h1>
           <p className="mt-1 text-[15px] text-[var(--color-text-muted)]">Welcome back, {name}.</p>
         </div>
         <div className="flex items-center gap-2.5 whitespace-nowrap text-[13px] text-[var(--color-text-muted)]">

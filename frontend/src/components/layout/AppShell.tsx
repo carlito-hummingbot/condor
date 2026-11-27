@@ -96,6 +96,8 @@ function AppShellBody() {
       {/* The rail replaces the 48px top bar. The onboarding wizard mounts in
           `main`, so the rail stays visible and usable beside it. */}
       <SideRail onReport={() => setReportOpen(true)} />
+      {/* `min-h-0` so a long padded page scrolls inside the screen on a phone: a flex
+          column otherwise grows to its content and the page scrolls the whole shell. */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {/* Server, Gateway status and Switch Mode (light/dark). */}
         <ShellControls />

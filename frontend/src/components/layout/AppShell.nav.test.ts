@@ -1,10 +1,10 @@
 /**
  * The shell's lists, as contract rather than as markup.
  *
- * A page is only reachable if the rail or the More menu names it, and it only
- * lays itself out correctly if the shell knows it is full bleed. Read directly:
- * they are data. `/fleet` is the case that shows why a door onto a redirect is
- * not a door — it lost its page in FEAT-114.
+ * A page is only reachable if the rail or the Settings panel names it, and it
+ * only lays itself out correctly if the shell knows it is full bleed. Read
+ * directly: they are data. `/fleet` is the case that shows why a door onto a
+ * redirect is not a door — it lost its page in FEAT-114.
  *
  * Both live in `lib/nav` rather than beside the shell that renders them: a
  * module may not export a component and plain data both (the lint gate's
@@ -15,21 +15,21 @@ import { describe, expect, it } from "vitest";
 
 import {
   FULL_BLEED_ROUTES,
-  MORE_ITEMS,
   RAIL_TOP,
-  SETTINGS_ITEMS,
+  REPORT_ISSUE,
+  SETTINGS_ENTRIES,
+  SETTINGS_GROUPS,
   isAgentsActive,
   isDashboardActive,
   isLabsActive,
-  isMoreActive,
-  isMoreEntryActive,
   isRailEntryActive,
   isRailItemLit,
+  isReportEntry,
   isSettingsActive,
   isSettingsEntryActive,
 } from "@/lib/nav";
 
-const destinations = [...RAIL_TOP, ...MORE_ITEMS];
+const destinations = [...RAIL_TOP, ...SETTINGS_ENTRIES];
 
 describe("the nav", () => {
   it("has neither a fleet nor a floor entry: both are somebody else's report now", () => {
@@ -38,37 +38,44 @@ describe("the nav", () => {
     expect(paths).not.toContain("/floor");
   });
 
-  it("has exactly Dashboard, Agents and Labs on the rail", () => {
+  it("has exactly Dashboard, Agents and Labs on the rail, and no More", () => {
     expect(RAIL_TOP.map((item) => item.label)).toEqual(["Dashboard", "Agents", "Labs"]);
     expect(RAIL_TOP.map((item) => item.to)).toEqual(["/", "/hub", "/labs"]);
   });
 
-  it("has exactly five Settings tabs under More, before Report an Issue", () => {
-    expect(MORE_ITEMS.map((item) => item.label)).toEqual([
-      "Hummingbot API",
-      "Gateway",
-      "Keys and Wallets",
-      "Servers",
-      "Updates",
+  it("has the Settings panel in three groups, in this order", () => {
+    expect(SETTINGS_GROUPS.map((g) => g.map((e) => e.label))).toEqual([
+      ["Hummingbot API", "Gateway", "Keys and Wallets", "Servers", "Updates"],
+      ["Agents", "LLM Endpoints", "Voice & AI", "Appearance", "Privacy"],
+      ["Report an Issue"],
     ]);
-    expect(MORE_ITEMS.every((item) => item.to.startsWith("/settings?tab="))).toBe(true);
   });
 
-  it("has exactly five Settings tabs behind the gear, none of them in More", () => {
-    expect(SETTINGS_ITEMS.map((item) => item.label)).toEqual([
-      "Agents",
-      "LLM Endpoints",
-      "Voice & AI",
-      "Appearance",
-      "Privacy",
+  it("points every Settings row at its tab, and Report an Issue at a dialog", () => {
+    expect(SETTINGS_ENTRIES.map((e) => e.to)).toEqual([
+      "/settings?tab=api",
+      "/settings?tab=gateway",
+      "/settings?tab=keys",
+      "/settings?tab=servers",
+      "/settings?tab=updates",
+      "/settings?tab=agents",
+      "/settings?tab=llm",
+      "/settings?tab=voice",
+      "/settings?tab=appearance",
+      "/settings?tab=privacy",
     ]);
-    const more = new Set(MORE_ITEMS.map((item) => item.to));
-    expect(SETTINGS_ITEMS.some((item) => more.has(item.to))).toBe(false);
+    const last = SETTINGS_GROUPS[2][0];
+    expect(last).toBe(REPORT_ISSUE);
+    expect(isReportEntry(last)).toBe(true);
+    expect(SETTINGS_ENTRIES).not.toContain(REPORT_ISSUE);
   });
 
-  it("gives every entry a distinct address and label", () => {
+  it("gives every entry a distinct address, id and label", () => {
     expect(new Set(destinations.map((i) => i.to)).size).toBe(destinations.length);
-    expect(new Set(destinations.map((i) => i.label)).size).toBe(destinations.length);
+    const all = [...RAIL_TOP, ...SETTINGS_GROUPS.flat()];
+    expect(new Set(all.map((i) => i.id)).size).toBe(all.length);
+    // "Agents" is a rail door and a Settings tab: same word, two doors, two ids.
+    expect(all.filter((i) => i.label === "Agents")).toHaveLength(2);
   });
 });
 
@@ -94,33 +101,39 @@ describe("active state", () => {
     expect(isLabsActive("/laboratory")).toBe(false);
   });
 
-  it("lights More on its own tabs, and Servers when no tab is given", () => {
-    expect(isMoreActive("/settings", "")).toBe(true);
-    expect(isMoreActive("/settings", "?tab=keys")).toBe(true);
-    expect(isMoreActive("/settings", "?tab=appearance")).toBe(false);
-    expect(isMoreActive("/portfolio", "?tab=keys")).toBe(false);
-    expect(isRailEntryActive("more", "/settings", "?tab=updates")).toBe(true);
-  });
-
-  it("lights Settings on every other Settings tab, never both together", () => {
-    for (const tab of ["agents", "llm", "voice", "appearance", "privacy", "notifications", "admin"]) {
-      expect(isSettingsActive("/settings", `?tab=${tab}`)).toBe(true);
-      expect(isMoreActive("/settings", `?tab=${tab}`)).toBe(false);
+  it("lights Settings on every Settings page, whatever the tab", () => {
+    for (const tab of [
+      "api",
+      "gateway",
+      "keys",
+      "servers",
+      "updates",
+      "agents",
+      "llm",
+      "voice",
+      "appearance",
+      "privacy",
+      "notifications",
+      "admin",
+    ]) {
+      expect(isSettingsActive("/settings")).toBe(true);
+      expect(isRailEntryActive("settings", "/settings", `?tab=${tab}`)).toBe(true);
     }
-    expect(isSettingsActive("/settings", "")).toBe(false);
-    expect(isSettingsActive("/hub", "?tab=privacy")).toBe(false);
-    const privacy = SETTINGS_ITEMS.find((i) => i.id === "set-privacy")!;
-    expect(isSettingsEntryActive(privacy, "/settings", "?tab=privacy")).toBe(true);
-    expect(isSettingsEntryActive(privacy, "/settings", "?tab=voice")).toBe(false);
+    expect(isRailEntryActive("settings", "/settings", "")).toBe(true);
+    expect(isSettingsActive("/settings/extra")).toBe(true);
+    expect(isSettingsActive("/hub")).toBe(false);
+    expect(isSettingsActive("/portfolio")).toBe(false);
   });
 
-  it("lights the More entry whose tab is open, and Servers when no tab is given", () => {
-    const keys = MORE_ITEMS.find((i) => i.id === "keys")!;
-    const servers = MORE_ITEMS.find((i) => i.id === "servers")!;
-    expect(isMoreEntryActive(keys, "/settings", "?tab=keys")).toBe(true);
-    expect(isMoreEntryActive(keys, "/settings", "?tab=gateway")).toBe(false);
-    expect(isMoreEntryActive(servers, "/settings", "")).toBe(true);
-    expect(isMoreEntryActive(servers, "/", "?tab=servers")).toBe(false);
+  it("lights the row whose tab is open, and Servers when no tab is given", () => {
+    const find = (id: string) => SETTINGS_ENTRIES.find((e) => e.id === id)!;
+    expect(isSettingsEntryActive(find("keys"), "/settings", "?tab=keys")).toBe(true);
+    expect(isSettingsEntryActive(find("keys"), "/settings", "?tab=gateway")).toBe(false);
+    expect(isSettingsEntryActive(find("set-privacy"), "/settings", "?tab=privacy")).toBe(true);
+    expect(isSettingsEntryActive(find("servers"), "/settings", "")).toBe(true);
+    expect(isSettingsEntryActive(find("servers"), "/", "?tab=servers")).toBe(false);
+    expect(isRailEntryActive("set-voice", "/settings", "?tab=voice")).toBe(true);
+    expect(isRailEntryActive("more", "/settings", "?tab=keys")).toBe(false);
   });
 });
 
@@ -140,18 +153,18 @@ describe("full bleed", () => {
 
 describe("lit state with an overlay open", () => {
   it("lights only the opener, whatever the route", () => {
-    expect(isRailItemLit("dashboard", "more", "/", "")).toBe(false);
-    expect(isRailItemLit("more", "more", "/", "")).toBe(true);
-    expect(isRailItemLit("settings", "more", "/settings", "?tab=voice")).toBe(false);
+    expect(isRailItemLit("dashboard", "settings", "/", "")).toBe(false);
     expect(isRailItemLit("settings", "settings", "/", "")).toBe(true);
+    expect(isRailItemLit("labs", "settings", "/labs", "")).toBe(false);
     expect(isRailItemLit("account", "account", "/", "")).toBe(true);
+    expect(isRailItemLit("settings", "account", "/settings", "?tab=voice")).toBe(false);
     expect(isRailItemLit("agents", "account", "/hub", "")).toBe(false);
   });
 
   it("follows the route when nothing is open", () => {
     expect(isRailItemLit("dashboard", null, "/", "")).toBe(true);
     expect(isRailItemLit("agents", null, "/hub", "")).toBe(true);
-    expect(isRailItemLit("more", null, "/settings", "?tab=keys")).toBe(true);
+    expect(isRailItemLit("settings", null, "/settings", "?tab=keys")).toBe(true);
     expect(isRailItemLit("settings", null, "/settings", "?tab=privacy")).toBe(true);
   });
 });

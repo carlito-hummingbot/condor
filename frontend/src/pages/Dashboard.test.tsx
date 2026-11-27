@@ -10,8 +10,12 @@ import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const prefs = vi.hoisted(() => ({
+  current: { profile: { display_name: "Algo Trader" } } as Record<string, unknown>,
+}));
+
 vi.mock("@/lib/api", () => ({
-  api: { getPreferences: async () => ({ profile: { display_name: "Algo Trader" } }) },
+  api: { getPreferences: async () => prefs.current },
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ token: "t", user: { id: 1, username: "local", first_name: "Local", role: "admin" } }),
@@ -57,6 +61,7 @@ function renderAt(path: string, element: React.ReactNode) {
 }
 
 beforeEach(() => {
+  prefs.current = { profile: { display_name: "Algo Trader" } };
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   container = document.createElement("div");
   document.body.appendChild(container);
@@ -82,6 +87,15 @@ describe("Dashboard", () => {
     expect(text).toContain("Daily P&L (Combined)");
     expect(text).toContain("Hourly P&L (Combined)");
     expect(text).toContain("Top News");
+  });
+
+  it("uses the saved dashboard title and name in place of the sample heading", async () => {
+    prefs.current = { profile: { display_name: "Ada" }, ui: { dashboard_title: "Ada Desk" } };
+    renderAt("/", <Dashboard />);
+    await flush();
+    await flush();
+    expect(container.querySelector("h1")?.textContent).toBe("Ada Desk");
+    expect(container.textContent).toContain("Welcome back, Ada.");
   });
 
   it("shows the three live agents with their subtitles and only the four fields", async () => {

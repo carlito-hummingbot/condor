@@ -11,7 +11,7 @@ Merged heads, in order:
 4. feat/test-connection-endpoint (#16) 6e80e930 (backend)
 5. fix/server-status-staleness (#17) 64fb7a75 (backend)
 6. feat/model-readiness-state (#24) d38d8939 (backend)
-7. ui/panel-rail-v2 (#25) d15f203c: contains the rail stack #3 4ea4af86, #4 a813dce7, #6 0d20f505, #7 3be0a250
+7. ui/panel-rail-v2 (#25) ad8e9ffd: contains the rail stack #3 b5a1bd0d, #4 5728adcf, #6 d617fd5e, #7 0b81a167 (More removed; Settings panel with three groups; avatar Account dialog; four-tab phone bar; Labs page)
 8. ui/onboarding-model-connect (#23) a35c6f81: contains #2, #9, #11, #12, #14, #21, #22
 
 Conflicts: AppShell.tsx (rail shell + wizard/keys banner/telemetry gate in `main`), lib/api.ts (login
@@ -35,3 +35,17 @@ the real Dashboard is a later proposal.
   The Agents rail door also lights on `/chat`.
 - `/?onboarding=1` and `/welcome` stay on the Dashboard; the first-run wizard shows over its page area.
 - Small shell fix: the right-hand column of `AppShell` got `min-h-0`, so a long page scrolls inside `main` on a phone.
+
+## Rail stack update (ad8e9ffd)
+
+`ui/panel-rail-v2` ad8e9ffd was merged in with `git merge`. Conflicts and how they were resolved:
+
+- `hooks/useDisplayName.ts`, `lib/preferences.ts`: #4 copied onboarding's preference helpers. Here there is ONE copy
+  (onboarding's, in `lib/onboarding.ts` and `hooks/useUserPreferences.ts`). `lib/preferences.ts` stays deleted,
+  `useDisplayName.ts` stays the thin re-export, and `AccountDialog.tsx` imports onboarding's helpers and hook.
+- `components/layout/AppShell.tsx`: only a comment differed; one `min-h-0` line (it is in the stack now).
+
+Showcase-only difference: `pages/Dashboard.tsx` shows the saved dashboard title (set in the Account dialog or the
+wizard) as its heading, and "Condor Dashboard" when none is saved. Nothing else in the stack was changed.
+The wizard bug (saving an exchange key in Connect ends the wizard early) and the `RECOMMENDED_MODEL_KEY` rename
+are still not fixed on this branch.

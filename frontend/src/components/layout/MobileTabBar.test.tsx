@@ -1,6 +1,7 @@
 /**
- * The phone tab bar: four tabs, and an Account sheet with name, role, More,
- * Settings and Logout; More and Settings open a second level with a back arrow.
+ * The phone tab bar: four tabs, and an Account sheet with name, role, then
+ * Account, Settings and Logout. Settings opens the rail panel's list (three
+ * groups) inside the sheet with a back arrow; Account opens the shared dialog.
  *
  * @vitest-environment jsdom
  */
@@ -92,20 +93,39 @@ async function click(el: Element | null | undefined) {
   await flush();
 }
 
-function dialog() {
-  return document.body.querySelector('[role="dialog"]');
+/** The bottom sheet, when open. The account dialog is a different dialog (aria-modal). */
+function sheet() {
+  return document.body.querySelector('[role="dialog"]:not([aria-modal="true"])');
 }
 
-function rows(root: Element | null) {
-  return Array.from(root?.querySelectorAll('[role="menuitem"]') ?? []).map((el) =>
+function accountDialog() {
+  return document.body.querySelector('[role="dialog"][aria-modal="true"]');
+}
+
+function rows(from: Element | null) {
+  return Array.from(from?.querySelectorAll('[role="menuitem"]') ?? []).map((el) =>
     el.textContent?.trim(),
   );
 }
 
 async function openAccount() {
   await click(container.querySelector('button[aria-label="Algo Trader"]'));
-  return dialog();
+  return sheet();
 }
+
+const SETTINGS_ROWS = [
+  "Hummingbot API",
+  "Gateway",
+  "Keys and Wallets",
+  "Servers",
+  "Updates",
+  "Agents",
+  "LLM Endpoints",
+  "Voice & AI",
+  "Appearance",
+  "Privacy",
+  "Report an Issue",
+];
 
 describe("MobileTabBar", () => {
   it("shows exactly four tabs: the rail's three doors, then Account", async () => {
@@ -167,56 +187,49 @@ describe("MobileTabBar", () => {
     );
   });
 
-  it("opens the Account sheet with name, role and three rows", async () => {
+  it("opens the Account sheet with name, role and exactly Account, Settings, Logout", async () => {
     renderAt("/");
     await flush();
-    const sheet = await openAccount();
-    expect(sheet?.getAttribute("aria-label")).toBe("Account");
-    expect(sheet?.textContent).toContain("Algo Trader");
-    expect(sheet?.textContent).toContain("Admin");
-    expect(rows(sheet)).toEqual(["More", "Settings", "Logout"]);
+    const open = await openAccount();
+    expect(open?.getAttribute("aria-label")).toBe("Account");
+    expect(open?.textContent).toContain("Algo Trader");
+    expect(open?.textContent).toContain("Admin");
+    expect(rows(open)).toEqual(["Account", "Settings", "Logout"]);
   });
 
-  it("More opens the six entries inside the sheet, and Back returns", async () => {
+  it("has no More anywhere: not on the bar, in the sheet or in the Settings list", async () => {
     renderAt("/");
     await flush();
-    const sheet = await openAccount();
-    await click(sheet?.querySelectorAll('[role="menuitem"]')[0]);
-    expect(rows(dialog())).toEqual([
-      "Hummingbot API",
-      "Gateway",
-      "Keys and Wallets",
-      "Servers",
-      "Updates",
-      "Report an Issue",
-    ]);
-    const hrefs = Array.from(dialog()?.querySelectorAll("a") ?? []).map((a) => a.getAttribute("href"));
+    const open = await openAccount();
+    expect(open?.textContent).not.toMatch(/\bMore\b/);
+    await click(open?.querySelectorAll('[role="menuitem"]')[1]);
+    expect(sheet()?.textContent).not.toMatch(/\bMore\b/);
+    expect(container.textContent).not.toMatch(/\bMore\b/);
+  });
+
+  it("Settings opens the full list in three groups, with separators and no group titles", async () => {
+    renderAt("/");
+    await flush();
+    const open = await openAccount();
+    await click(open?.querySelectorAll('[role="menuitem"]')[1]);
+    const list = sheet();
+    expect(list?.getAttribute("aria-label")).toBe("Settings");
+    expect(rows(list)).toEqual(SETTINGS_ROWS);
+    expect(list?.querySelectorAll('[role="separator"]')).toHaveLength(2);
+    // The dividers sit after Updates and after Privacy; Report an Issue is last.
+    const order = Array.from(list?.querySelectorAll('[role="menuitem"], [role="separator"]') ?? []).map(
+      (el) => (el.getAttribute("role") === "separator" ? "|" : el.textContent?.trim()),
+    );
+    expect(order.indexOf("|")).toBe(order.indexOf("Updates") + 1);
+    expect(order.lastIndexOf("|")).toBe(order.indexOf("Privacy") + 1);
+    expect(order[order.length - 1]).toBe("Report an Issue");
+    const hrefs = Array.from(list?.querySelectorAll("a") ?? []).map((a) => a.getAttribute("href"));
     expect(hrefs).toEqual([
       "/settings?tab=api",
       "/settings?tab=gateway",
       "/settings?tab=keys",
       "/settings?tab=servers",
       "/settings?tab=updates",
-    ]);
-
-    await click(dialog()?.querySelector('button[aria-label="Back"]'));
-    expect(rows(dialog())).toEqual(["More", "Settings", "Logout"]);
-  });
-
-  it("Settings opens the five entries inside the sheet", async () => {
-    renderAt("/");
-    await flush();
-    const sheet = await openAccount();
-    await click(sheet?.querySelectorAll('[role="menuitem"]')[1]);
-    expect(rows(dialog())).toEqual([
-      "Agents",
-      "LLM Endpoints",
-      "Voice & AI",
-      "Appearance",
-      "Privacy",
-    ]);
-    const hrefs = Array.from(dialog()?.querySelectorAll("a") ?? []).map((a) => a.getAttribute("href"));
-    expect(hrefs).toEqual([
       "/settings?tab=agents",
       "/settings?tab=llm",
       "/settings?tab=voice",
@@ -225,49 +238,80 @@ describe("MobileTabBar", () => {
     ]);
   });
 
+  it("Back returns to the first level", async () => {
+    renderAt("/");
+    await flush();
+    const open = await openAccount();
+    await click(open?.querySelectorAll('[role="menuitem"]')[1]);
+    await click(sheet()?.querySelector('button[aria-label="Back"]'));
+    expect(rows(sheet())).toEqual(["Account", "Settings", "Logout"]);
+  });
+
   it("lights the open Settings entry in its list", async () => {
     renderAt("/settings?tab=appearance");
     await flush();
-    const sheet = await openAccount();
-    await click(sheet?.querySelectorAll('[role="menuitem"]')[1]);
-    const lit = dialog()?.querySelector('[aria-current="page"]');
-    expect(lit?.textContent?.trim()).toBe("Appearance");
+    const open = await openAccount();
+    await click(open?.querySelectorAll('[role="menuitem"]')[1]);
+    expect(sheet()?.querySelector('[aria-current="page"]')?.textContent?.trim()).toBe("Appearance");
   });
 
-  it("closes the sheet after choosing an entry, and Report an Issue opens the dialog", async () => {
+  it("closes the sheet after choosing an entry", async () => {
     renderAt("/");
     await flush();
-    let sheet = await openAccount();
-    await click(sheet?.querySelectorAll('[role="menuitem"]')[0]);
-    await click(dialog()?.querySelector("a"));
-    expect(dialog()).toBeNull();
+    const open = await openAccount();
+    await click(open?.querySelectorAll('[role="menuitem"]')[1]);
+    await click(sheet()?.querySelector("a"));
+    expect(sheet()).toBeNull();
+  });
 
-    sheet = await openAccount();
-    await click(sheet?.querySelectorAll('[role="menuitem"]')[0]);
-    const items = dialog()?.querySelectorAll('[role="menuitem"]') ?? [];
+  it("Report an Issue closes the sheet and opens the report dialog", async () => {
+    renderAt("/");
+    await flush();
+    const open = await openAccount();
+    await click(open?.querySelectorAll('[role="menuitem"]')[1]);
+    const items = sheet()?.querySelectorAll('[role="menuitem"]') ?? [];
     await click(items[items.length - 1]);
     expect(reported).toHaveBeenCalledTimes(1);
-    expect(dialog()).toBeNull();
+    expect(sheet()).toBeNull();
+  });
+
+  it("the Account row closes the sheet, then opens the account dialog; closing returns focus to the tab", async () => {
+    renderAt("/");
+    await flush();
+    const open = await openAccount();
+    await click(open?.querySelectorAll('[role="menuitem"]')[0]);
+    // One layer at a time: the sheet is gone, the dialog is up.
+    expect(sheet()).toBeNull();
+    const dlg = accountDialog();
+    expect(dlg).not.toBeNull();
+    expect(dlg?.textContent).toContain("Your account");
+
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    });
+    await flush();
+    expect(accountDialog()).toBeNull();
+    expect(document.activeElement).toBe(container.querySelector('button[aria-label="Algo Trader"]'));
   });
 
   it("reopens on the first level", async () => {
     renderAt("/");
     await flush();
-    let sheet = await openAccount();
-    await click(sheet?.querySelectorAll('[role="menuitem"]')[1]);
+    let open = await openAccount();
+    await click(open?.querySelectorAll('[role="menuitem"]')[1]);
     await click(container.querySelector('button[aria-label="Algo Trader"]'));
-    expect(dialog()).toBeNull();
-    sheet = await openAccount();
-    expect(rows(sheet)).toEqual(["More", "Settings", "Logout"]);
+    expect(sheet()).toBeNull();
+    open = await openAccount();
+    expect(rows(open)).toEqual(["Account", "Settings", "Logout"]);
   });
 
   it("Logout logs out and closes the sheet", async () => {
     renderAt("/");
     await flush();
-    const sheet = await openAccount();
-    await click(sheet?.querySelectorAll('[role="menuitem"]')[2]);
+    const open = await openAccount();
+    await click(open?.querySelectorAll('[role="menuitem"]')[2]);
     expect(logout).toHaveBeenCalledTimes(1);
-    expect(dialog()).toBeNull();
+    expect(sheet()).toBeNull();
   });
 
   it("has no bell and no unread count", async () => {
