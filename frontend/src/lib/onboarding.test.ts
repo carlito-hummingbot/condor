@@ -14,6 +14,7 @@ import {
   planStepIds,
   readinessLoading,
   readinessRows,
+  splitModelOptions,
   stepsForPlan,
   type Readiness,
   isTradingSurface,
@@ -493,5 +494,25 @@ describe("readiness check", () => {
     expect(readinessLoading({ ...ready, keys: "loading" })).toBe(true);
     expect(readinessLoading({ ...ready, modelStatus: "loading" })).toBe(true);
     expect(readinessLoading({ ...ready, keys: "error", modelStatus: "error" })).toBe(false);
+  });
+});
+
+describe("model step detection", () => {
+  const rows = [
+    { key: "claude-code", label: "Claude Code", ready: true, detail: "installed and logged in" },
+    { key: "gemini", label: "Gemini CLI", ready: false, detail: "not installed" },
+    { key: "ollama:", label: "Ollama", ready: undefined },
+    { key: "openrouter:", label: "OpenRouter", ready: true, picker: true },
+  ];
+
+  it("lists only what this machine can run as found", () => {
+    const { found, other } = splitModelOptions(rows);
+    expect(found.map((row) => row.key)).toEqual(["claude-code"]);
+    expect(other.map((row) => row.key)).toEqual(["gemini", "ollama:", "openrouter:"]);
+  });
+
+  it("never calls an unprobed row or a picker found", () => {
+    expect(splitModelOptions([rows[2], rows[3]]).found).toEqual([]);
+    expect(splitModelOptions([]).found).toEqual([]);
   });
 });

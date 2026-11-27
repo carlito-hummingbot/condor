@@ -553,6 +553,21 @@ export function withActiveAgentKey(
   return { agent: { ...existing, active_agent_key: agentKey } };
 }
 
+/**
+ * Split the model catalogue for the setup screen. "found" is what this machine
+ * can run right now (`ready` is true: a CLI that is installed, a local server
+ * that answers, a key that is set). A row the backend could not probe has no
+ * `ready` and is not called found. Pickers (OpenRouter, custom) open a list and
+ * are never a one-click connection, so they stay in "other".
+ */
+export function splitModelOptions<T extends { ready?: boolean; picker?: boolean }>(
+  agents: readonly T[],
+): { found: T[]; other: T[] } {
+  const found = agents.filter((agent) => !agent.picker && agent.ready === true);
+  const other = agents.filter((agent) => !found.includes(agent));
+  return { found, other };
+}
+
 /** A ready model is confirmed. Anything else is a choice. */
 export function modelStepMode(ready: boolean | null | undefined): "confirm" | "choose" {
   return ready === true ? "confirm" : "choose";
