@@ -73,3 +73,10 @@ figure.phone .phone-frame img { border: 0; border-radius: 28px; width: 100%; max
 .phone-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 24px; }
 .phone-row figure.phone { margin: 0.5rem 0 1rem; max-width: 420px; }
 .phone-row figure.phone figcaption { max-width: 390px; }
+/* Close-up of the rail next to its legend. The image is a 4x capture of a 63 px strip, shown at 140 px wide (2.2x) so the labels read. */
+.rail-demo { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; margin: 1rem 0 1.6rem; }
+.rail-demo figure { margin: 0; flex: 0 0 auto; width: 140px; }
+.rail-demo figure img { width: 140px; max-width: 140px; }
+.rail-demo figcaption { font-size: 0.8rem; }
+.rail-demo .legend { flex: 1 1 320px; min-width: 280px; }
+.rail-demo .legend table { margin-top: 0; }
