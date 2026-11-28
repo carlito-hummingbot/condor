@@ -10,7 +10,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { AGENTS, CHANNELS, NEWS, START_HERE, STRATEGIES } from "./explore/sampleData";
+import { AGENTS, CHANNELS, LESSONS, NEWS, STRATEGIES } from "./explore/sampleData";
 
 const { Explore, HubRedirect } = await import("./Explore");
 
@@ -73,19 +73,28 @@ afterEach(() => {
 });
 
 describe("Explore", () => {
-  it("renders the four tabs, with Overview selected first", async () => {
+  it("renders the four tabs, with Get Started selected first", async () => {
     renderAt("/explore");
     await flush();
     expect(tabs().map((t) => t.textContent?.replace(/\d+/g, "").trim())).toEqual([
-      "Overview",
+      "Get Started",
       "Strategies",
       "Agents",
       "What's new",
     ]);
-    expect(tabNamed("Overview").getAttribute("aria-selected")).toBe("true");
-    expect(panel().textContent).toContain("Start here");
-    expect(panel().textContent).toContain("Live now");
-    expect(panel().textContent).toContain("Browse");
+    expect(tabNamed("Get Started").getAttribute("aria-selected")).toBe("true");
+    expect(panel().textContent).toContain("Get started");
+    expect(panel().textContent).toContain("Next livestream");
+    // Live now and Browse left this tab.
+    expect(panel().textContent).not.toContain("Live now");
+    expect(panel().textContent).not.toContain("Browse");
+  });
+
+  it("keeps the overview id, so an old ?tab=overview link still opens it", async () => {
+    renderAt("/explore?tab=overview");
+    await flush();
+    expect(tabNamed("Get Started").getAttribute("aria-selected")).toBe("true");
+    expect(panel().textContent).toContain("Four short lessons");
   });
 
   it("puts the selected tab in ?tab= when it is clicked", async () => {
@@ -107,15 +116,15 @@ describe("Explore", () => {
     await flush();
     expect(tabNamed("Agents").getAttribute("aria-selected")).toBe("true");
     expect(panel().textContent).toContain("an AI-driven setup: a model decides, inside the limits you set.");
-    expect(panel().textContent).not.toContain("Start here");
+    expect(panel().textContent).not.toContain("Four short lessons");
   });
 
   it("moves tabs with the arrow, Home and End keys", async () => {
     renderAt("/explore");
     await flush();
-    tabNamed("Overview").focus();
+    tabNamed("Get Started").focus();
     await act(async () => {
-      tabNamed("Overview").dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+      tabNamed("Get Started").dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
     });
     await flush();
     expect(tabNamed("Strategies").getAttribute("aria-selected")).toBe("true");
@@ -131,16 +140,47 @@ describe("Explore", () => {
       tabNamed("What's new").dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true }));
     });
     await flush();
-    expect(tabNamed("Overview").getAttribute("aria-selected")).toBe("true");
+    expect(tabNamed("Get Started").getAttribute("aria-selected")).toBe("true");
   });
 
-  it("shows three Start here picks, the livestream card and the Live now preview", async () => {
+  it("shows the four lessons, underlined, with no video, build or import actions", async () => {
     renderAt("/explore");
     await flush();
-    const picks = START_HERE.filter((p) => p.pick !== "livestream");
-    for (const pick of picks) expect(panel().textContent).toContain(pick.title);
-    expect(panel().textContent).toContain("Next livestream");
-    expect(panel().querySelectorAll('section[aria-label="Live strategies and agents"] article')).toHaveLength(3);
+    for (const lesson of LESSONS) {
+      expect(panel().textContent).toContain(lesson.title);
+      expect(panel().textContent).toContain(lesson.description);
+    }
+    const titles = [...panel().querySelectorAll("h3 button")] as HTMLButtonElement[];
+    expect(titles).toHaveLength(4);
+    expect(titles[0].className).toContain("underline");
+    for (const gone of ["Watch", "Try in Build", "Import", "video coming"]) {
+      expect(panel().textContent).not.toContain(gone);
+    }
+  });
+
+  it("opens one lesson's video and summary under the box, and closes it on a second click", async () => {
+    renderAt("/explore");
+    await flush();
+    // Nothing is open on first load.
+    expect(panel().querySelector("#explore-lesson-detail")).toBeNull();
+
+    const titles = () => [...panel().querySelectorAll("h3 button")] as HTMLButtonElement[];
+    await click(titles()[1]);
+    const detail = panel().querySelector("#explore-lesson-detail") as HTMLElement;
+    expect(detail).toBeTruthy();
+    expect(detail.textContent).toContain(LESSONS[1].title);
+    expect(detail.textContent).toContain(LESSONS[1].videoSummary);
+    expect(detail.textContent).toContain("Sample video");
+    expect(detail.textContent).toContain("Sample data");
+    expect(titles()[1].getAttribute("aria-expanded")).toBe("true");
+
+    // One at a time.
+    await click(titles()[3]);
+    expect(panel().querySelector("#explore-lesson-detail")?.textContent).toContain(LESSONS[3].videoSummary);
+
+    // The open title closes it.
+    await click(titles()[3]);
+    expect(panel().querySelector("#explore-lesson-detail")).toBeNull();
   });
 
   it("shows the source counts and filters the agent cards", async () => {

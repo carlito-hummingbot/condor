@@ -91,13 +91,12 @@ export interface LiveNowCard {
   totalRuntime: string;
 }
 
-export interface StartPick {
+/** One of the four Get Started lessons: a title, what it teaches, and its video's summary. */
+export interface Lesson {
   id: string;
-  pick: "strategy" | "agent" | "livestream";
-  ref: string | null;
   title: string;
-  why: string;
-  when?: string;
+  description: string;
+  videoSummary: string;
 }
 
 export const DEFINITIONS: readonly Definition[] = [
@@ -765,36 +764,50 @@ export const LIVE_NOW: readonly LiveNowCard[] = [
   }
 ];
 
-export const START_HERE: readonly StartPick[] = [
+/**
+ * The four Get Started lessons, in the order the user asked for them. Each one
+ * opens a sample video frame and its summary under the Start here box; no video
+ * is loaded and there is no third-party embed.
+ */
+export const LESSONS: readonly Lesson[] = [
   {
-    "id": "start-pmm",
-    "pick": "strategy",
-    "ref": "pure-market-making",
-    "title": "Start with pure market making",
-    "why": "It is the original single-pair template, so the docs, examples and settings are the easiest to follow."
+    id: "lesson-hummingbot",
+    title: "What is Hummingbot & How does it work?",
+    description:
+      "Hummingbot is the open-source engine this app runs on. It connects to exchanges and keeps a bot working from the rules and limits you set.",
+    videoSummary:
+      "Condor is the screen. Hummingbot is the engine underneath. You pick a bot, and Hummingbot runs it on an exchange.",
   },
   {
-    "id": "start-grid",
-    "pick": "strategy",
-    "ref": "grid",
-    "title": "Then try grid trading",
-    "why": "A small price range makes the mechanics visible: orders re-arm by themselves and the P&L is easy to read."
+    id: "lesson-bot-types",
+    title: "What is a bot, its types, and trading style?",
+    description:
+      "A bot is one trading job. Its type is Strategy, which follows rules you write, or Agent, which decides inside limits you set. Trading style is what it does, such as market making or arbitrage, and both types share those styles.",
+    videoSummary:
+      "Strategy follows your rules. An agent decides inside limits you set. Trading style is separate, and both types can use market making, arbitrage, and the rest.",
   },
   {
-    "id": "start-watch-churn",
-    "pick": "agent",
-    "ref": "hb-churn",
-    "title": "Or watch an agent first: Churn",
-    "why": "Season 1's winner: a stablecoin market maker that turned $800 into $2.87M of volume without price risk. Watch the video, then import."
+    id: "lesson-design",
+    title: "How to design a bot Strategy/Agent?",
+    description:
+      "Design starts with a short guide: type, trading style, exchange, and pair. You can answer it yourself or with the assistant, and the draft carries into a backtest.",
+    videoSummary:
+      "Open Build, answer the Design guide, and leave with a draft you can test. The assistant can fill the same answers with you.",
   },
   {
-    "id": "start-next-livestream",
-    "pick": "livestream",
-    "ref": null,
-    "title": "Next livestream",
-    "why": "Sample card. Replace the date and link with the real schedule before the page ships.",
-    "when": "Sample date: Thu 3 Dec 2026, 16:00 UTC"
-  }
+    id: "lesson-improve",
+    title: "How to improve a bot Strategy/Agent?",
+    description:
+      "Improve starts from a bot that is already running. Change one thing, check it in a backtest and a dry run, then send that version live.",
+    videoSummary:
+      "From a live bot, open Improve, change one setting, and walk it through backtest, dry run, and deploy before it goes live.",
+  },
 ];
+
+/** The Next livestream card beside the lessons. Sample date and links. */
+export const LIVESTREAM = {
+  why: "Sample card. Replace the date and link with the real schedule before the page ships.",
+  when: "Sample date: Thu 3 Dec 2026, 16:00 UTC",
+} as const;
 
 export const SOURCE_COUNTS = { hummingbot: 1, botcamp: 14, community: 2 } as const;

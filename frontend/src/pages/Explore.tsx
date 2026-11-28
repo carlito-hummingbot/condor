@@ -14,12 +14,11 @@ import { PageNav } from "@/components/nav/PageNav";
 import {
   AGENTS,
   CHANNELS,
-  LIVE_NOW,
+  LESSONS,
+  LIVESTREAM,
   NEWS,
-  START_HERE,
   STRATEGIES,
   type Agent,
-  type LiveNowCard,
   type NewsItem,
   type SourceKind,
   type Strategy,
@@ -47,7 +46,7 @@ type AgentFilter = "all" | SourceKind;
 type NewsFilter = "all" | NewsItem["kind"];
 
 const TABS: readonly { id: TabId; label: string; count?: number }[] = [
-  { id: "overview", label: "Overview" },
+  { id: "overview", label: "Get Started" },
   { id: "strategies", label: "Strategies", count: STRATEGIES.length },
   { id: "agents", label: "Agents", count: AGENTS.length },
   { id: "news", label: "What's new", count: NEWS.length },
@@ -65,9 +64,6 @@ const RISK_STYLE: Record<Strategy["risk"], string> = {
   high: "text-[var(--color-red)]",
 };
 
-const UP = "text-[var(--color-green)]";
-const DOWN = "text-[var(--color-red)]";
-
 const CARD = "min-w-0 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]";
 
 const SOURCE_STYLE: Record<SourceKind, string> = {
@@ -81,8 +77,6 @@ const SOURCE_DOT: Record<SourceKind, string> = {
   botcamp: "bg-[#a78bfa]",
   community: "bg-[#2dd4bf]",
 };
-
-const isNegative = (value: string) => value.trim().startsWith("-") || value.trim().startsWith("\u2212");
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -113,18 +107,6 @@ function SourceBadge({ kind }: { kind: SourceKind }) {
   return (
     <span className={`rounded-[5px] border px-1.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wide ${SOURCE_STYLE[kind]}`}>
       {SOURCE_LABEL[kind]}
-    </span>
-  );
-}
-
-function LiveDot({ label = "Live" }: { label?: string }) {
-  return (
-    <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold tracking-wider ${UP}`}>
-      <i
-        aria-hidden="true"
-        className="h-2 w-2 rounded-full bg-[var(--color-green)] shadow-[0_0_0_4px_color-mix(in_srgb,var(--color-green)_28%,transparent)]"
-      />
-      {label}
     </span>
   );
 }
@@ -295,198 +277,107 @@ function AgentCard({ agent }: { agent: Agent }) {
   );
 }
 
-function LiveAgentCard({ item }: { item: LiveNowCard }) {
-  const rows: [string, string][] = [
-    ["Pair", item.pair],
-    ["Filled Orders Qty", item.filledOrders],
-    ["Volume", item.volume],
-    ["Agent Started", item.agentStarted],
-    ["Total Runtime", item.totalRuntime],
-  ];
-  return (
-    <article className="relative min-w-0 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-5 pb-2 pt-4">
-      <div className="relative mb-0.5 flex items-center justify-center">
-        <span className="text-[10.5px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
-          {item.type === "agent" ? "Agent" : "Strategy"}
-        </span>
-        <span className="absolute right-0 top-0 flex items-center gap-2">
-          <LiveDot />
-          <button
-            type="button"
-            title="Chart coming soon"
-            aria-label="Open chart, coming soon"
-            className="flex h-7 w-7 items-center justify-center rounded-md border border-[var(--color-border)] text-[var(--color-text-muted)]"
-          >
-            <svg aria-hidden="true" viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M3 13V8M8 13V3M13 13V6" />
-            </svg>
-          </button>
-        </span>
-      </div>
-      <h3 className="text-center text-[19px] font-bold tracking-tight">{item.name}</h3>
-      <p className="mb-3.5 mt-0.5 text-center text-sm text-[var(--color-text-muted)]">{item.venue}</p>
-      <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-2 pb-3 tabular-nums">
-        <div>
-          <span className="mb-0.5 block text-[12.5px] text-[var(--color-text-muted)]">P&amp;L</span>
-          <b className={`whitespace-nowrap text-[15px] ${isNegative(item.pnl) ? DOWN : UP}`}>{item.pnl}</b>
-        </div>
-        <div className="ml-auto text-right">
-          <span className="mb-0.5 block text-[12.5px] text-[var(--color-text-muted)]">Realized / Unrealized</span>
-          <b className="whitespace-nowrap text-[15px]">
-            <span className={isNegative(item.realized) ? DOWN : UP}>{item.realized}</span> /{" "}
-            <span className={isNegative(item.unrealized) ? DOWN : UP}>{item.unrealized}</span>
-          </b>
-        </div>
-      </div>
-      <dl className="m-0 tabular-nums">
-        {rows.map(([label, value]) => (
-          <div key={label} className="flex items-baseline justify-between gap-3 border-t border-[var(--color-border)] py-2.5 text-[14.5px]">
-            <dt className="shrink-0 text-[var(--color-text-muted)]">{label}</dt>
-            <dd className="m-0 min-w-0 text-right font-semibold">{value}</dd>
-          </div>
-        ))}
-      </dl>
-    </article>
-  );
-}
-
-function OverviewPanel({ onSelect }: { onSelect: (tab: TabId) => void }) {
-  const navigate = useNavigate();
-  const picks = START_HERE.filter((p) => p.pick !== "livestream");
-  const livestream = START_HERE.find((p) => p.pick === "livestream");
-  const livePreview = [...LIVE_NOW.filter((i) => i.type === "agent").slice(0, 2), LIVE_NOW.find((i) => i.type === "strategy")!];
-  const strategyTeasers = STRATEGIES.slice(0, 3);
-  const agentTeasers = AGENTS.slice(0, 3);
-  const newsTeasers = NEWS.slice(0, 3);
-  const when = livestream?.when?.replace("Sample date: ", "") ?? "";
+function OverviewPanel() {
+  const [open, setOpen] = useState<string | null>(null);
+  const lesson = LESSONS.find((row) => row.id === open) ?? null;
+  const when = LIVESTREAM.when.replace("Sample date: ", "");
   const [date, time] = when.split(", ");
 
   return (
     <div className="pt-1">
-      <SectionHead title="Start here" hint="Three ways in; the agent pick shows what a hackathon entry looks like." />
+      <SectionHead title="Get started" hint="Four short lessons. Open one to watch the sample video." />
       <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[1.55fr_1fr]">
         <ul className={`${CARD} m-0 list-none p-0`}>
-          {picks.map((pick, i) => (
-            <li key={pick.id} className="flex min-w-0 gap-3 border-t border-[var(--color-border)] px-4 py-3 first:border-t-0">
-              <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[var(--color-primary)]/60 text-[12.5px] font-bold text-[var(--color-primary)]">
-                {i + 1}
-              </span>
-              <div className="min-w-0">
-                <h3 className="text-[15.5px] font-bold leading-snug">{pick.title}</h3>
-                <p className="mt-1 text-[13.5px] leading-snug text-[var(--color-text-muted)]">{pick.why}</p>
-                <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <button
-                    type="button"
-                    title="Video coming"
-                    className="inline-flex items-center gap-1 border-b border-[var(--color-primary)]/55 text-[13px] font-semibold"
-                  >
-                    <Play aria-hidden="true" className="h-2.5 w-2.5 fill-[var(--color-primary)] text-[var(--color-primary)]" />
-                    Watch · video coming
-                  </button>
-                  {pick.pick === "strategy" ? (
+          {LESSONS.map((row, i) => {
+            const isOpen = row.id === open;
+            return (
+              <li
+                key={row.id}
+                className="flex min-w-0 gap-3 border-t border-[var(--color-border)] px-4 py-3 first:border-t-0"
+              >
+                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[var(--color-primary)]/60 text-[12.5px] font-bold text-[var(--color-primary)]">
+                  {i + 1}
+                </span>
+                <div className="min-w-0">
+                  <h3 className="text-[15.5px] font-bold leading-snug">
                     <button
                       type="button"
-                      onClick={() => navigate("/build")}
-                      className="text-[13px] text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                      onClick={() => setOpen(isOpen ? null : row.id)}
+                      aria-expanded={isOpen}
+                      aria-controls={isOpen ? "explore-lesson-detail" : undefined}
+                      className="text-left underline decoration-[var(--color-primary)]/60 decoration-1 underline-offset-4 hover:decoration-[var(--color-primary)]"
                     >
-                      Try in Build
+                      {row.title}
                     </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => onSelect("agents")}
-                      className="text-[13px] text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
-                    >
-                      Import
-                    </button>
-                  )}
+                  </h3>
+                  <p className="mt-1 text-[13.5px] leading-snug text-[var(--color-text-muted)]">
+                    {row.description}
+                  </p>
                 </div>
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
 
-        {livestream && (
-          <article className="flex min-w-0 flex-col rounded-xl border border-[var(--color-primary)]/45 bg-[linear-gradient(160deg,color-mix(in_srgb,var(--color-primary)_9%,transparent),transparent)] px-4 py-3.5">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[10.5px] font-bold uppercase tracking-wider text-[var(--color-primary)]">
-                Next livestream
-              </span>
-              <SampleBadge />
-            </div>
-            <p className="mt-2 text-[24px] font-bold leading-tight tracking-tight">{date}</p>
-            <p className="text-[14px] text-[var(--color-text-muted)]">{time}</p>
-            <p className="mt-2 text-[13px] leading-snug text-[var(--color-text-muted)]">
-              {livestream.why}
-            </p>
-            <div className="mt-auto flex flex-wrap gap-2 pt-5">
-              <button
-                type="button"
-                className="inline-flex h-8 items-center justify-center rounded-md bg-[var(--color-primary)] px-3 text-[13px] font-semibold text-[var(--on-primary)]"
-              >
-                Set a reminder
-              </button>
-              <a
-                href={CHANNELS[0].url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-[var(--color-border)] px-3 text-[13px] font-semibold text-[var(--color-text)]"
-              >
-                YouTube <ExternalLink aria-hidden="true" className="h-3 w-3" />
-              </a>
-            </div>
-          </article>
-        )}
-      </div>
-
-      <SectionHead
-        title="Live now"
-        aside={
-          <>
-            <LiveDot label={`${livePreview.length} running`} />
+        <article className="flex min-w-0 flex-col rounded-xl border border-[var(--color-primary)]/45 bg-[linear-gradient(160deg,color-mix(in_srgb,var(--color-primary)_9%,transparent),transparent)] px-4 py-3.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[10.5px] font-bold uppercase tracking-wider text-[var(--color-primary)]">
+              Next livestream
+            </span>
             <SampleBadge />
+          </div>
+          <p className="mt-2 text-[24px] font-bold leading-tight tracking-tight">{date}</p>
+          <p className="text-[14px] text-[var(--color-text-muted)]">{time}</p>
+          <p className="mt-2 text-[13px] leading-snug text-[var(--color-text-muted)]">{LIVESTREAM.why}</p>
+          <div className="mt-auto flex flex-wrap gap-2 pt-5">
             <button
               type="button"
-              onClick={() => navigate("/")}
-              className="text-[13.5px] text-[var(--color-text-muted)] underline decoration-[var(--color-border)] underline-offset-4 hover:text-[var(--color-text)]"
+              className="inline-flex h-8 items-center justify-center rounded-md bg-[var(--color-primary)] px-3 text-[13px] font-semibold text-[var(--on-primary)]"
             >
-              All 6 in the Dashboard
+              Set a reminder
             </button>
-          </>
-        }
-      />
-      <section aria-label="Live strategies and agents" className="grid grid-cols-1 gap-3.5 md:grid-cols-2 xl:grid-cols-3">
-        {livePreview.map((item) => (
-          <LiveAgentCard key={item.id} item={item} />
-        ))}
-      </section>
+            <a
+              href={CHANNELS[0].url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-[var(--color-border)] px-3 text-[13px] font-semibold text-[var(--color-text)]"
+            >
+              YouTube <ExternalLink aria-hidden="true" className="h-3 w-3" />
+            </a>
+          </div>
+        </article>
+      </div>
 
-      <SectionHead title="Browse" hint="A short taste of each tab." />
-      <section aria-label="Catalogue previews" className="grid grid-cols-1 gap-3.5 lg:grid-cols-3">
-        <TeaserCard
-          title="Strategies"
-          all={`All ${STRATEGIES.length}`}
-          onAll={() => onSelect("strategies")}
-          items={strategyTeasers.map((s) => ({ id: s.id, title: s.name, sub: s.oneLine, right: s.difficulty }))}
-        />
-        <TeaserCard
-          title="Agents"
-          all={`All ${AGENTS.length}`}
-          onAll={() => onSelect("agents")}
-          items={agentTeasers.map((a) => ({
-            id: a.id,
-            title: a.name,
-            sub: a.oneLine,
-            right: a.race ? `${a.race.points} pts` : "",
-          }))}
-        />
-        <TeaserCard
-          title="What's new"
-          all={`All ${NEWS.length}`}
-          onAll={() => onSelect("news")}
-          items={newsTeasers.map((n) => ({ id: n.id, title: n.title, sub: n.summary, kind: n.kind, right: "sample" }))}
-        />
-      </section>
+      {lesson && (
+        <div
+          id="explore-lesson-detail"
+          className={`mt-3.5 grid grid-cols-1 gap-3.5 p-3.5 sm:grid-cols-2 ${CARD}`}
+        >
+          {/* A sample frame: nothing is embedded and no video id exists yet. */}
+          <div className="relative aspect-video overflow-hidden rounded-lg border border-[var(--color-border)] bg-[linear-gradient(160deg,hsl(0_0%_14%),hsl(0_0%_6%))]">
+            <span className="absolute right-2 top-2">
+              <SampleBadge />
+            </span>
+            <span className="absolute inset-0 flex items-center justify-center">
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-[0_8px_22px_rgba(0,0,0,0.5)]">
+                <Play aria-hidden="true" className="ml-0.5 h-4 w-4 fill-[#111]" />
+              </span>
+            </span>
+            <span className="absolute bottom-2 left-2 rounded-[5px] bg-black/55 px-1.5 py-0.5 text-[11.5px] font-semibold text-white">
+              Sample video
+            </span>
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10.5px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
+              Video summary
+            </p>
+            <h3 className="mt-1 text-[16px] font-bold leading-snug tracking-tight">{lesson.title}</h3>
+            <p className="mt-2 text-[13.5px] leading-relaxed text-[var(--color-text-muted)]">
+              {lesson.videoSummary}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -504,47 +395,6 @@ function NewsKind({ kind, withIcon = true }: { kind: NewsItem["kind"]; withIcon?
       {withIcon && kind !== "x" && (kind === "livestream" ? <Video className="h-3 w-3" /> : <MessagesSquare className="h-3 w-3" />)}
       {label}
     </span>
-  );
-}
-
-function TeaserCard({
-  title,
-  all,
-  onAll,
-  items,
-}: {
-  title: string;
-  all: string;
-  onAll: () => void;
-  items: { id: string; title: string; sub: string; right?: string; kind?: NewsItem["kind"] }[];
-}) {
-  return (
-    <article className={`${CARD} px-4 pb-1 pt-3`}>
-      <div className="flex items-baseline justify-between gap-3">
-        <h2 className="text-[13px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">{title}</h2>
-        <button type="button" onClick={onAll} className="whitespace-nowrap text-[12.5px] text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
-          {all} →
-        </button>
-      </div>
-      <ul className="m-0 list-none p-0">
-        {items.map((item) => (
-          <li key={item.id} className="grid grid-cols-[78px_1fr_auto] items-center gap-2.5 border-t border-[var(--color-border)] py-2.5 first:border-t-0">
-            {item.kind ? (
-              <NewsKind kind={item.kind} withIcon={false} />
-            ) : (
-              <span className="relative flex h-9 w-[62px] items-center justify-center overflow-hidden rounded-md border border-[var(--color-border)] bg-[linear-gradient(150deg,hsl(0_0%_15%),hsl(0_0%_6%))]">
-                <Play aria-hidden="true" className="h-2.5 w-2.5 fill-white/90 text-white/90" />
-              </span>
-            )}
-            <span className="min-w-0">
-              <b className="block truncate text-[14px] font-semibold">{item.title}</b>
-              <span className="block truncate text-[12.5px] text-[var(--color-text-muted)]">{item.sub}</span>
-            </span>
-            {item.right && <span className="whitespace-nowrap text-[11.5px] text-[var(--color-text-muted)]">{item.right}</span>}
-          </li>
-        ))}
-      </ul>
-    </article>
   );
 }
 
@@ -849,7 +699,7 @@ export function Explore() {
         tabIndex={0}
         className="outline-none"
       >
-        {tab === "overview" && <OverviewPanel onSelect={select} />}
+        {tab === "overview" && <OverviewPanel />}
         {tab === "strategies" && <StrategiesPanel />}
         {tab === "agents" && <AgentsPanel onSelect={select} />}
         {tab === "news" && <NewsPanel />}
