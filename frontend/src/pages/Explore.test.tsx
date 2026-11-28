@@ -87,6 +87,8 @@ describe("Explore", () => {
     expect(names).not.toContain("Strategies");
     expect(names).not.toContain("Agents");
     expect(tabNamed("Get Started").getAttribute("aria-selected")).toBe("true");
+    // What's new counts every post, Botcamp included.
+    expect(tabNamed("What's new").textContent).toContain(String(NEWS.length));
     expect(panel().textContent).toContain("Get started");
     expect(panel().textContent).toContain("Next livestream");
     // Live now and Browse left this tab.
@@ -389,12 +391,48 @@ describe("Explore", () => {
     expect(chipNamed("Livestream").textContent).toContain("3");
     expect(chipNamed("X").textContent).toContain("3");
     expect(chipNamed("Discord").textContent).toContain("2");
+    expect(chipNamed("Botcamp").textContent).toContain("3");
+    // Botcamp sits right after Discord in the source row.
+    const order = chips().map((c) => c.textContent?.replace(/\d+/g, "").trim());
+    expect(order).toEqual(["All", "Livestream", "X", "Discord", "Botcamp"]);
+
+    await click(chipNamed("Botcamp"));
+    const botcamp = NEWS.filter((n) => n.kind === "botcamp");
+    expect(botcamp).toHaveLength(3);
+    const botcampItems = [...panel().querySelectorAll("ol > li")];
+    expect(botcampItems).toHaveLength(3);
+    for (const item of botcampItems) {
+      expect(item.textContent).toContain("Botcamp");
+      expect(item.textContent).toContain("Sample");
+    }
+    for (const item of botcamp) expect(panel().textContent).toContain(item.title);
+    expect(panel().textContent).not.toContain(NEWS.find((n) => n.kind === "livestream")!.title);
 
     await click(chipNamed("Discord"));
     const discord = NEWS.filter((n) => n.kind === "discord");
     expect(panel().querySelectorAll("ol > li")).toHaveLength(discord.length);
     for (const item of discord) expect(panel().textContent).toContain(item.title);
     expect(panel().textContent).not.toContain(NEWS.find((n) => n.kind === "livestream")!.title);
+  });
+
+  it("follows LinkedIn and Reddit after the original three, in a new tab", async () => {
+    renderAt("/explore?tab=news");
+    await flush();
+    const links = [...panel().querySelectorAll('aside a[href]')] as HTMLAnchorElement[];
+    expect(links).toHaveLength(5);
+    expect(links.map((a) => a.getAttribute("href"))).toEqual([
+      "https://www.youtube.com/@hummingbot",
+      "https://x.com/_hummingbot",
+      "https://discord.gg/hummingbot",
+      "https://www.linkedin.com/company/hummingbot-foundation",
+      "https://www.reddit.com/r/Hummingbot/",
+    ]);
+    for (const link of links) {
+      expect(link.getAttribute("target")).toBe("_blank");
+      expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+    }
+    expect(panel().textContent).toContain("Hummingbot on LinkedIn");
+    expect(panel().textContent).toContain("r/Hummingbot");
   });
 
   it("opens the three channel links in a new tab without a referrer", async () => {

@@ -24,7 +24,7 @@ export interface Definition {
 export interface Channel {
   id: string;
   name: string;
-  kind: "livestream" | "x" | "discord";
+  kind: "livestream" | "x" | "discord" | "linkedin" | "reddit";
   url: string;
   note: string;
 }
@@ -68,7 +68,7 @@ export interface Agent {
 
 export interface NewsItem {
   id: string;
-  kind: "livestream" | "x" | "discord";
+  kind: "livestream" | "x" | "discord" | "botcamp";
   date: string;
   title: string;
   summary: string;
@@ -200,6 +200,20 @@ export const CHANNELS: readonly Channel[] = [
     "kind": "discord",
     "url": "https://discord.gg/hummingbot",
     "note": "Official invite; announcements land in the community server."
+  },
+  {
+    "id": "ch-linkedin",
+    "name": "Hummingbot on LinkedIn",
+    "kind": "linkedin",
+    "url": "https://www.linkedin.com/company/hummingbot-foundation",
+    "note": "Linked from hummingbot.org and its site config as the official company page."
+  },
+  {
+    "id": "ch-reddit",
+    "name": "r/Hummingbot",
+    "kind": "reddit",
+    "url": "https://www.reddit.com/r/Hummingbot/",
+    "note": "The subreddit hummingbot.org's own blog posts link to; checked that it loads."
   }
 ];
 
@@ -744,6 +758,33 @@ export const NEWS: readonly NewsItem[] = [
     "date": "2026-11-12",
     "title": "weekly volume milestone",
     "summary": "Sample item. Placeholder for a milestone post; the number must come from a real source.",
+    "link": "#",
+    "real": false
+  },
+  {
+    "id": "news-9",
+    "kind": "botcamp",
+    "date": "2026-11-11",
+    "title": "Botcamp hackathon entries",
+    "summary": "Sample item. Placeholder for a note that entries for the next Agent Builders Cup round are open.",
+    "link": "#",
+    "real": false
+  },
+  {
+    "id": "news-10",
+    "kind": "botcamp",
+    "date": "2026-11-09",
+    "title": "new agents in the catalogue",
+    "summary": "Sample item. Placeholder for a short post about new agents published on Botcamp.",
+    "link": "#",
+    "real": false
+  },
+  {
+    "id": "news-11",
+    "kind": "botcamp",
+    "date": "2026-11-06",
+    "title": "Botcamp community call",
+    "summary": "Sample item. Placeholder for a community call announcement from Botcamp.",
     "link": "#",
     "real": false
   }

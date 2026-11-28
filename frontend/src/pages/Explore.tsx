@@ -4,9 +4,11 @@ import { MiniPriceChart } from "@/pages/dashboard/charts";
 import {
   ExternalLink,
   Lock,
+  MessageSquare,
   MessagesSquare,
   Play,
   Radio,
+  Users,
   Video,
   X,
 } from "lucide-react";
@@ -26,6 +28,7 @@ import {
   NEWS,
   PRICE_DAYS,
   STRATEGIES,
+  type Channel,
   type Lesson,
   type LiveNowCard,
   type NewsItem,
@@ -386,13 +389,16 @@ function VideoDialog({ lesson, onClose }: { lesson: Lesson; onClose: () => void 
 }
 
 function NewsKind({ kind, withIcon = true }: { kind: NewsItem["kind"]; withIcon?: boolean }) {
-  const label = kind === "livestream" ? "Livestream" : kind === "discord" ? "Discord" : "X";
+  const label =
+    kind === "livestream" ? "Livestream" : kind === "discord" ? "Discord" : kind === "botcamp" ? "Botcamp" : "X";
   const style =
     kind === "livestream"
       ? "border-[var(--color-primary)]/50 bg-[var(--color-primary)]/12 text-[var(--color-primary)]"
       : kind === "x"
         ? "border-[#7dd3fc]/50 bg-[#7dd3fc]/12 text-[#7dd3fc]"
-        : "border-[#a78bfa]/50 bg-[#a78bfa]/12 text-[#a78bfa]";
+        : kind === "botcamp"
+          ? "border-[#2dd4bf]/50 bg-[#2dd4bf]/12 text-[#2dd4bf]"
+          : "border-[#a78bfa]/50 bg-[#a78bfa]/12 text-[#a78bfa]";
   return (
     <span className={`inline-flex items-center gap-1 rounded-[5px] border px-1.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wide ${style}`}>
       {withIcon && kind !== "x" && (kind === "livestream" ? <Video className="h-3 w-3" /> : <MessagesSquare className="h-3 w-3" />)}
@@ -703,6 +709,24 @@ function BotcampPanel({ signedIn, onFlip }: { signedIn: boolean; onFlip: (next: 
   );
 }
 
+/** The Follow list's icon and one-line description, per channel kind. Lucide has
+ *  no LinkedIn or Reddit glyph, so those two take a neutral one in the same chip. */
+const CHANNEL_ICON: Record<Channel["kind"], typeof Radio> = {
+  livestream: Radio,
+  x: X,
+  discord: MessagesSquare,
+  linkedin: Users,
+  reddit: MessageSquare,
+};
+
+const CHANNEL_LINE: Record<Channel["kind"], string> = {
+  livestream: "Livestream episodes",
+  x: "Posts and threads",
+  discord: "Announcements",
+  linkedin: "Company updates",
+  reddit: "Community threads",
+};
+
 function NewsPanel() {
   const [filter, setFilter] = useState<NewsFilter>("all");
   const counts: Record<NewsFilter, number> = {
@@ -710,6 +734,7 @@ function NewsPanel() {
     livestream: NEWS.filter((n) => n.kind === "livestream").length,
     x: NEWS.filter((n) => n.kind === "x").length,
     discord: NEWS.filter((n) => n.kind === "discord").length,
+    botcamp: NEWS.filter((n) => n.kind === "botcamp").length,
   };
   const shown = filter === "all" ? NEWS : NEWS.filter((n) => n.kind === filter);
   const filters: { id: NewsFilter; label: string }[] = [
@@ -717,9 +742,16 @@ function NewsPanel() {
     { id: "livestream", label: "Livestream" },
     { id: "x", label: "X" },
     { id: "discord", label: "Discord" },
+    { id: "botcamp", label: "Botcamp" },
   ];
   const dot = (kind: NewsItem["kind"]) =>
-    kind === "livestream" ? "bg-[var(--color-primary)]" : kind === "x" ? "bg-[#7dd3fc]" : "bg-[#a78bfa]";
+    kind === "livestream"
+      ? "bg-[var(--color-primary)]"
+      : kind === "x"
+        ? "bg-[#7dd3fc]"
+        : kind === "botcamp"
+          ? "bg-[#2dd4bf]"
+          : "bg-[#a78bfa]";
 
   return (
     <div className="pt-1">
@@ -727,7 +759,7 @@ function NewsPanel() {
         <h2 className="text-[18px] font-bold tracking-tight">What&apos;s new</h2>
         <SampleBadge />
         <span className="text-[13px] text-[var(--color-text-muted)]">
-          One timeline: livestreams, X posts and Discord announcements.
+          One timeline: livestreams, X posts, Discord announcements and Botcamp news.
         </span>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2" role="group" aria-label="Filter updates by source">
@@ -784,7 +816,7 @@ function NewsPanel() {
 
         <aside className={`${CARD} self-start p-4`} aria-label="Follow the official channels">
           <h2 className="text-[13px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Follow</h2>
-          <p className="mt-0.5 text-[12.5px] text-[var(--color-text-muted)]">The three official channels.</p>
+          <p className="mt-0.5 text-[12.5px] text-[var(--color-text-muted)]">The official channels.</p>
           <ul className="m-0 mt-1 list-none p-0">
             {CHANNELS.map((channel) => (
               <li key={channel.id} className="border-t border-[var(--color-border)] py-2 first:border-t-0">
@@ -795,12 +827,15 @@ function NewsPanel() {
                   className="flex items-center gap-2.5 no-underline"
                 >
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] text-[var(--color-text-muted)]">
-                    {channel.kind === "livestream" ? <Radio className="h-3.5 w-3.5" /> : channel.kind === "x" ? <X className="h-3.5 w-3.5" /> : <MessagesSquare className="h-3.5 w-3.5" />}
+                    {(() => {
+                      const Icon = CHANNEL_ICON[channel.kind];
+                      return <Icon className="h-3.5 w-3.5" aria-hidden="true" />;
+                    })()}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-[14px] font-semibold">{channel.name}</span>
                     <span className="block text-[11.5px] text-[var(--color-text-muted)]">
-                      {channel.kind === "livestream" ? "Livestream episodes" : channel.kind === "x" ? "Posts and threads" : "Announcements"}
+                      {CHANNEL_LINE[channel.kind]}
                     </span>
                   </span>
                   <ExternalLink aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-[var(--color-text-muted)]" />
@@ -816,8 +851,8 @@ function NewsPanel() {
       </div>
       <p className="mt-3 flex flex-wrap items-center gap-2 border-t border-[var(--color-border)] pt-2 text-[11.5px] text-[var(--color-text-muted)]">
         <SampleBadge />
-        All {NEWS.length} posts are sample, and their links are placeholders. The three channels are real: YouTube, X
-        and the Discord invite, checked on hummingbot.org.
+        All {NEWS.length} posts are sample, and their links are placeholders. The five channels are real: YouTube, X,
+        the Discord invite, LinkedIn and Reddit, checked against hummingbot.org.
       </p>
     </div>
   );
