@@ -71,7 +71,7 @@ export interface NavEntry {
 /** Rail, top group. The logo is not an entry: it is the brand, and it never lights. */
 export const RAIL_TOP: readonly NavEntry[] = [
   { id: "dashboard", to: "/", icon: LayoutDashboard, label: "Dashboard" },
-  { id: "explore", to: "/explore", icon: Compass, label: "Explore" },
+  { id: "explore", to: "/explore", icon: Compass, label: "Learn" },
   { id: "build", to: "/build", icon: Hammer, label: "Build" },
 ];
 

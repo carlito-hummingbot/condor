@@ -187,11 +187,10 @@ function VideoThumb({
    *  button and the label exactly as they were. */
   onPlay?: () => void;
 }) {
-  const corner = onPlay ? (
-    <span className="absolute bottom-2 left-2 rounded-[5px] bg-black/55 px-1.5 py-0.5 text-[11.5px] font-semibold text-white">
-      Play video
-    </span>
-  ) : (
+  // A row box is 150px wide: the play button in the middle and the sample
+  // badge bottom-right are enough, and the old corner pill overlapped the
+  // badge there. Card-sized boxes (no `onPlay`) keep their "Video coming".
+  const corner = onPlay ? null : (
     <span className="absolute bottom-2 left-2 rounded-[5px] bg-black/55 px-1.5 py-0.5 text-[11.5px] font-semibold text-white">
       Video coming
     </span>
@@ -799,9 +798,9 @@ export function Explore() {
     <div className="mx-auto w-full max-w-[1400px] text-[var(--color-text)]">
       <header className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
         <div>
-          <h1 className="text-[26px] font-bold leading-tight tracking-tight">Explore</h1>
+          <h1 className="text-[26px] font-bold leading-tight tracking-tight">Learn</h1>
           <p className="mt-1 max-w-[75ch] text-[15px] text-[var(--color-text-muted)]">
-            Explore is where you find something to run: watch a 30-second video, read one line, then try it in Build or
+            Learn is where you find something to run: watch a 30-second video, read one line, then try it in Build or
             import it.
           </p>
         </div>
@@ -812,7 +811,7 @@ export function Explore() {
 
       <div className="mt-4">
         <PageNav
-          label="Explore sections"
+          label="Learn sections"
           idPrefix="explore"
           current={tab}
           onSelect={(id) => select(id as TabId)}

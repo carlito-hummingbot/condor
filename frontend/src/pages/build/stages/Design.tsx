@@ -775,7 +775,7 @@ export default function Design({ draft, setDraft, goTo }: StageProps) {
                 <div role="group" aria-label="Import from" className="flex flex-wrap gap-1.5">
                   {(
                     [
-                      { id: "explore", label: "From Explore" },
+                      { id: "explore", label: "From Learn" },
                       { id: "paste", label: "Paste" },
                       { id: "file", label: "File" },
                     ] as const
@@ -797,7 +797,7 @@ export default function Design({ draft, setDraft, goTo }: StageProps) {
                 {importPanel === "explore" && (
                   <>
                     <p className="mt-2 text-xs text-[var(--color-text-muted)]">
-                      The 14 Botcamp agents of Explore (sample): pick one to fill the guide.
+                      The 14 Botcamp agents of Learn (sample): pick one to fill the guide.
                     </p>
                     <ul className="mt-1.5 max-h-44 list-none overflow-y-auto p-0">
                       {CATALOG_ITEMS.map((item) => (

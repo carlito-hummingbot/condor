@@ -110,6 +110,19 @@ afterEach(() => {
 });
 
 describe("SideRail", () => {
+  it("names the second door Learn, still pointing at /explore", async () => {
+    renderAt("/explore");
+    await flush();
+    const link = container.querySelector('nav[aria-label="Primary"] a[href="/explore"]');
+    expect(link?.textContent?.trim()).toBe("Learn");
+    expect(link?.getAttribute("aria-label") ?? link?.textContent?.trim()).toBe("Learn");
+    // No door is labelled Explore any more.
+    const labels = [...container.querySelectorAll('nav[aria-label="Primary"] a')].map((a) =>
+      (a.getAttribute("aria-label") || a.textContent || "").trim(),
+    );
+    expect(labels).not.toContain("Explore");
+  });
+
   it("wears the Hummingbot mark at the top, still linking home", async () => {
     renderAt("/");
     await flush();
@@ -133,7 +146,7 @@ describe("SideRail", () => {
   it("lights Explore on /explore, not on Dashboard", async () => {
     renderAt("/explore");
     await flush();
-    expect(currentLabels()).toEqual(["Explore"]);
+    expect(currentLabels()).toEqual(["Learn"]);
     rerenderAt("/build");
     await flush();
     expect(currentLabels()).toEqual(["Build"]);
@@ -169,7 +182,7 @@ describe("SideRail", () => {
     await flush();
     const nav = container.querySelector('nav[aria-label="Primary"]')!;
     const labels = [...nav.querySelectorAll("a span, button span")].map((el) => el.textContent);
-    expect(labels).toEqual(["Dashboard", "Explore", "Build", "Settings"]);
+    expect(labels).toEqual(["Dashboard", "Learn", "Build", "Settings"]);
     expect(nav.textContent).not.toContain("More");
     expect(nav.querySelector('[aria-label*="otification"]')).toBeNull();
   });
@@ -181,7 +194,7 @@ describe("SideRail", () => {
     const order = [...nav.querySelectorAll("a, button")].map(
       (el) => el.getAttribute("aria-label") || el.textContent?.trim(),
     );
-    expect(order.slice(-5)).toEqual(["Dashboard", "Explore", "Build", "Settings", "Algo Trader"]);
+    expect(order.slice(-5)).toEqual(["Dashboard", "Learn", "Build", "Settings", "Algo Trader"]);
   });
 
   it("shows Algo Trader's initials and opens the account menu", async () => {

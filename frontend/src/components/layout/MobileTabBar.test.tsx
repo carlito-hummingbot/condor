@@ -137,7 +137,7 @@ describe("MobileTabBar", () => {
     ]);
     expect(links).toEqual([
       ["Dashboard", "/"],
-      ["Explore", "/explore"],
+      ["Learn", "/explore"],
       ["Build", "/build"],
     ]);
     const buttons = Array.from(container.querySelectorAll("nav button")).map((b) =>
@@ -152,7 +152,7 @@ describe("MobileTabBar", () => {
 
   it("lights Explore on the catalogue, Dashboard only on the home", async () => {
     for (const [path, label] of [
-      ["/explore", "Explore"],
+      ["/explore", "Learn"],
       ["/", "Dashboard"],
     ] as const) {
       renderAt(path);

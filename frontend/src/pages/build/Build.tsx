@@ -73,7 +73,7 @@ function seedFromLink(from: string | null, item: string | null, intent: string |
       origin: {
         from: "explore",
         itemId: catalogue.id,
-        label: `Based on ${catalogue.name} (Explore, sample)`,
+        label: `Based on ${catalogue.name} (Learn, sample)`,
         chat: intent === "improve",
       },
       stage: "design",
@@ -145,7 +145,7 @@ export function Build() {
           {state.origin?.from === "explore" && (
             <p className="mb-0.5 text-[12px] text-[var(--color-text-muted)]">
               <Link to="/explore" className="hover:text-[var(--color-text)] hover:underline">
-                Explore
+                Learn
               </Link>{" "}
               › <span className="text-[var(--color-text)]">{state.origin.label}</span>
             </p>
@@ -385,7 +385,7 @@ export function Build() {
             to="/explore"
             className="font-semibold text-[var(--color-primary)] underline-offset-2 hover:underline"
           >
-            Back to Explore
+            Back to Learn
           </Link>{" "}
           <span className="text-[var(--color-text-muted)]">
             to find the next thing to run.

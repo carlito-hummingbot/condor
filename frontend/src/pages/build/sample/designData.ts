@@ -227,7 +227,7 @@ export const STARTING_POINTS = [
   {
     value: "import" as const,
     label: "Import",
-    hint: "Bring in a bot you already have: from Explore, a paste, or a file.",
+    hint: "Bring in a bot you already have: from Learn, a paste, or a file.",
   },
   {
     value: "scratch" as const,

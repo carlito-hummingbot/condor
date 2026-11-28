@@ -39,7 +39,7 @@ describe("the nav", () => {
   });
 
   it("has exactly Dashboard, Explore and Build on the rail, and no More", () => {
-    expect(RAIL_TOP.map((item) => item.label)).toEqual(["Dashboard", "Explore", "Build"]);
+    expect(RAIL_TOP.map((item) => item.label)).toEqual(["Dashboard", "Learn", "Build"]);
     expect(RAIL_TOP.map((item) => item.to)).toEqual(["/", "/explore", "/build"]);
   });
 
@@ -76,7 +76,7 @@ describe("the nav", () => {
     expect(new Set(all.map((i) => i.id)).size).toBe(all.length);
     // "Agents" is only the Settings row now; the rail door is Explore.
     expect(all.filter((i) => i.label === "Agents")).toHaveLength(1);
-    expect(all.filter((i) => i.label === "Explore")).toHaveLength(1);
+    expect(all.filter((i) => i.label === "Learn")).toHaveLength(1);
   });
 });
 

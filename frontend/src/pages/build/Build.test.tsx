@@ -210,7 +210,7 @@ describe("Build shell", () => {
     renderAt("/build?from=explore&item=hb-agents%5Cchurn.html");
     await flush();
 
-    expect(text()).toContain("Based on Churn (Explore, sample)");
+    expect(text()).toContain("Based on Churn (Learn, sample)");
     expect(readDraft()?.title).toBe("Churn (copy)");
     expect(readDraft()?.botKind).toBe("agent");
     expect(readDraft()?.startingPoint).toBe("import");
@@ -284,7 +284,7 @@ describe("Build shell", () => {
     // The chat is open (its guide is behind "Edit guide") and the draft is named v2.
     expect(text()).toContain("Edit guide");
     expect(text()).toContain("Draft: Churn v2");
-    expect(text()).toContain("Based on Churn (Explore, sample)");
+    expect(text()).toContain("Based on Churn (Learn, sample)");
     // The guide's own form controls are not on screen.
     expect(text()).not.toContain("Save and open the chat");
   });
@@ -296,7 +296,7 @@ describe("Build shell", () => {
     );
     renderAt("/build?stage=improve");
     await flush();
-    const back = [...container.querySelectorAll("a")].find((a) => a.textContent?.trim() === "Back to Explore");
+    const back = [...container.querySelectorAll("a")].find((a) => a.textContent?.trim() === "Back to Learn");
     expect(back?.getAttribute("href")).toBe("/explore");
   });
 
