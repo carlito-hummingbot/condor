@@ -1,10 +1,11 @@
 import { useId, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { Tooltip } from "@/components/ui/Tooltip";
 import { initialsFrom, useDashboardTitle, useDisplayName } from "@/hooks/useDisplayName";
 import {
   RAIL_TOP,
+  RUN_SETUP_PATH,
   SETTINGS_ICON,
   isRailItemLit,
   type NavEntry,
@@ -21,10 +22,12 @@ import { RailPanel } from "./RailPanel";
  * Every door shows its name under the icon (10px, like the panel rail on the
  * right), so nothing depends on a hover. The logo and the avatar are the two
  * items without a text label and keep a tooltip. The avatar opens the account
- * menu (name, role, Account, Logout); a red dot on it means the selected server
- * is offline. The account menu is the second overlay: it and the Settings panel
+ * menu (name, role, Account, Run setup again, Logout); a red dot on it means
+ * the selected server is offline. The account menu is the second overlay: it and
+ * the Settings panel
  * are never open together, and while it is open only the avatar is lit. Its
- * Account row opens `AccountDialog`, a modal above the rail.
+ * Account row opens `AccountDialog`, a modal above the rail; its Run setup
+ * again row goes to the onboarding wizard (`RUN_SETUP_PATH`).
  *
  * Dashboard, Agents and Labs on top. The Settings gear and the avatar sit at
  * the foot. The gear opens one panel beside the rail (`RailPanel`) with the
@@ -55,6 +58,7 @@ function RailLink({ item, overlay }: { item: NavEntry; overlay: RailOverlayId | 
 
 export function SideRail({ onReport }: { onReport: () => void }) {
   const { pathname, search } = useLocation();
+  const navigate = useNavigate();
   const title = useDashboardTitle();
   const name = useDisplayName();
   // The one open overlay (see `RailOverlayId`). While it is set, only its
@@ -140,6 +144,7 @@ export function SideRail({ onReport }: { onReport: () => void }) {
         open={accountOpen}
         onClose={() => setOverlay(null)}
         onAccount={() => setAccountDialog(true)}
+        onRunSetup={() => navigate(RUN_SETUP_PATH)}
       />
       <AccountDialog
         open={accountDialog}

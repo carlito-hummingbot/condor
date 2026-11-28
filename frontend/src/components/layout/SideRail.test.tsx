@@ -5,7 +5,8 @@
  * the rail actually paints them, and that the Settings gear opens one panel
  * beside it with three groups of rows. There is no More. The avatar opens the
  * account menu: the name, the role, Account (which opens the Your account
- * dialog) and Logout, nothing else.
+ * dialog), Run setup again (which closes the popup and goes to the setup route)
+ * and Logout, nothing else.
  *
  * @vitest-environment jsdom
  */
@@ -13,10 +14,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ServerContext } from "@/hooks/useServer";
+import { RUN_SETUP_PATH } from "@/lib/nav";
 
 const { updatePreferences } = vi.hoisted(() => ({
   updatePreferences: vi.fn(async (updates: Record<string, unknown>) => ({ ...updates })),
@@ -57,6 +59,12 @@ async function flush() {
   });
 }
 
+/** Shows where the router is, so a row that navigates can be checked. */
+function LocationProbe() {
+  const { pathname } = useLocation();
+  return <div data-testid="location">{pathname}</div>;
+}
+
 function renderAt(path: string, onReport: () => void = () => {}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   act(() => {
@@ -65,11 +73,16 @@ function renderAt(path: string, onReport: () => void = () => {}) {
         <ServerContext.Provider value={{ server: "local", setServer: () => {} }}>
           <MemoryRouter initialEntries={[path]}>
             <SideRail onReport={onReport} />
+            <LocationProbe />
           </MemoryRouter>
         </ServerContext.Provider>
       </QueryClientProvider>,
     );
   });
+}
+
+function pathname(): string | null | undefined {
+  return container.querySelector('[data-testid="location"]')?.textContent;
 }
 
 /** Rendering again at another path: the previous tree goes first. */
@@ -183,22 +196,16 @@ describe("SideRail", () => {
     expect(text).toContain("Admin");
     expect(text).toContain("Logout");
 
-    // Only user functions: Account and Logout, and none of the old top-bar controls.
+    // Only user functions: Account, Run setup again and Logout, and none of the
+    // old top-bar controls.
     const items = [...document.body.querySelectorAll('[role="menuitem"]')].map((el) =>
       el.textContent?.trim(),
     );
-    expect(items).toEqual(["Account", "Logout"]);
-    for (const gone of [
-      "API Servers",
-      "Display Currency",
-      "USDT",
-      "Theme",
-      "Run setup again",
-      "Gateway",
-      "local",
-    ]) {
+    expect(items).toEqual(["Account", "Run setup again", "Logout"]);
+    for (const gone of ["API Servers", "Display Currency", "USDT", "Theme", "Gateway", "local"]) {
       expect(text).not.toContain(gone);
     }
+    // Run setup again is a row, not a link: it leaves through the router.
     expect(document.body.querySelector('a[href="/welcome"]')).toBeNull();
     expect(document.body.querySelector('[aria-label="Theme"]')).toBeNull();
 
@@ -258,12 +265,32 @@ describe("SideRail", () => {
       expect(accountMenu()).toBeUndefined();
     });
 
-    it("has the name, the role, Account and Logout and no panel content", async () => {
+    it("has the name, the role, Account, Run setup again and Logout and no panel content", async () => {
       renderAt("/");
       await flush();
       await click(avatar());
       expect(panel()).toBeNull();
-      expect(accountMenu()?.textContent ?? "").toBe("Algo TraderAdminAccountLogout");
+      expect(accountMenu()?.textContent ?? "").toBe(
+        "Algo TraderAdminAccountRun setup againLogout",
+      );
+    });
+
+    it("closes the popup and goes to the setup route from Run setup again", async () => {
+      renderAt("/");
+      await flush();
+      expect(pathname()).toBe("/");
+      await click(avatar());
+      const runSetup = [...document.body.querySelectorAll('[role="menuitem"]')].find(
+        (el) => el.textContent?.trim() === "Run setup again",
+      ) as HTMLElement;
+      expect(runSetup).toBeDefined();
+
+      await click(runSetup);
+      expect(accountMenu()).toBeUndefined();
+      expect(avatar().getAttribute("aria-expanded")).toBe("false");
+      expect(avatar().className).not.toContain("ring-2");
+      expect(pathname()).toBe(RUN_SETUP_PATH);
+      expect(RUN_SETUP_PATH).toBe("/welcome");
     });
 
     it("opens the Your account dialog from the Account row and closes the menu", async () => {
