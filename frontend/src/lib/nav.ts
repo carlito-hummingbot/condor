@@ -43,22 +43,22 @@ import {
  * that browser rather than a second door onto the same records. `/floor`
  * redirects to `/bots`.
  *
- * Hub joined it in FEAT-153 and left it again. `/hub` mounts the Agents
+ * Hub joined it in FEAT-153 and left it again. `/hub` mounts the agent
  * workspace with its transcript column swapped for the catalogue, so a tab of
- * its own sat beside Agents saying the same thing twice. Its door was the card
- * at the foot of the Agents rail.
+ * its own sat beside the chat saying the same thing twice. Its door was the
+ * card at the foot of the rail.
  *
  * The top bar is a left icon rail now. Three doors in the main group:
  * Dashboard, Explore and Labs. Dashboard is `/` (the chat home until the stats
  * page lands). Explore is `/explore`, the catalogue of strategies and agents;
- * it used to be Agents at `/hub`, and `/hub` now redirects here in the
- * showcase (showcase-only rename: the rail PRs still say Agents). Labs is
- * `/labs`, a placeholder page for now (Design, Backtest, Test Run and Diagnose
- * come later); `/strategies` redirects to it. The Settings gear sits at the
- * foot of the rail, above the avatar, and opens a panel beside the rail with
- * every Settings tab people reach for, in three groups, and Report an Issue.
- * Portfolio, Trade, DEX, Routines and Bots have no door in the nav for now;
- * their routes still work by address.
+ * it used to be Agents at `/hub`, and `/hub` now redirects here. The showcase
+ * is the only branch with that page: in the rail PRs the door keeps `/hub`
+ * until the catalogue lands. Labs is `/labs`, a placeholder page for now
+ * (Design, Backtest, Test Run and Diagnose come later); `/strategies` redirects
+ * to it. The Settings gear sits at the foot of the rail, above the avatar, and
+ * opens a panel beside the rail with every Settings tab people reach for, in
+ * three groups, and Report an Issue. Portfolio, Trade, DEX, Routines and Bots
+ * have no door in the nav for now; their routes still work by address.
  */
 export interface NavEntry {
   id: string;
@@ -96,7 +96,8 @@ export const REPORT_ISSUE: ReportEntry = { id: "report", label: "Report an Issue
  * groups and no group titles. Each `to` is a Settings tab (`/settings?tab=...`).
  * The phone's Account sheet reads this same list.
  *
- * Ids: "agents" is also a rail door, so the Settings one is `set-agents`.
+ * Ids: the Settings row for agent configuration is `set-agents`; the rail door
+ * that opens the catalogue is `explore`.
  * Notifications and Admin are Settings tabs with no row here: they stay
  * reachable inside the Settings page.
  */
@@ -137,7 +138,7 @@ export type RailOverlayId = "settings" | "account";
 /** The gear at the foot of the rail. It opens the Settings panel; it is not a link. */
 export const SETTINGS_ICON = Settings;
 
-/** The chat home only. Explore and an agent's page are elsewhere. */
+/** The chat home only. The Explore door and an agent's page are elsewhere. */
 export function isDashboardActive(pathname: string): boolean {
   return pathname === "/";
 }

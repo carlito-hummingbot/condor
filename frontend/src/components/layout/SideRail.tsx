@@ -26,7 +26,7 @@ import { RailPanel } from "./RailPanel";
  * are never open together, and while it is open only the avatar is lit. Its
  * Account row opens `AccountDialog`, a modal above the rail.
  *
- * Dashboard, Agents and Labs on top. The Settings gear and the avatar sit at
+ * Dashboard, Explore and Labs on top. The Settings gear and the avatar sit at
  * the foot. The gear opens one panel beside the rail (`RailPanel`) with the
  * Settings list. There is no bell in the rail.
  */
