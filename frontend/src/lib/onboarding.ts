@@ -83,7 +83,6 @@ export const STEP_DEFS = [
   { id: "model", title: "AI model", skippable: true },
   { id: "connect", title: "Connect where you trade", skippable: true },
   { id: "look", title: "Look & units", skippable: true },
-  { id: "alerts", title: "Stay in the loop", skippable: false },
   { id: "done", title: "You're set", skippable: false },
 ] as const;
 
@@ -111,7 +110,6 @@ export const INSTALLED_STEP_IDS = [
   "model",
   "connect",
   "look",
-  "alerts",
   "done",
 ] as const;
 
@@ -205,7 +203,7 @@ export function readinessLoading(r: Readiness): boolean {
 }
 
 /**
- * The steps this run shows, by id. Name, look and alerts are preferences with
+ * The steps this run shows, by id. Name and look are preferences with
  * no way to detect them, so they always appear. The model and the exchange step
  * appear only when the install still needs them; a read that failed is left
  * out rather than guessed, because the user can still reach both in Settings.
@@ -214,7 +212,7 @@ export function planStepIds(r: Readiness): StepId[] {
   const ids: StepId[] = ["check", "profile"];
   if (r.modelStatus === "loaded" && r.model?.ready !== true) ids.push("model");
   if (r.keys === "none") ids.push("connect");
-  ids.push("look", "alerts", "done");
+  ids.push("look", "done");
   return ids;
 }
 
@@ -224,21 +222,6 @@ export function stepsForPlan(ids: readonly string[]): StepDef[] {
   return ids
     .map((id) => STEP_DEFS.find((step) => step.id === id))
     .filter((step): step is (typeof STEP_DEFS)[number] => !!step && installed.has(step.id));
-}
-
-/**
- * Telemetry has no default when this seat can change it. A seat that cannot
- * (not the admin, or `CONDOR_TELEMETRY` pinned) may continue without a write
- * the API would refuse. A failed read must not trap the step either.
- */
-export function canContinueAlerts(
-  choice: "yes" | "no" | null,
-  gate?: { status: "loading" | "error" | "ready"; canChange: boolean; envOverridden: boolean },
-): boolean {
-  if (!gate) return choice === "yes" || choice === "no";
-  if (gate.status === "loading") return false;
-  if (gate.status === "error" || !gate.canChange || gate.envOverridden) return true;
-  return choice === "yes" || choice === "no";
 }
 
 /**

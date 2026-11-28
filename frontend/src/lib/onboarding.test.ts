@@ -4,7 +4,6 @@ import {
   STEP_DEFS,
   advance,
   buildPreferenceUpdates,
-  canContinueAlerts,
   canJumpTo,
   dashboardTitleFrom,
   describeModel,
@@ -220,7 +219,6 @@ describe("step flow", () => {
       "model",
       "connect",
       "look",
-      "alerts",
       "done",
     ]);
     expect(STEP_DEFS.filter((step) => step.skippable).map((step) => step.id)).toEqual([
@@ -228,15 +226,6 @@ describe("step flow", () => {
       "connect",
       "look",
     ]);
-    expect(canContinueAlerts(null)).toBe(false);
-    expect(canContinueAlerts("yes")).toBe(true);
-    expect(canContinueAlerts("no")).toBe(true);
-    const locked = { status: "ready" as const, canChange: false, envOverridden: false };
-    const pinned = { status: "ready" as const, canChange: true, envOverridden: true };
-    expect(canContinueAlerts(null, locked)).toBe(true);
-    expect(canContinueAlerts(null, pinned)).toBe(true);
-    expect(canContinueAlerts(null, { status: "loading", canChange: true, envOverridden: false })).toBe(false);
-    expect(canContinueAlerts(null, { status: "error", canChange: true, envOverridden: false })).toBe(true);
     expect(
       savedAppearanceToApply({
         storedTheme: "light",
@@ -458,7 +447,7 @@ describe("readiness check", () => {
   const status = (r: Readiness, id: string) => readinessRows(r).find((row) => row.id === id)?.status;
 
   it("asks only for the name and preferences when setup did everything", () => {
-    expect(ids(ready)).toEqual(["check", "profile", "look", "alerts", "done"]);
+    expect(ids(ready)).toEqual(["check", "profile", "look", "done"]);
   });
 
   it("adds the model step only when the model is not ready", () => {
@@ -487,7 +476,7 @@ describe("readiness check", () => {
 
   it("keeps the order of the full flow whatever is missing", () => {
     const everything: Readiness = { ...ready, model: null, keys: "none" };
-    expect(ids(everything)).toEqual(["check", "profile", "model", "connect", "look", "alerts", "done"]);
+    expect(ids(everything)).toEqual(["check", "profile", "model", "connect", "look", "done"]);
     expect(stepsForPlan(ids(everything)).map((step) => step.id)).toEqual(ids(everything));
     expect(stepsForPlan(["check", "nope", "done"]).map((step) => step.id)).toEqual(["check", "done"]);
   });

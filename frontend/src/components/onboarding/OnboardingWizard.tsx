@@ -29,7 +29,6 @@ import {
   type StepDef,
 } from "@/lib/onboarding";
 
-import { AlertsStep } from "./AlertsStep";
 import { CheckStep } from "./CheckStep";
 import { ConnectTradeStep } from "./ConnectTradeStep";
 import { DoneStep } from "./DoneStep";
@@ -300,13 +299,6 @@ export function OnboardingWizard() {
               )}
               {step.id === "look" && (
                 <LookStep
-                  busy={busy}
-                  onContinue={(partial) => void continueStep(partial, false)}
-                  onBind={onBind}
-                />
-              )}
-              {step.id === "alerts" && (
-                <AlertsStep
                   busy={busy}
                   onContinue={(partial) => void continueStep(partial, false)}
                   onBind={onBind}
