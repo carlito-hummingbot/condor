@@ -15,6 +15,7 @@ import { useServer } from "@/hooks/useServer";
 import { FULL_BLEED_ROUTES } from "@/lib/nav";
 import { routeFacts } from "@/lib/pageFacts";
 import { useViewFacts } from "@/lib/viewFacts";
+import { MobileTabBar } from "./MobileTabBar";
 import { ShellControls } from "./ShellControls";
 import { SideRail } from "./SideRail";
 
@@ -102,12 +103,14 @@ function AppShellBody() {
   useViewFacts(() => routeFacts(pathname, search, queryClient));
 
   return (
-    <div className="flex h-screen flex-row">
+    <div className="flex h-screen flex-col md:flex-row">
       {/* The rail replaces the 48px top bar. Onboarding's wizard should mount
           on this root — not inside `main` — so it covers the rail too. PR #2
           currently mounts it inside `main`; expect that conflict. */}
       <SideRail onReport={() => setReportOpen(true)} />
-      <div className="flex min-w-0 flex-1 flex-col">
+      {/* `min-h-0` so a long padded page scrolls inside the screen on a phone: a flex
+          column otherwise grows to its content and the page scrolls the whole shell. */}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {/* Server, Gateway status and Switch Mode (light/dark). */}
         <ShellControls />
 
@@ -135,6 +138,8 @@ function AppShellBody() {
           {showKeysOverlay && <ConnectKeysOverlay />}
         </main>
       </div>
+
+      <MobileTabBar onReport={() => setReportOpen(true)} />
 
       <ReportIssueDialog open={reportOpen} onClose={() => setReportOpen(false)} />
 

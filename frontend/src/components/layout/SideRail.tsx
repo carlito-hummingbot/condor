@@ -82,7 +82,7 @@ export function SideRail({ onReport }: { onReport: () => void }) {
   return (
     <nav
       aria-label="Primary"
-      className="flex w-16 shrink-0 flex-col items-center gap-1 border-r border-[var(--color-border)] bg-[var(--color-surface)] py-2"
+      className="hidden w-16 shrink-0 flex-col items-center gap-1 border-r border-[var(--color-border)] bg-[var(--color-surface)] py-2 md:flex"
     >
       <Tooltip label={title}>
         <Link to="/" aria-label={title} className="mb-1 flex h-10 w-10 items-center justify-center rounded-md">
