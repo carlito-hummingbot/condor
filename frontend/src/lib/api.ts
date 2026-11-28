@@ -4,6 +4,7 @@ import type {
   FleetMap,
   FleetOwner,
 } from "@/lib/agent-attribution";
+import type { UserPreferences } from "@/lib/onboarding";
 import { controllerKey } from "@/lib/controller-identity";
 import { collectCursorPages, type WalkOutcome } from "@/lib/history-pagination";
 
@@ -3350,6 +3351,21 @@ export interface PendingConfirmation {
 
 export const api = {
   getServers: () => apiFetch<ServerInfo[]>("/api/v1/servers"),
+
+  /**
+   * The signed-in user's preference map.
+   *
+   * The merge on the server is shallow at the top level, so a patch must send
+   * each key whole (`onboarding`, `profile`, `ui`). A partial `agent` object
+   * would wipe its siblings. `code_run` is reserved and refused.
+   */
+  getPreferences: () => apiFetch<UserPreferences>("/api/v1/auth/preferences"),
+
+  updatePreferences: (updates: Record<string, unknown>) =>
+    apiFetch<UserPreferences>("/api/v1/auth/preferences", {
+      method: "PATCH",
+      body: JSON.stringify({ updates }),
+    }),
 
   /** Build identity — shown to the user when they file an issue. */
   getEnv: () => apiFetch<AppEnvResponse>("/api/v1/meta/env"),

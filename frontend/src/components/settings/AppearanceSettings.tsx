@@ -1,5 +1,6 @@
 import { Eye, Moon, Sun } from "lucide-react";
 
+import { RunSetupAgain } from "@/components/onboarding/RunSetupAgain";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { useTheme, type Theme } from "@/hooks/useTheme";
 
@@ -70,6 +71,18 @@ export function AppearanceSettings() {
           <span className="inline-flex h-7 items-center rounded-md bg-[var(--color-primary-fill)] px-3 text-xs font-medium text-[var(--on-primary)]">
             Primary action
           </span>
+        </div>
+      </section>
+
+      <section className="border-t border-[var(--color-border)] pt-8">
+        <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
+          <div>
+            <h3 className="text-sm font-semibold text-[var(--color-text)]">Setup</h3>
+            <p className="mt-1 max-w-md text-xs leading-relaxed text-[var(--color-text-muted)]">
+              Walk through first-run setup again. Servers, keys and the chosen model stay where they are.
+            </p>
+          </div>
+          <RunSetupAgain />
         </div>
       </section>
     </div>
