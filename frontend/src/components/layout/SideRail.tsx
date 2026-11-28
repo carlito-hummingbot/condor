@@ -20,7 +20,7 @@ import { RailPanel } from "./RailPanel";
  * items without a text label and keep a tooltip. The avatar has no menu yet:
  * it goes to Settings, and the account menu lands in the next change.
  *
- * Dashboard, Agents and Labs on top. The Settings gear and the avatar sit at
+ * Dashboard, Explore and Labs on top. The Settings gear and the avatar sit at
  * the foot. The gear opens one panel beside the rail (`RailPanel`) with the
  * Settings list. There is no bell in the rail.
  */
