@@ -11,7 +11,7 @@ import { AccountSheet } from "./AccountSheet";
  * The phone's nav. Below `md` the rail is hidden and four tabs sit at the
  * bottom, with labels under the icons — there is no hover on a touch screen.
  *
- * Dashboard, Agents and Labs are the rail's doors (`RAIL_TOP` in `lib/nav`).
+ * Dashboard, Explore and Labs are the rail's doors (`RAIL_TOP` in `lib/nav`).
  * Account is the rail's avatar: it opens a sheet with the name and role, then
  * Account, Settings and Logout (see `AccountSheet`). A red dot on it means the
  * selected server is offline. The Account tab is fixed: it is the only home
