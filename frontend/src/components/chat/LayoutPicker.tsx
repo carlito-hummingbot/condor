@@ -24,7 +24,7 @@ const MAIN: { id: MainSlot; label: string; Icon: LucideIcon; hint: string }[] = 
   { id: "agent", label: "Agent", Icon: Brain, hint: "What the agent knows and runs" },
   { id: "portfolio", label: "Portfolio", Icon: Wallet, hint: "Balances by asset and venue" },
   { id: "execution", label: "Bots", Icon: Bot, hint: "What is running: deployed controllers" },
-  { id: "loops", label: "Loops", Icon: Repeat, hint: "Live tick loops" },
+  { id: "loops", label: "Strategies", Icon: Repeat, hint: "Live strategies" },
 ];
 const SIDE: { id: SideSlot; label: string; Icon: LucideIcon; hint: string }[] = [
   { id: "tasks", label: "Tasks", Icon: Radio, hint: "Work delegated from this chat" },

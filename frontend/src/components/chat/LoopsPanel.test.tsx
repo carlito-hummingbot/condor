@@ -141,12 +141,12 @@ afterEach(() => {
 describe("LoopsPanel", () => {
   it("says nothing is looping with an empty list", async () => {
     await render({ loops: [] });
-    expect(panel().textContent).toContain("Nothing looping right now");
+    expect(panel().textContent).toContain("No strategies running right now");
   });
 
   it("says it is loading rather than claiming nothing is looping", async () => {
     await render({ loops: [], isLoading: true });
-    expect(panel().textContent).not.toContain("Nothing looping right now");
+    expect(panel().textContent).not.toContain("No strategies running right now");
     expect(panel().textContent).toContain("Loading");
   });
 

@@ -60,10 +60,10 @@ export const PANELS: {
   },
   {
     id: "loops",
-    label: "Loops",
+    label: "Strategies",
     Icon: Repeat,
-    hint: "Every live tick loop on this server, running or paused",
-    disabledHint: "Select a server to see its loops",
+    hint: "Every live strategy on this server, running or paused",
+    disabledHint: "Select a server to see its strategies",
   },
 ];
 

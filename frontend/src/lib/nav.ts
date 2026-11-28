@@ -53,12 +53,13 @@ import {
  * page lands). Explore is `/hub`, today's Agent Hub under its new name, and
  * stays lit on an agent's own page. The Explore catalogue page (tabs Overview,
  * Strategies, Agents and What's new) is still to be built; until it lands the
- * door opens the Hub and the route stays `/hub`. Labs is `/labs`, built in a
- * later change; until then it shows the ordinary not-found page inside the
- * shell. The Settings gear sits at the foot of the rail, above the avatar, and
- * opens a panel beside the rail with every Settings tab people reach for, in
- * three groups, and Report an Issue. Portfolio, Trade, DEX, Routines and Bots
- * have no door in the nav for now; their routes still work by address.
+ * door opens the Hub and the route stays `/hub`. Labs is `/labs`, a placeholder
+ * page for now (Design, Backtest, Test Run and Diagnose come later);
+ * `/strategies` redirects to it. The Settings gear sits at the foot of the rail,
+ * above the avatar, and opens a panel beside the rail with every Settings tab
+ * people reach for, in three groups, and Report an Issue. Portfolio, Trade, DEX,
+ * Routines and Bots have no door in the nav for now; their routes still work by
+ * address.
  */
 export interface NavEntry {
   id: string;

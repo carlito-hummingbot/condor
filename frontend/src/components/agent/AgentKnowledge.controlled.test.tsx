@@ -187,7 +187,7 @@ describe("the sections", () => {
       "Skills",
       "Memories",
       "Tools",
-      "Loops",
+      "Strategies",
       "Routines",
       "Activity",
     ]);
@@ -198,7 +198,7 @@ describe("the sections", () => {
     // because there is nothing left for a host to pass.
     await render({ slug: "orca" });
 
-    await click(tabNamed("Loops"));
+    await click(tabNamed("Strategies"));
     expect(body()).toContain("No loops yet");
 
     await click(tabNamed("Activity"));

@@ -532,6 +532,10 @@ const ROUTES: {
   onScreen?: Reader;
 }[] = [
   {
+    pattern: /^\/labs$/,
+    facts: () => ({ label: "Labs" }),
+  },
+  {
     pattern: /^\/portfolio$/,
     facts: () => ({ label: "Portfolio" }),
     onScreen: (_p, tab, qc) => {
