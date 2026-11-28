@@ -24,7 +24,9 @@ import type { WizardAction } from "./MakeItYoursStep";
  *   one is preselected) and the primary button names it.
  * - Not found: a Connect button that shows what to run on this machine. Condor
  *   cannot sign a command-line tool in or install it, so it says so and offers
- *   to check again.
+ *   to check again. The primary button still says Next and carries on without a
+ *   model (showcase only: a demo can click through without stopping here);
+ *   nothing is saved, as with Skip.
  *
  * OpenRouter and custom endpoints open their own model lists, so they sit under
  * "More options". The chat stays quiet until one model is ready.
@@ -72,10 +74,12 @@ export function ModelStep({
 
   const targetKey = mode === "confirm" ? model?.key : selected?.key;
   const primaryLabel = mode === "choose" && selected ? `Connect ${selected.label}` : "Next";
+  // With nothing found there is no model to save, so Next carries on the way
+  // Skip does, one step at a time (`keep` only patches when it has a key).
   useEffect(() => {
     onBind({
       label: primaryLabel,
-      disabled: busy || patch.isPending || (mode === "choose" && !targetKey),
+      disabled: busy || patch.isPending,
       run: () => void keepRef.current(targetKey),
     });
     return () => onBind(null);
@@ -108,7 +112,7 @@ export function ModelStep({
       <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-muted)]">
         {found.length > 0
           ? "Condor checked this machine and found these. Pick the one to chat with."
-          : "Nothing ready was found on this machine. Connect shows what to run, then check again. Skip leaves the chat quiet."}
+          : "Nothing ready was found on this machine. Connect shows what to run, then check again. Skip leaves the chat quiet. You can connect a model later from the chat."}
       </p>
 
       <ul className="mt-3 max-h-72 divide-y divide-[var(--color-border)] overflow-y-auto rounded-lg border border-[var(--color-border)]">
