@@ -10,7 +10,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { AGENTS, CHANNELS, LESSONS, NEWS, STRATEGIES } from "./explore/sampleData";
+import { AGENTS, CHANNELS, LESSONS, LIVE_NOW, NEWS, STRATEGIES } from "./explore/sampleData";
 
 const { Explore, HubRedirect } = await import("./Explore");
 
@@ -73,11 +73,12 @@ afterEach(() => {
 });
 
 describe("Explore", () => {
-  it("renders the four tabs, with Get Started selected first", async () => {
+  it("renders the five tabs, with Get Started selected first", async () => {
     renderAt("/explore");
     await flush();
     expect(tabs().map((t) => t.textContent?.replace(/\d+/g, "").trim())).toEqual([
       "Get Started",
+      "Live Bots",
       "Strategies",
       "Agents",
       "What's new",
@@ -127,11 +128,11 @@ describe("Explore", () => {
       tabNamed("Get Started").dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
     });
     await flush();
-    expect(tabNamed("Strategies").getAttribute("aria-selected")).toBe("true");
-    expect(document.activeElement).toBe(tabNamed("Strategies"));
+    expect(tabNamed("Live Bots").getAttribute("aria-selected")).toBe("true");
+    expect(document.activeElement).toBe(tabNamed("Live Bots"));
 
     await act(async () => {
-      tabNamed("Strategies").dispatchEvent(new KeyboardEvent("keydown", { key: "End", bubbles: true }));
+      tabNamed("Live Bots").dispatchEvent(new KeyboardEvent("keydown", { key: "End", bubbles: true }));
     });
     await flush();
     expect(tabNamed("What's new").getAttribute("aria-selected")).toBe("true");
@@ -141,6 +142,46 @@ describe("Explore", () => {
     });
     await flush();
     expect(tabNamed("Get Started").getAttribute("aria-selected")).toBe("true");
+  });
+
+  it("opens Live Bots from ?tab=live-bots and lists all six sample bots", async () => {
+    renderAt("/explore?tab=live-bots");
+    await flush();
+    expect(tabNamed("Live Bots").getAttribute("aria-selected")).toBe("true");
+    expect(panel().textContent).toContain("Live bots");
+    expect(panel().textContent).toContain("Sample data");
+    const cards = [...panel().querySelectorAll('section[aria-label="Live bots"] article')];
+    expect(cards).toHaveLength(6);
+    expect(cards.map((c) => c.querySelector("h3")?.textContent)).toEqual(LIVE_NOW.map((n) => n.name));
+    // No dead chart button and no Improve on a catalogue card.
+    expect(panel().textContent).not.toContain("coming soon");
+    expect(panel().textContent).not.toContain("Improve");
+  });
+
+  it("puts the chart after the P&L block and the Exchange row before the other rows", async () => {
+    renderAt("/explore?tab=live-bots");
+    await flush();
+    const card = panel().querySelector('section[aria-label="Live bots"] article') as HTMLElement;
+    const chart = card.querySelector('svg[role="img"]') as SVGElement;
+    expect(chart.getAttribute("aria-label")).toContain("sample data");
+    const realized = [...card.querySelectorAll("span")].find((s) => s.textContent === "Realized / Unrealized")!;
+    const dl = card.querySelector("dl")!;
+    expect(realized.compareDocumentPosition(chart) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(chart.compareDocumentPosition(dl) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect([...card.querySelectorAll("dt")].map((d) => d.textContent)).toEqual([
+      "Exchange",
+      "Pair",
+      "Filled Orders Qty",
+      "Volume",
+      "Agent Started",
+      "Total Runtime",
+    ]);
+    // The venue shows once, as that row — never twice.
+    expect(card.textContent?.split("Binance (spot)").length).toBe(2);
+    expect(card.textContent).not.toContain("Open chart");
+    // The day labels the chart draws.
+    expect(chart.textContent).toContain("22");
+    expect(chart.textContent).toContain("28");
   });
 
   it("shows the four lessons, underlined, with no video, build or import actions", async () => {

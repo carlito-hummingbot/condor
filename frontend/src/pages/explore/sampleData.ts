@@ -89,7 +89,12 @@ export interface LiveNowCard {
   volume: string;
   agentStarted: string;
   totalRuntime: string;
+  /** Seven sample closes, 22–28 Nov, around this card's pair. */
+  priceSeries: readonly number[];
 }
+
+/** The seven day labels the Live Bots cards' mini charts share, ending 28 Nov. */
+export const PRICE_DAYS = ["22", "23", "24", "25", "26", "27", "28"] as const;
 
 /** One of the four Get Started lessons: a title, what it teaches, and its video's summary. */
 export interface Lesson {
@@ -690,7 +695,8 @@ export const LIVE_NOW: readonly LiveNowCard[] = [
     "filledOrders": "1,284",
     "volume": "$186,420",
     "agentStarted": "25-Nov-26 at 12:55 pm",
-    "totalRuntime": "3D 2H 30Mins"
+    "totalRuntime": "3D 2H 30Mins",
+    "priceSeries": [0.9999, 1.0001, 0.9998, 1.0002, 1.0001, 1.0003, 1.0002]
   },
   {
     "id": "live-agent-gateforum",
@@ -704,7 +710,8 @@ export const LIVE_NOW: readonly LiveNowCard[] = [
     "filledOrders": "312",
     "volume": "$842,950",
     "agentStarted": "26-Nov-26 at 9:40 am",
-    "totalRuntime": "2D 5H 45Mins"
+    "totalRuntime": "2D 5H 45Mins",
+    "priceSeries": [93180, 94060, 92740, 95310, 96020, 97419, 96880]
   },
   {
     "id": "live-agent-jev",
@@ -718,7 +725,8 @@ export const LIVE_NOW: readonly LiveNowCard[] = [
     "filledOrders": "74",
     "volume": "$24,310",
     "agentStarted": "28-Nov-26 at 12:55 pm",
-    "totalRuntime": "2H 30Mins"
+    "totalRuntime": "2H 30Mins",
+    "priceSeries": [186.4, 188.1, 185.2, 189.6, 191.3, 190.4, 192.8]
   },
   {
     "id": "live-strategy-pmm",
@@ -732,7 +740,8 @@ export const LIVE_NOW: readonly LiveNowCard[] = [
     "filledOrders": "860",
     "volume": "$96,240",
     "agentStarted": "27-Nov-26 at 8:05 am",
-    "totalRuntime": "1D 7H 20Mins"
+    "totalRuntime": "1D 7H 20Mins",
+    "priceSeries": [3284, 3312, 3268, 3345, 3390, 3402, 3431]
   },
   {
     "id": "live-strategy-grid",
@@ -746,7 +755,8 @@ export const LIVE_NOW: readonly LiveNowCard[] = [
     "filledOrders": "2,046",
     "volume": "$412,780",
     "agentStarted": "26-Nov-26 at 4:30 pm",
-    "totalRuntime": "1D 22H 55Mins"
+    "totalRuntime": "1D 22H 55Mins",
+    "priceSeries": [184.2, 186.9, 183.4, 188.7, 190.1, 189.3, 191.6]
   },
   {
     "id": "live-strategy-xemm",
@@ -760,7 +770,8 @@ export const LIVE_NOW: readonly LiveNowCard[] = [
     "filledOrders": "505",
     "volume": "$58,610",
     "agentStarted": "28-Nov-26 at 6:10 am",
-    "totalRuntime": "9H 15Mins"
+    "totalRuntime": "9H 15Mins",
+    "priceSeries": [2.148, 2.171, 2.132, 2.196, 2.205, 2.189, 2.221]
   }
 ];
 

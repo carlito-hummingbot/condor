@@ -19,7 +19,12 @@ export interface AgentCard {
   /** Sample timestamps and runs, relative to a fixed sample "now" of 28-Nov-26 at 3:25 pm. */
   agentStarted: string;
   totalRuntime: string;
+  /** Seven sample closes, 22–28 Nov, around this bot's pair. */
+  priceSeries: readonly number[];
 }
+
+/** The seven day labels the bot cards' mini charts share, ending 28 Nov. */
+export const PRICE_DAYS = ["22", "23", "24", "25", "26", "27", "28"] as const;
 
 export interface SentimentRow {
   source: string;
@@ -105,6 +110,7 @@ export const SAMPLE = {
       volume: 186_420,
       agentStarted: "25-Nov-26 at 12:55 pm",
       totalRuntime: "3D 2H 30Mins",
+      priceSeries: [0.9998, 1.0002, 0.9999, 1.0003, 1.0001, 1.0004, 1.0002],
     },
     {
       title: "GateForum",
@@ -118,6 +124,7 @@ export const SAMPLE = {
       volume: 842_950,
       agentStarted: "26-Nov-26 at 9:40 am",
       totalRuntime: "2D 5H 45Mins",
+      priceSeries: [93_180, 94_060, 92_740, 95_310, 96_020, 97_419, 96_880],
     },
     {
       title: "JEV",
@@ -131,6 +138,7 @@ export const SAMPLE = {
       volume: 24_310,
       agentStarted: "28-Nov-26 at 12:55 pm",
       totalRuntime: "2H 30Mins",
+      priceSeries: [186.4, 188.1, 185.2, 189.6, 191.3, 190.4, 192.8],
     },
   ] satisfies AgentCard[],
 } as const;

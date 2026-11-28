@@ -6,8 +6,8 @@ import { PageNav } from "@/components/nav/PageNav";
 import { useDashboardTitle, useDisplayName } from "@/hooks/useDisplayName";
 import { formatDateTime } from "@/lib/formatters";
 import { DEFAULT_DASHBOARD_TITLE } from "@/lib/onboarding";
-import { BarChart, Gauge, PriceChart, Sparkline } from "./dashboard/charts";
-import { SAMPLE, type AgentCard } from "./dashboard/sampleData";
+import { BarChart, Gauge, MiniPriceChart, PriceChart, Sparkline } from "./dashboard/charts";
+import { PRICE_DAYS, SAMPLE, type AgentCard } from "./dashboard/sampleData";
 
 /**
  * The showcase Dashboard: what a trader looks at first. Sample data only.
@@ -88,7 +88,6 @@ function AgentCardView({ agent }: { agent: AgentCard }) {
         className="absolute right-3.5 top-3.5 h-[9px] w-[9px] rounded-full bg-[var(--color-green)] shadow-[0_0_0_4px_color-mix(in_srgb,var(--color-green)_26%,transparent)]"
       />
       <h3 className="text-center text-[19px] font-bold tracking-tight">{agent.title}</h3>
-      <p className="mb-1.5 mt-0.5 text-center text-sm text-[var(--color-text-muted)]">{agent.subtitle}</p>
       {/* Showcase continuity: the same bot opens in Build's Improve stage. */}
       <div className="mb-2 flex justify-center">
         <button
@@ -118,9 +117,14 @@ function AgentCardView({ agent }: { agent: AgentCard }) {
           </b>
         </div>
       </div>
+      <div className="border-t border-[var(--color-border)] pt-2">
+        <MiniPriceChart values={agent.priceSeries} labels={PRICE_DAYS} pair={agent.pair} />
+      </div>
       <dl className="m-0 tabular-nums">
         {(
           [
+            // The venue used to sit under the name; it is a detail row now.
+            ["Exchange", agent.subtitle],
             ["Pair", agent.pair],
             ["Filled Orders Qty", agent.filledOrders.toLocaleString("en-US")],
             ["Volume", usd(agent.volume)],

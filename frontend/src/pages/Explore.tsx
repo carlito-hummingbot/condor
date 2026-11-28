@@ -1,4 +1,6 @@
 import { useState, type ReactNode } from "react";
+import { MiniPriceChart } from "@/pages/dashboard/charts";
+
 import {
   ExternalLink,
   MessagesSquare,
@@ -15,10 +17,13 @@ import {
   AGENTS,
   CHANNELS,
   LESSONS,
+  LIVE_NOW,
   LIVESTREAM,
   NEWS,
+  PRICE_DAYS,
   STRATEGIES,
   type Agent,
+  type LiveNowCard,
   type NewsItem,
   type SourceKind,
   type Strategy,
@@ -27,8 +32,8 @@ import {
 /**
  * Explore: the second rail door in the showcase.
  *
- * A catalogue of things to run, split into four tabs (Overview, Strategies,
- * Agents, What's new) with the tab in `?tab=`. Everything is sample data from
+ * A catalogue of things to run, split into five tabs (Get Started, Live Bots,
+ * Strategies, Agents, What's new) with the tab in `?tab=`. Everything is sample data from
  * `explore/sampleData.ts`; the pack marks the 14 Botcamp agents and the 10
  * strategy names as real, and the videos are placeholders. Nothing here calls
  * the API.
@@ -41,12 +46,13 @@ import {
  * a redirect, so the old Agent Hub page is unreachable in the showcase.
  */
 
-type TabId = "overview" | "strategies" | "agents" | "news";
+type TabId = "overview" | "live-bots" | "strategies" | "agents" | "news";
 type AgentFilter = "all" | SourceKind;
 type NewsFilter = "all" | NewsItem["kind"];
 
 const TABS: readonly { id: TabId; label: string; count?: number }[] = [
   { id: "overview", label: "Get Started" },
+  { id: "live-bots", label: "Live Bots", count: LIVE_NOW.length },
   { id: "strategies", label: "Strategies", count: STRATEGIES.length },
   { id: "agents", label: "Agents", count: AGENTS.length },
   { id: "news", label: "What's new", count: NEWS.length },
@@ -412,6 +418,89 @@ function DefinitionBar({ term, definition, count }: { term: string; definition: 
   );
 }
 
+/**
+ * Live Bots: the six sample bots that are running now, as their own tab.
+ *
+ * They used to be a three-card preview at the foot of Get Started ("All 6 in
+ * the Dashboard"); all six live here, in the Dashboard card's shape: name and
+ * type, the P&L block, a 7-day price line, then the detail rows with Exchange
+ * first — which is where the venue under the name went. No chart button and no
+ * Improve button on these cards: this is a catalogue, not a control panel.
+ */
+function LiveBotsPanel() {
+  return (
+    <div className="pt-1">
+      <SectionHead
+        title="Live bots"
+        hint="Six sample bots running now: three agents and three strategies."
+        aside={<SampleBadge />}
+      />
+      <section aria-label="Live bots" className="grid grid-cols-1 gap-3.5 md:grid-cols-2 xl:grid-cols-3">
+        {LIVE_NOW.map((item) => (
+          <LiveAgentCard key={item.id} item={item} />
+        ))}
+      </section>
+    </div>
+  );
+}
+
+/** A muted green/red pair for the sample money strings. */
+const moneyTone = (value: string) =>
+  value.trim().startsWith("-") ? "text-[var(--color-red)]" : "text-[var(--color-green)]";
+
+/** One sample bot: the Dashboard card's layout, with its own 7-day price line. */
+function LiveAgentCard({ item }: { item: LiveNowCard }) {
+  const rows: [string, string][] = [
+    ["Exchange", item.venue],
+    ["Pair", item.pair],
+    ["Filled Orders Qty", item.filledOrders],
+    ["Volume", item.volume],
+    ["Agent Started", item.agentStarted],
+    ["Total Runtime", item.totalRuntime],
+  ];
+  return (
+    <article className="relative min-w-0 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-5 pb-2 pt-4">
+      <div className="relative mb-0.5 flex items-center justify-center">
+        <span className="text-[10.5px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
+          {item.type === "agent" ? "Agent" : "Strategy"}
+        </span>
+        <span className="absolute right-0 top-0 flex items-center gap-1.5 text-[11px] font-bold tracking-wider text-[var(--color-green)]">
+          <i
+            aria-hidden="true"
+            className="h-2 w-2 rounded-full bg-[var(--color-green)] shadow-[0_0_0_4px_color-mix(in_srgb,var(--color-green)_28%,transparent)]"
+          />
+          Live
+        </span>
+      </div>
+      <h3 className="text-center text-[19px] font-bold tracking-tight">{item.name}</h3>
+      <div className="mt-2.5 flex flex-wrap items-end justify-between gap-x-3 gap-y-2 pb-3 tabular-nums">
+        <div>
+          <span className="mb-0.5 block text-[12.5px] text-[var(--color-text-muted)]">P&amp;L</span>
+          <b className={`whitespace-nowrap text-[15px] ${moneyTone(item.pnl)}`}>{item.pnl}</b>
+        </div>
+        <div className="ml-auto text-right">
+          <span className="mb-0.5 block text-[12.5px] text-[var(--color-text-muted)]">Realized / Unrealized</span>
+          <b className="whitespace-nowrap text-[15px]">
+            <span className={moneyTone(item.realized)}>{item.realized}</span> /{" "}
+            <span className={moneyTone(item.unrealized)}>{item.unrealized}</span>
+          </b>
+        </div>
+      </div>
+      <div className="border-t border-[var(--color-border)] pt-2">
+        <MiniPriceChart values={item.priceSeries} labels={PRICE_DAYS} pair={item.pair} />
+      </div>
+      <dl className="m-0 tabular-nums">
+        {rows.map(([label, value]) => (
+          <div key={label} className="flex items-baseline justify-between gap-3 border-t border-[var(--color-border)] py-2.5 text-[14.5px]">
+            <dt className="shrink-0 text-[var(--color-text-muted)]">{label}</dt>
+            <dd className="m-0 min-w-0 text-right font-semibold">{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </article>
+  );
+}
+
 function StrategiesPanel() {
   return (
     <div className="pt-1">
@@ -700,6 +789,7 @@ export function Explore() {
         className="outline-none"
       >
         {tab === "overview" && <OverviewPanel />}
+        {tab === "live-bots" && <LiveBotsPanel />}
         {tab === "strategies" && <StrategiesPanel />}
         {tab === "agents" && <AgentsPanel onSelect={select} />}
         {tab === "news" && <NewsPanel />}

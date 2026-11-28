@@ -2,7 +2,11 @@
  * Inline SVG charts for the showcase Dashboard. No library, no network: each
  * one draws the numbers it is given. Colours come from the app's tokens, so
  * the colour-blind palette and the light theme apply.
+ *
+ * `MiniPriceChart` is shared with Explore's Live Bots cards.
  */
+
+import { useId } from "react";
 
 const UP = "var(--color-green)";
 const DOWN = "var(--color-red)";
@@ -170,6 +174,84 @@ export function Gauge({ value }: { value: number }) {
       <text x="180" y="114" textAnchor="middle" fontSize="12.5" fill={MUTED}>
         Greed
       </text>
+    </svg>
+  );
+}
+
+/**
+ * The 7-day price line on a bot card: the mini chart between the P&L block and
+ * the Exchange row, on Explore's Live Bots and the Dashboard's bot cards alike.
+ *
+ * About 88px tall across the card's full width, price ticks up the left edge
+ * and the day labels along the bottom, values and labels both given by the
+ * caller so each bot keeps its own sample series beside its card. One gradient
+ * per instance, named from `useId`, or several cards on a page would share an
+ * id and the second one would paint with the first one's fill.
+ *
+ * Sample data, and the label says so; nothing is fetched.
+ */
+export function MiniPriceChart({
+  values,
+  labels,
+  pair,
+}: {
+  values: readonly number[];
+  labels: readonly string[];
+  pair: string;
+}) {
+  const gradientId = useId();
+  const W = 300;
+  const H = 88;
+  const left = 40;
+  const right = 6;
+  const top = 6;
+  const bottom = 18;
+  const max = Math.max(...values);
+  const min = Math.min(...values);
+  const span = max - min || 1;
+  const x = (i: number) => left + (i / Math.max(values.length - 1, 1)) * (W - left - right);
+  const y = (v: number) => top + (1 - (v - min) / span) * (H - top - bottom);
+  const line = values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const area = `${left},${H - bottom} ${line} ${x(values.length - 1).toFixed(1)},${H - bottom}`;
+  // Three ticks: the top, middle and bottom of the range the series covers.
+  const ticks = [max, (max + min) / 2, min];
+  const decimals = max < 10 ? 4 : 0;
+
+  return (
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      className="h-[88px] w-full"
+      role="img"
+      aria-label={`${pair} price over the last 7 days, sample data`}
+    >
+      <defs>
+        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={UP} stopOpacity="0.28" />
+          <stop offset="100%" stopColor={UP} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {ticks.map((t, i) => (
+        <g key={t}>
+          <line x1={left} x2={W - right} y1={y(t)} y2={y(t)} stroke={GRID} strokeWidth="1" strokeDasharray={i === 2 ? "0" : "2 3"} />
+          <text x={left - 4} y={y(t) + 3} textAnchor="end" fontSize="8" fill={MUTED} className="tabular-nums">
+            {t.toFixed(decimals)}
+          </text>
+        </g>
+      ))}
+      <polygon points={area} fill={`url(#${gradientId})`} />
+      <polyline points={line} fill="none" stroke={UP} strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
+      {labels.map((label, i) => (
+        <text
+          key={label}
+          x={x(i)}
+          y={H - 5}
+          textAnchor={i === 0 ? "start" : i === labels.length - 1 ? "end" : "middle"}
+          fontSize="8"
+          fill={MUTED}
+        >
+          {label}
+        </text>
+      ))}
     </svg>
   );
 }

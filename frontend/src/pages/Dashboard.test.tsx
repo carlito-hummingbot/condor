@@ -135,24 +135,38 @@ describe("Dashboard", () => {
     expect(container.querySelector('[role="tabpanel"]')?.textContent).toContain("Sample");
   });
 
-  it("shows the three live agents with their subtitles and the five field rows", async () => {
+  it("shows the three live agents, each with the chart and the Exchange row", async () => {
     renderAt("/", <Dashboard />);
     await flush();
     const cards = [...container.querySelectorAll('section[aria-label="Live agents"] article')];
     expect(cards.map((c) => c.querySelector("h3")?.textContent)).toEqual(["Stable Churn", "GateForum", "JEV"]);
-    expect(cards.map((c) => c.querySelector("p")?.textContent)).toEqual(["Binance (spot)", "Gate (perps)", "Meteora"]);
     for (const card of cards) {
       expect(card.textContent).toContain("Realized / Unrealized");
+      // The venue is a row now, not the line under the name.
       expect([...card.querySelectorAll("dt")].map((d) => d.textContent)).toEqual([
+        "Exchange",
         "Pair",
         "Filled Orders Qty",
         "Volume",
         "Agent Started",
         "Total Runtime",
       ]);
+      // The 7-day line sits after the P&L block and before the rows.
+      const chart = card.querySelector('svg[role="img"]');
+      expect(chart?.getAttribute("aria-label")).toContain("sample data");
+      const dl = card.querySelector("dl")!;
+      expect(chart!.compareDocumentPosition(dl) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(card.textContent).toContain("22");
+      expect(card.textContent).toContain("28");
+      expect(card.textContent).toContain("Improve");
     }
-    const started = cards.map((c) => c.querySelectorAll("dd")[3]?.textContent);
-    const runtime = cards.map((c) => c.querySelectorAll("dd")[4]?.textContent);
+    expect(cards.map((c) => c.querySelectorAll("dd")[0]?.textContent)).toEqual([
+      "Binance (spot)",
+      "Gate (perps)",
+      "Meteora",
+    ]);
+    const started = cards.map((c) => c.querySelectorAll("dd")[4]?.textContent);
+    const runtime = cards.map((c) => c.querySelectorAll("dd")[5]?.textContent);
     expect(started).toEqual(["25-Nov-26 at 12:55 pm", "26-Nov-26 at 9:40 am", "28-Nov-26 at 12:55 pm"]);
     expect(runtime).toEqual(["3D 2H 30Mins", "2D 5H 45Mins", "2H 30Mins"]);
   });
