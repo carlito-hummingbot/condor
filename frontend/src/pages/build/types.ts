@@ -23,15 +23,31 @@ export type StrategyType =
   | "LP";
 export type MarketType = "Spot" | "Perps" | "LP";
 export type StartingPoint = "import" | "scratch";
+/** Max Positions: the user types a number, or the agent sizes it from the budget. */
+export type MaxPositionsMode = "fixed" | "dynamic";
 
 export interface Draft {
   botKind: BotKind | null;
   strategyType: StrategyType | null;
   exchange: string | null;
   marketType: MarketType | null;
+  /** The first of `pairs`; the later stages read this one. */
   pair: string | null;
+  /** Every pair the user entered, normalised and de-duplicated. */
+  pairs: string[];
+  /** The pair field as typed, so a bad entry stays on screen to be fixed. */
+  pairsText: string;
+  /** The agent picks the pairs itself; the field is then ignored. */
+  pairsDynamic: boolean;
+  /** Kept so an old saved draft still reads; the Markets form replaced it. */
   marketQty: number | null;
   maxPositions: number | null;
+  maxPositionsMode: MaxPositionsMode | null;
+  /** Market-making spread percentages as typed, e.g. "0.1, 0.3" — chips on screen. */
+  spreads: string;
+  /** Percentages, as typed; null until the user enters one. */
+  targetProfit: number | null;
+  stopLoss: number | null;
   startingPoint: StartingPoint | null;
   howItWorks: string;
   title: string;
