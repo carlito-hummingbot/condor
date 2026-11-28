@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import { Button } from "@/components/ui/Button";
 import { useCredentials } from "@/hooks/useCredentials";
@@ -20,6 +20,7 @@ import {
   readinessRows,
   resolveServerGate,
   retreat,
+  setupReturnPath,
   startFlow,
   stepsForPlan,
   type FlowState,
@@ -54,7 +55,13 @@ export function OnboardingWizard() {
   const { data: prefs } = useUserPreferences();
   const patch = usePatchPreferences();
   const queryClient = useQueryClient();
-  const [params, setParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  // Read-only: a forced run closes by navigating away, not by editing the URL.
+  const [params] = useSearchParams();
+  const forcedRun = params.get("onboarding") === "1";
+  // Where Finish and Skip hand back to. Captured at mount, before any save.
+  const [returnTo] = useState(() => setupReturnPath(location.state, location.search));
   const [action, setAction] = useState<WizardAction | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -143,8 +150,10 @@ export function OnboardingWizard() {
   const planned = useMemo(() => stepsForPlan(planStepIds(readiness)), [readiness]);
   const [frozen, setFrozen] = useState<StepDef[] | null>(null);
   const STEPS = frozen ?? planned;
+  // A run that was asked for by hand starts clean at the first step: the saved
+  // `last_step` and the skips of an older run do not carry over.
   const [flow, setFlow] = useState<FlowState>(() =>
-    startFlow(planned, undefined, prefs?.onboarding?.skipped),
+    startFlow(planned, undefined, forcedRun ? [] : prefs?.onboarding?.skipped),
   );
   const step = STEPS[flow.index] ?? STEPS[0];
 
@@ -159,12 +168,12 @@ export function OnboardingWizard() {
     setAction(next);
   }, []);
 
-  const clearForce = useCallback(() => {
-    if (params.get("onboarding") !== "1") return;
-    const next = new URLSearchParams(params);
-    next.delete("onboarding");
-    setParams(next, { replace: true });
-  }, [params, setParams]);
+  // "Run setup again" hands back to the page it was asked from (the dashboard
+  // for the avatar popup); a first run that was not asked for just closes.
+  const closeRun = useCallback(() => {
+    if (!forcedRun) return;
+    navigate(returnTo, { replace: true });
+  }, [forcedRun, navigate, returnTo]);
 
   const save = useCallback(
     async (partial: PreferencePatch, replaceOnboarding = false) => {
@@ -213,8 +222,8 @@ export function OnboardingWizard() {
       },
     });
     if (!saved) return;
-    clearForce();
-  }, [clearForce, flow.skipped, save]);
+    closeRun();
+  }, [closeRun, flow.skipped, save]);
 
   const skipAll = useCallback(async () => {
     const saved = await save({
@@ -225,8 +234,8 @@ export function OnboardingWizard() {
         skipped: flow.skipped,
       },
     });
-    if (saved) clearForce();
-  }, [clearForce, flow.skipped, save, step.id]);
+    if (saved) closeRun();
+  }, [closeRun, flow.skipped, save, step.id]);
 
   const preferences = prefs ?? {};
 

@@ -308,6 +308,12 @@ export interface OnboardingSignals {
   prefsReady: boolean;
   prefsError: boolean;
   completed: boolean;
+  /**
+   * The raw `completed_at`, not just "is it set". A run that is opened again on
+   * a finished install must tell the completion it started with apart from the
+   * one its own Finish writes, so it knows when to close.
+   */
+  completedAt?: string | null;
   /** `?onboarding=1` — Settings asked to run setup again. */
   force: boolean;
   keysReady: boolean;
@@ -325,6 +331,8 @@ export interface OnboardingSignals {
    * the credentials probe load, then fail, and that must not dismiss setup.
    */
   wizardEngaged?: boolean;
+  /** `completedAt` at the moment the wizard opened. See `finishedThisRun`. */
+  engagedCompletedAt?: string | null;
 }
 
 export function isOnboardingComplete(prefs: UserPreferences | undefined): boolean {
@@ -337,17 +345,33 @@ export function isExistingUser(signals: Pick<OnboardingSignals, "hasKeys" | "has
 }
 
 /**
+ * True once the run on screen has written its own completion — Finish, Skip
+ * setup, or a fresh completion from another tab. A completion that was already
+ * there when the wizard opened (a re-run) is not one, or setup would shut
+ * itself the moment it started.
+ */
+export function finishedThisRun(
+  s: Pick<OnboardingSignals, "wizardEngaged" | "completedAt" | "engagedCompletedAt">,
+): boolean {
+  if (!s.wizardEngaged) return false;
+  return (s.completedAt || null) !== (s.engagedCompletedAt || null);
+}
+
+/**
  * Show the wizard for a signed-in user who has not finished it and has nothing
  * on the install yet. Existing users are marked complete instead, unless they
  * asked to run setup again.
+ *
+ * A wizard that is already on screen outranks every "this install is past first
+ * run" answer: saving an exchange key in the Connect step, or a credentials
+ * probe the server just picked breaks, must not close setup under the user.
+ * Only its own Finish or Skip does that (see `finishedThisRun`).
  */
 export function shouldShowWizard(s: OnboardingSignals): boolean {
   if (!s.prefsReady || s.prefsError) return false;
   if (s.force) return true;
+  if (s.wizardEngaged) return !finishedThisRun(s);
   if (s.completed || s.hasKeys) return false;
-  // Keep a setup that has already opened. The first credentials failure, before
-  // the wizard is up, is still an outage and does not open it.
-  if (s.wizardEngaged) return true;
   if (!s.keysReady || s.keysError) return false;
   if (!s.activityReady || s.hasActivity) return false;
   return true;
@@ -359,6 +383,9 @@ export function shouldShowWizard(s: OnboardingSignals): boolean {
  */
 export function shouldAutoComplete(s: OnboardingSignals): boolean {
   if (!s.prefsReady || s.prefsError || s.completed || s.force) return false;
+  // Setup is on screen: the run in progress decides when it is over. A key
+  // saved in Connect is not a reason to write `completed_at` behind it.
+  if (s.wizardEngaged) return false;
   if (!s.keysReady || s.keysError) return false;
   if (s.hasKeys) return true;
   if (!s.activityReady) return false;
@@ -406,6 +433,27 @@ export function isTradingSurface(pathname: string): boolean {
 export function forceOnboarding(search: string): boolean {
   const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
   return params.get("onboarding") === "1";
+}
+
+/**
+ * Where the wizard hands back to when the user finishes or skips a run that was
+ * opened on purpose: the page that opened it (router state `from`, or
+ * `?from=`), and the Dashboard otherwise.
+ *
+ * Only a same-app path is accepted, so this can never be turned into a redirect
+ * somewhere else; the wizard's own entry points fall back to the Dashboard.
+ */
+export function setupReturnPath(state: unknown, search: string): string {
+  const fromState =
+    state && typeof state === "object" && typeof (state as { from?: unknown }).from === "string"
+      ? (state as { from: string }).from
+      : null;
+  const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
+  const path = (fromState ?? params.get("from") ?? "").trim();
+  if (!path.startsWith("/") || path.startsWith("//")) return "/";
+  // Never bounce straight back into the forced wizard.
+  if (path === "/welcome" || path.startsWith("/welcome?") || path.includes("onboarding=1")) return "/";
+  return path;
 }
 
 /**
@@ -588,7 +636,11 @@ export function splitModelOptions<
   return { found, other };
 }
 
-/** The model Condor suggests when several are found, if it is among them. */
+/**
+ * The model Condor suggests when several are found, if it is among them. Named
+ * `_ID`, not `_KEY`: `sessionState.keys.test.ts` reserves a module constant
+ * whose name contains KEY for persisted storage keys, and this is a model id.
+ */
 export const RECOMMENDED_MODEL_ID = "claude-acp:sonnet";
 
 /** Which found model the primary button names: the recommended one, else the first. */

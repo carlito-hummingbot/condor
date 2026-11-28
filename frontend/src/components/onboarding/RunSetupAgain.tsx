@@ -1,13 +1,17 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/Button";
 import { usePatchPreferences, useUserPreferences } from "@/hooks/useUserPreferences";
 import { restartedOnboarding } from "@/lib/onboarding";
 
-/** Settings → Appearance. Clears completion and opens the wizard again. */
+/**
+ * Settings → Appearance. Clears completion and opens the wizard again, and
+ * comes back to Settings when the run is finished or skipped.
+ */
 export function RunSetupAgain() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { data, isFetched, isError } = useUserPreferences();
   const patch = usePatchPreferences();
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +29,10 @@ export function RunSetupAgain() {
               replaceOnboarding: true,
             },
             {
-              onSuccess: () => navigate("/?onboarding=1"),
+              onSuccess: () =>
+                navigate("/?onboarding=1", {
+                  state: { from: `${location.pathname}${location.search}` },
+                }),
               onError: (err) => {
                 setError(err instanceof Error ? err.message : "Could not restart setup.");
               },
