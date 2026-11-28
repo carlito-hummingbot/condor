@@ -145,16 +145,37 @@ function SectionHead({
   );
 }
 
-function TryInLabs({ className = "" }: { className?: string }) {
+/**
+ * The two ways into Build from a catalogue item (showcase: continuity only).
+ *
+ * "Use as starting point" opens the Design stage with the item's fields in the
+ * draft; "Improve this" opens the same draft in Design with its chat already
+ * asking how to improve it. Both name the item, so Build can prefill it and say
+ * where it came from.
+ */
+function BuildFromItem({ id, name, className = "" }: { id: string; name: string; className?: string }) {
   const navigate = useNavigate();
+  const open = (intent: "use" | "improve") =>
+    navigate(`/build?stage=design&from=explore&intent=${intent}&item=${encodeURIComponent(id)}`);
   return (
-    <button
-      type="button"
-      onClick={() => navigate("/labs")}
-      className={`inline-flex h-8 items-center justify-center rounded-md bg-[var(--color-primary)] px-3 text-[13px] font-semibold text-[var(--on-primary)] ${className}`}
-    >
-      Try in Labs
-    </button>
+    <div className={`flex flex-wrap gap-2 ${className}`}>
+      <button
+        type="button"
+        onClick={() => open("use")}
+        aria-label={`Use ${name} as a starting point`}
+        className="inline-flex h-8 items-center justify-center rounded-md bg-[var(--color-primary)] px-3 text-[13px] font-semibold text-[var(--on-primary)]"
+      >
+        Use as starting point
+      </button>
+      <button
+        type="button"
+        onClick={() => open("improve")}
+        aria-label={`Improve ${name}`}
+        className="inline-flex h-8 items-center justify-center rounded-md border border-[var(--color-border)] px-3 text-[13px] font-semibold text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]"
+      >
+        Improve this
+      </button>
+    </div>
   );
 }
 
@@ -231,8 +252,8 @@ function StrategyRow({ strategy }: { strategy: Strategy }) {
           </span>
         </div>
       </div>
-      <div className="flex shrink-0 gap-2 sm:w-[110px] sm:flex-col sm:items-stretch">
-        <TryInLabs className="flex-1" />
+      <div className="flex shrink-0 gap-2 sm:w-[190px] sm:flex-col sm:items-stretch">
+        <BuildFromItem id={strategy.id} name={strategy.name} className="sm:flex-col" />
       </div>
     </li>
   );
@@ -264,15 +285,8 @@ function AgentCard({ agent }: { agent: Agent }) {
         <p className="text-[12px] text-[var(--color-text-muted)]">
           Where: {agent.venue ?? "not stated"}
         </p>
-        <div className="mt-auto flex gap-2 pt-2">
-          <TryInLabs className="flex-1" />
-          <button
-            type="button"
-            title="Import is not built yet"
-            className="inline-flex h-8 items-center justify-center rounded-md border border-[var(--color-border)] px-3 text-[13px] font-semibold text-[var(--color-text)]"
-          >
-            Import
-          </button>
+        <div className="mt-auto pt-2">
+          <BuildFromItem id={agent.id} name={agent.name} />
         </div>
       </div>
     </article>
@@ -370,10 +384,10 @@ function OverviewPanel({ onSelect }: { onSelect: (tab: TabId) => void }) {
                   {pick.pick === "strategy" ? (
                     <button
                       type="button"
-                      onClick={() => navigate("/labs")}
+                      onClick={() => navigate("/build")}
                       className="text-[13px] text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
                     >
-                      Try in Labs
+                      Try in Build
                     </button>
                   ) : (
                     <button
@@ -812,7 +826,7 @@ export function Explore() {
         <div>
           <h1 className="text-[26px] font-bold leading-tight tracking-tight">Explore</h1>
           <p className="mt-1 max-w-[75ch] text-[15px] text-[var(--color-text-muted)]">
-            Explore is where you find something to run: watch a 30-second video, read one line, then try it in Labs or
+            Explore is where you find something to run: watch a 30-second video, read one line, then try it in Build or
             import it.
           </p>
         </div>

@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { useDashboardTitle, useDisplayName } from "@/hooks/useDisplayName";
 import { formatDateTime } from "@/lib/formatters";
@@ -72,7 +73,11 @@ function hourLabels(now: Date, count: number): string[] {
   });
 }
 
+/** The Dashboard's cards have no ids of their own; this is the one Build names. */
+const liveId = (title: string) => title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+
 function AgentCardView({ agent }: { agent: AgentCard }) {
+  const navigate = useNavigate();
   return (
     <article className="relative min-w-0 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-5 pb-2 pt-4">
       <span
@@ -81,7 +86,20 @@ function AgentCardView({ agent }: { agent: AgentCard }) {
         className="absolute right-3.5 top-3.5 h-[9px] w-[9px] rounded-full bg-[var(--color-green)] shadow-[0_0_0_4px_color-mix(in_srgb,var(--color-green)_26%,transparent)]"
       />
       <h3 className="text-center text-[19px] font-bold tracking-tight">{agent.title}</h3>
-      <p className="mb-3.5 mt-0.5 text-center text-sm text-[var(--color-text-muted)]">{agent.subtitle}</p>
+      <p className="mb-1.5 mt-0.5 text-center text-sm text-[var(--color-text-muted)]">{agent.subtitle}</p>
+      {/* Showcase continuity: the same bot opens in Build's Improve stage. */}
+      <div className="mb-2 flex justify-center">
+        <button
+          type="button"
+          onClick={() =>
+            navigate(`/build?stage=improve&from=dashboard&item=${encodeURIComponent(liveId(agent.title))}`)
+          }
+          aria-label={`Improve ${agent.title}`}
+          className="rounded-md border border-[var(--color-border)] px-2.5 py-1 text-[12px] font-semibold text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]"
+        >
+          Improve
+        </button>
+      </div>
       <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-2 pb-3 tabular-nums">
         <div>
           <span className="mb-0.5 block text-[12.5px] text-[var(--color-text-muted)]">P&amp;L</span>
