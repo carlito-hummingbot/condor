@@ -10,7 +10,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { AGENTS, CHANNELS, LESSONS, LIVE_NOW, NEWS, STRATEGIES } from "./explore/sampleData";
+import { BOTCAMP_URL, CHANNELS, LESSONS, LIVE_NOW, NEWS, STRATEGIES } from "./explore/sampleData";
 
 const { Explore, HubRedirect } = await import("./Explore");
 
@@ -73,16 +73,19 @@ afterEach(() => {
 });
 
 describe("Explore", () => {
-  it("renders the five tabs, with Get Started selected first", async () => {
+  it("renders four tabs — Get Started, Live Bots, Bots, What's new — with Get Started first", async () => {
     renderAt("/explore");
     await flush();
     expect(tabs().map((t) => t.textContent?.replace(/\d+/g, "").trim())).toEqual([
       "Get Started",
       "Live Bots",
-      "Strategies",
-      "Agents",
+      "Bots",
       "What's new",
     ]);
+    // No separate Strategies or Agents tab any more.
+    const names = tabs().map((t) => t.textContent?.replace(/\d+/g, "").trim());
+    expect(names).not.toContain("Strategies");
+    expect(names).not.toContain("Agents");
     expect(tabNamed("Get Started").getAttribute("aria-selected")).toBe("true");
     expect(panel().textContent).toContain("Get started");
     expect(panel().textContent).toContain("Next livestream");
@@ -98,26 +101,26 @@ describe("Explore", () => {
     expect(panel().textContent).toContain("Four short lessons");
   });
 
-  it("puts the selected tab in ?tab= when it is clicked", async () => {
+  it("puts the selected tab in ?tab= when Bots is clicked", async () => {
     renderAt("/explore");
     await flush();
-    await click(tabNamed("Strategies"));
-    expect(where()).toBe("/explore?tab=strategies");
-    expect(tabNamed("Strategies").getAttribute("aria-selected")).toBe("true");
-    expect(panel().textContent).toContain("a rule-based setup: fixed rules decide when to quote, enter and exit.");
+    await click(tabNamed("Bots"));
+    expect(where()).toBe("/explore?tab=bots");
+    expect(tabNamed("Bots").getAttribute("aria-selected")).toBe("true");
+    expect(panel().textContent).toContain("Rule-based: fixed rules decide when to quote, enter and exit.");
     for (const strategy of STRATEGIES) expect(panel().textContent).toContain(strategy.name);
-
-    await click(tabNamed("Agents"));
-    expect(where()).toBe("/explore?tab=agents");
-    expect(panel().textContent).toContain("an AI-driven setup: a model decides, inside the limits you set.");
   });
 
-  it("opens the tab named in ?tab=", async () => {
-    renderAt("/explore?tab=agents");
-    await flush();
-    expect(tabNamed("Agents").getAttribute("aria-selected")).toBe("true");
-    expect(panel().textContent).toContain("an AI-driven setup: a model decides, inside the limits you set.");
-    expect(panel().textContent).not.toContain("Four short lessons");
+  it("maps the old ?tab=strategies and ?tab=agents links onto Bots", async () => {
+    for (const legacy of ["strategies", "agents"]) {
+      renderAt(`/explore?tab=${legacy}`);
+      await flush();
+      expect(tabNamed("Bots").getAttribute("aria-selected")).toBe("true");
+      // The address is rewritten, so the tab and the URL agree.
+      expect(where()).toBe("/explore?tab=bots");
+      act(() => root.unmount());
+      root = createRoot(container);
+    }
   });
 
   it("moves tabs with the arrow, Home and End keys", async () => {
@@ -269,78 +272,114 @@ describe("Explore", () => {
     expect(container.querySelector("iframe")).toBeNull();
   });
 
-  it("keeps Strategies as it was, Risk line and its dead video button included", async () => {
-    renderAt("/explore?tab=strategies");
+  it("keeps Strategies exactly as they were, in the right-hand column", async () => {
+    renderAt("/explore?tab=bots");
     await flush();
-    expect(panel().textContent).toContain("Risk:");
-    expect(panel().textContent).toContain("Video coming");
+    const strategies = panel().querySelector('section[aria-label="Strategies"]') as HTMLElement;
+    expect(strategies.textContent).toContain("Strategies");
+    expect(strategies.textContent).toContain("Risk:");
+    expect(strategies.textContent).toContain("Video coming");
+    for (const strategy of STRATEGIES) expect(strategies.textContent).toContain(strategy.name);
     // No dialog from a Strategies video box.
-    await click([...panel().querySelectorAll("button")].find((b) => b.getAttribute("aria-label")?.includes("video, coming soon"))!);
+    await click([...strategies.querySelectorAll("button")].find((b) => b.getAttribute("aria-label")?.includes("video, coming soon"))!);
     expect(container.querySelector('[role="dialog"]')).toBeNull();
   });
 
-  it("shows the source counts and filters the agent cards", async () => {
-    renderAt("/explore?tab=agents");
+  it("puts Agents left of Strategies, with the four ready agents first", async () => {
+    renderAt("/explore?tab=bots");
     await flush();
-    expect(chipNamed("All").textContent).toContain(String(AGENTS.length));
-    expect(chipNamed("Hummingbot").textContent).toContain("1");
-    expect(chipNamed("Botcamp Hackathon").textContent).toContain("14");
-    expect(chipNamed("Community").textContent).toContain("2");
-    // The final design opens on the 14 real hackathon agents.
-    expect(chipNamed("Botcamp Hackathon").getAttribute("aria-pressed")).toBe("true");
+    const agents = panel().querySelector('section[aria-label="Agents"]') as HTMLElement;
+    const strategies = panel().querySelector('section[aria-label="Strategies"]') as HTMLElement;
+    // Agents come first in the DOM, so they stack first on a phone too.
+    expect(agents.compareDocumentPosition(strategies) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
-    const botcamp = AGENTS.filter((a) => a.sourceKind === "botcamp");
-    const hummingbot = AGENTS.filter((a) => a.sourceKind === "hummingbot");
-    const community = AGENTS.filter((a) => a.sourceKind === "community");
-
-    await click(chipNamed("Botcamp Hackathon"));
-    expect(chipNamed("Botcamp Hackathon").getAttribute("aria-pressed")).toBe("true");
-    for (const agent of botcamp) expect(panel().textContent).toContain(agent.name);
-    expect(panel().textContent).not.toContain(hummingbot[0].name);
-    expect(panel().textContent).toContain("From the Botcamp Agent Builders Cup");
-    expect(panel().textContent).toContain("by wei hong · Botcamp");
-
-    await click(chipNamed("Hummingbot"));
-    expect(panel().textContent).toContain(hummingbot[0].name);
-    expect(panel().textContent).not.toContain(botcamp[0].name);
-
-    await click(chipNamed("Community"));
-    for (const agent of community) expect(panel().textContent).toContain(agent.name);
-    expect(panel().textContent).not.toContain(botcamp[0].name);
-  });
-
-  it("lists all 14 hackathon agents under Botcamp Hackathon", async () => {
-    renderAt("/explore?tab=agents");
-    await flush();
-    const botcamp = AGENTS.filter((a) => a.sourceKind === "botcamp");
-    expect(botcamp).toHaveLength(14);
-    const cards = [...container.querySelectorAll('section[aria-label="Agents, video first"] article')];
-    expect(cards).toHaveLength(botcamp.length);
-    for (const agent of botcamp) {
-      const card = cards.find((c) => c.textContent?.includes(agent.name));
-      expect(card, `${agent.name} is missing`).toBeTruthy();
-      expect(card?.textContent).toContain("Botcamp Hackathon");
+    const ready = [...agents.querySelectorAll('ul[aria-label="Agents, ready to use"] li')];
+    expect(ready).toHaveLength(4);
+    expect(ready.map((row) => row.querySelector("h3")?.textContent)).toEqual([
+      "Directional Trader",
+      "Fundamental Analyst",
+      "Market Making Expert",
+      "Solana DEX LP Expert",
+    ]);
+    // They are normal rows: no lock, and they carry the Agents tab's old action.
+    for (const row of ready) {
+      expect(row.getAttribute("aria-disabled")).toBeNull();
+      expect(row.querySelector("button")).toBeTruthy();
+      expect(row.textContent).toContain("Sample data");
     }
-    // And one click reveals the 3 sample agents through the same filter row.
-    await click(chipNamed("All"));
-    expect(container.querySelectorAll('section[aria-label="Agents, video first"] article')).toHaveLength(AGENTS.length);
+    expect(agents.querySelectorAll('[aria-label="Hackathon agents"] li')).toHaveLength(14);
   });
 
-  it("has no real href except the three verified channel links", async () => {
+  it("locks the 14 hackathon agents while signed out, with the Botcamp panel above them", async () => {
+    renderAt("/explore?tab=bots");
+    await flush();
+    const agents = panel().querySelector('section[aria-label="Agents"]') as HTMLElement;
+    const locked = [...agents.querySelectorAll('ul[aria-label="Hackathon agents"] li')];
+    expect(locked).toHaveLength(14);
+    expect(agents.textContent).toContain("14 Hackathon Agents");
+    expect(agents.textContent).toContain("Locked");
+    for (const row of locked) {
+      expect(row.getAttribute("aria-disabled")).toBe("true");
+      expect(row.textContent).toContain("Locked");
+      expect(row.querySelector("button")).toBeNull();
+      expect(row.querySelector("a")).toBeNull();
+    }
+    // The panel sits between the sub-heading and the 14.
+    const panelEl = agents.querySelector("label")?.closest("div.rounded-xl") as HTMLElement;
+    expect(panelEl?.textContent).toContain("Sign in to Botcamp to unlock the 14 hackathon agents");
+    expect(panelEl!.compareDocumentPosition(agents.querySelector('ul[aria-label="Hackathon agents"]')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("sends Log in and Create account to Botcamp in a new tab", async () => {
+    renderAt("/explore?tab=bots");
+    await flush();
+    const links = [...panel().querySelectorAll('a[href*="botcamp"]')] as HTMLAnchorElement[];
+    expect(links.map((a) => a.textContent?.trim())).toEqual(["Log in", "Create account"]);
+    for (const link of links) {
+      expect(link.getAttribute("href")).toBe("https://www.botcamp.xyz");
+      expect(link.getAttribute("target")).toBe("_blank");
+      expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+    }
+  });
+
+  it("unlocks the 14 when the demo switch says signed in", async () => {
+    renderAt("/explore?tab=bots");
+    await flush();
+    const agents = () => panel().querySelector('section[aria-label="Agents"]') as HTMLElement;
+    expect(agents().textContent).toContain("Locked");
+
+    const toggle = panel().querySelector('input[type="checkbox"]') as HTMLInputElement;
+    expect(toggle.checked).toBe(false);
+    await act(async () => {
+      toggle.click();
+    });
+    await flush();
+
+    expect(agents().textContent).not.toContain("Locked");
+    expect(agents().textContent).toContain("Signed in to Botcamp (sample)");
+    const rows = [...agents().querySelectorAll('ul[aria-label="Hackathon agents"] li')];
+    expect(rows).toHaveLength(14);
+    for (const row of rows) {
+      expect(row.getAttribute("aria-disabled")).toBeNull();
+      expect(row.querySelector("button")).toBeTruthy();
+    }
+    // The flag is what the helper reads, so a reload keeps the demo state.
+    expect(localStorage.getItem("botcampSignedIn")).toBe("1");
+  });
+
+  it("has no real href except the three channel links and the two Botcamp links", async () => {
     renderAt("/explore");
     await flush();
     const collect = () => [...container.querySelectorAll("a[href]")].map((a) => a.getAttribute("href")!);
     const hrefs = collect();
-    await click(tabNamed("Strategies"));
-    hrefs.push(...collect());
-    await click(tabNamed("Agents"));
+    await click(tabNamed("Bots"));
     hrefs.push(...collect());
     await click(tabNamed("What's new"));
     hrefs.push(...collect());
 
-    const allowed = new Set(["#", ...CHANNELS.map((c) => c.url)]);
+    const allowed = new Set(["#", BOTCAMP_URL, ...CHANNELS.map((c) => c.url)]);
     for (const href of hrefs) expect(allowed.has(href), `unexpected href ${href}`).toBe(true);
-    expect(new Set(hrefs.filter((h) => h !== "#"))).toEqual(new Set(CHANNELS.map((c) => c.url)));
+    expect(new Set(hrefs.filter((h) => h !== "#"))).toEqual(new Set([BOTCAMP_URL, ...CHANNELS.map((c) => c.url)]));
   });
 
   it("filters the What's new timeline by source", async () => {
@@ -366,18 +405,19 @@ describe("Explore", () => {
     for (const link of links) expect(link.getAttribute("rel")).toBe("noopener noreferrer");
   });
 
-  it("marks sample blocks, not the real strategy list", async () => {
+  it("marks sample text as sample, and leaves the real strategy list unmarked", async () => {
     renderAt("/explore");
     await flush();
+    // Get Started and its sample videos.
     expect(panel().textContent).toContain("Sample data");
-    await click(tabNamed("Strategies"));
-    expect(panel().textContent).not.toContain("Sample data");
-    await click(tabNamed("Agents"));
-    await click(chipNamed("All"));
-    const sampleCards = [...container.querySelectorAll('section[aria-label="Agents, video first"] article')].filter(
-      (c) => c.textContent?.includes("Sample data"),
-    );
-    expect(sampleCards).toHaveLength(3);
+
+    await click(tabNamed("Bots"));
+    const strategies = panel().querySelector('section[aria-label="Strategies"]') as HTMLElement;
+    expect(strategies.textContent).not.toContain("Sample data");
+
+    // The four ready agents are written for the showcase, so they say so.
+    const ready = [...panel().querySelectorAll('ul[aria-label="Agents, ready to use"] li')];
+    expect(ready.filter((row) => row.textContent?.includes("Sample data"))).toHaveLength(4);
   });
 });
 
