@@ -321,7 +321,17 @@ export default function Deploy({ draft, setDraft, goTo }: StageProps) {
               <Summary label="Kind" value={kind} />
               <Summary label="Venue" value={venue} />
               <Summary label="Capital" value={formatUsd(capital)} />
-              <Summary label="Max positions" value={draft.maxPositions ? String(draft.maxPositions) : "3 (sample)"} />
+              {/* Fixed reads the number the user typed; Dynamic has none to show. */}
+              <Summary
+                label="Max positions"
+                value={
+                  draft.maxPositionsMode === "dynamic"
+                    ? "Dynamic (depends on budget)"
+                    : draft.maxPositions
+                      ? String(draft.maxPositions)
+                      : "3 (sample)"
+                }
+              />
               <Summary label="Daily stop" value={formatUsd(maxLossPerDay)} />
               <Summary label="Total stop" value={formatUsd(maxLossTotal)} />
               <Summary label="Starts" value={startMode === "paused" ? "Paused" : "Live"} />
