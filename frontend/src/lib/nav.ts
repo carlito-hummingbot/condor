@@ -1,13 +1,21 @@
 import {
-  Bot,
   Brain,
-  Droplets,
+  Bug,
+  Compass,
+  Download,
+  FlaskConical,
+  KeyRound,
+  LayoutDashboard,
+  Mic,
+  Network,
+  Palette,
+  Server,
+  ServerCog,
   Settings,
-  Swords,
-  Wallet,
-  Zap,
+  Shield,
+  Sparkles,
+  type LucideIcon,
 } from "lucide-react";
-
 
 /**
  * The main nav.
@@ -35,22 +43,169 @@ import {
  * that browser rather than a second door onto the same records. `/floor`
  * redirects to `/bots`.
  *
- * Hub joined it in FEAT-153 and left it again. `/hub` mounts the Agents
+ * Hub joined it in FEAT-153 and left it again. `/hub` mounts the agent
  * workspace with its transcript column swapped for the catalogue, so a tab of
- * its own sat beside Agents saying the same thing twice. Its door is the card
- * at the foot of the Agents rail, below the agents it installs — which is
- * where you are when you want it. It is the one full-bleed route with no nav
- * entry.
+ * its own sat beside the chat saying the same thing twice. Its door was the
+ * card at the foot of the rail.
+ *
+ * The top bar is a left icon rail now. Three doors in the main group:
+ * Dashboard, Explore and Labs. Dashboard is `/` (the chat home until the stats
+ * page lands). Explore is `/hub`, today's Agent Hub under its new name, and
+ * stays lit on an agent's own page. The Explore catalogue page (tabs Overview,
+ * Strategies, Agents and What's new) is still to be built; until it lands the
+ * door opens the Hub and the route stays `/hub`. Labs is `/labs`, built in a
+ * later change; until then it shows the ordinary not-found page inside the
+ * shell. The Settings gear sits at the foot of the rail, above the avatar, and
+ * opens a panel beside the rail with every Settings tab people reach for, in
+ * three groups, and Report an Issue. Portfolio, Trade, DEX, Routines and Bots
+ * have no door in the nav for now; their routes still work by address.
  */
-export const NAV_ITEMS = [
-  { to: "/", icon: Brain, label: "Agents" },
-  { to: "/portfolio", icon: Wallet, label: "Portfolio" },
-  { to: "/trade", icon: Swords, label: "Trade" },
-  { to: "/dex", icon: Droplets, label: "DEX" },
-  { to: "/bots", icon: Bot, label: "Bots" },
-  { to: "/routines", icon: Zap, label: "Routines" },
-  { to: "/settings", icon: Settings, label: "Settings" },
-] as const;
+export interface NavEntry {
+  id: string;
+  to: string;
+  icon: LucideIcon;
+  label: string;
+}
+
+/** Rail, top group. The logo is not an entry: it is the brand, and it never lights. */
+export const RAIL_TOP: readonly NavEntry[] = [
+  { id: "dashboard", to: "/", icon: LayoutDashboard, label: "Dashboard" },
+  { id: "explore", to: "/hub", icon: Compass, label: "Explore" },
+  { id: "labs", to: "/labs", icon: FlaskConical, label: "Labs" },
+];
+
+/** Report an Issue is not a route: it opens the existing dialog. */
+export interface ReportEntry {
+  id: "report";
+  label: string;
+  icon: LucideIcon;
+  action: "report";
+}
+
+/** One row of the Settings panel: a Settings tab, or the Report an Issue action. */
+export type PanelEntry = NavEntry | ReportEntry;
+
+export function isReportEntry(entry: PanelEntry): entry is ReportEntry {
+  return "action" in entry;
+}
+
+export const REPORT_ISSUE: ReportEntry = { id: "report", label: "Report an Issue", icon: Bug, action: "report" };
+
+/**
+ * The Settings panel, as three groups. The panel draws a thin divider between
+ * groups and no group titles. Each `to` is a Settings tab (`/settings?tab=...`).
+ * The phone's Account sheet reads this same list.
+ *
+ * Ids: the Settings row for agent configuration is `set-agents`; the rail door
+ * that opens the catalogue is `explore`.
+ * Notifications and Admin are Settings tabs with no row here: they stay
+ * reachable inside the Settings page.
+ */
+export const SETTINGS_GROUPS: readonly (readonly PanelEntry[])[] = [
+  [
+    { id: "api", to: "/settings?tab=api", icon: ServerCog, label: "Hummingbot API" },
+    { id: "gateway", to: "/settings?tab=gateway", icon: Network, label: "Gateway" },
+    { id: "keys", to: "/settings?tab=keys", icon: KeyRound, label: "Keys and Wallets" },
+    { id: "servers", to: "/settings?tab=servers", icon: Server, label: "Servers" },
+    { id: "updates", to: "/settings?tab=updates", icon: Download, label: "Updates" },
+  ],
+  [
+    { id: "set-agents", to: "/settings?tab=agents", icon: Brain, label: "Agents" },
+    { id: "set-llm", to: "/settings?tab=llm", icon: Sparkles, label: "LLM Endpoints" },
+    { id: "set-voice", to: "/settings?tab=voice", icon: Mic, label: "Voice & AI" },
+    { id: "set-appearance", to: "/settings?tab=appearance", icon: Palette, label: "Appearance" },
+    { id: "set-privacy", to: "/settings?tab=privacy", icon: Shield, label: "Privacy" },
+  ],
+  [REPORT_ISSUE],
+];
+
+/** The panel's title. */
+export const SETTINGS_TITLE = "Settings";
+
+/** Just the Settings tab links of `SETTINGS_GROUPS`, in order. */
+export const SETTINGS_ENTRIES: readonly NavEntry[] = SETTINGS_GROUPS.flat().filter(
+  (entry): entry is NavEntry => !isReportEntry(entry),
+);
+
+/**
+ * Whatever the rail has open beside or above itself. At most one thing at a
+ * time: the Settings panel and (PR #4) the avatar popup, which adds "account".
+ * The rail keeps this one value, so every open overlay has the same lit-state
+ * rule (`isRailItemLit`).
+ */
+export type RailOverlayId = "settings" | "account";
+
+/** The gear at the foot of the rail. It opens the Settings panel; it is not a link. */
+export const SETTINGS_ICON = Settings;
+
+/** The chat home only. The Explore door and an agent's page are elsewhere. */
+export function isDashboardActive(pathname: string): boolean {
+  return pathname === "/";
+}
+
+/** The Explore door: today's Agent Hub, and a single agent's page. */
+export function isExploreActive(pathname: string): boolean {
+  return pathname === "/hub" || pathname.startsWith("/agents/");
+}
+
+export function isLabsActive(pathname: string): boolean {
+  return pathname === "/labs" || pathname.startsWith("/labs/");
+}
+
+function onSettingsPage(pathname: string): boolean {
+  return pathname === "/settings" || pathname.startsWith("/settings/");
+}
+
+/** The Settings tab on screen. `/settings` alone opens Servers. */
+function settingsTab(search: string): string {
+  return new URLSearchParams(search).get("tab") ?? "servers";
+}
+
+function tabOf(entry: NavEntry): string | null {
+  return new URL(entry.to, "http://x").searchParams.get("tab");
+}
+
+/** True on every Settings page (any tab, Notifications and Admin included), so the gear stays lit. */
+export function isSettingsActive(pathname: string): boolean {
+  return onSettingsPage(pathname);
+}
+
+/** The panel row whose Settings tab is on screen. */
+export function isSettingsEntryActive(entry: NavEntry, pathname: string, search: string): boolean {
+  return onSettingsPage(pathname) && tabOf(entry) === settingsTab(search);
+}
+
+export function isRailEntryActive(id: string, pathname: string, search: string): boolean {
+  switch (id) {
+    case "dashboard":
+      return isDashboardActive(pathname);
+    case "explore":
+      return isExploreActive(pathname);
+    case "labs":
+      return isLabsActive(pathname);
+    case "settings":
+      return isSettingsActive(pathname);
+    default: {
+      const entry = SETTINGS_ENTRIES.find((item) => item.id === id);
+      return entry ? isSettingsEntryActive(entry, pathname, search) : false;
+    }
+  }
+}
+
+/**
+ * Is this rail item lit? While an overlay is open only the item that opened
+ * it is lit, so the page behind it (Dashboard on `/`) stops competing. With
+ * nothing open, the route decides.
+ */
+export function isRailItemLit(
+  id: string,
+  overlay: RailOverlayId | null,
+  pathname: string,
+  search: string,
+): boolean {
+  if (overlay !== null) return id === overlay;
+  return isRailEntryActive(id, pathname, search);
+}
 
 /**
  * Routes that lay themselves out edge to edge and scroll inside their own panes,

@@ -1,7 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Bug, Moon, Sun } from "lucide-react";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import { ChatBubble } from "@/components/chat/ChatBubble";
 import { ConnectKeysOverlay } from "@/components/ConnectKeysOverlay";
@@ -13,14 +12,11 @@ import { ChatProvider } from "@/hooks/useChat";
 import { useCredentials } from "@/hooks/useCredentials";
 import { usePrefetchData } from "@/hooks/usePrefetchData";
 import { useServer } from "@/hooks/useServer";
-import { useTheme } from "@/hooks/useTheme";
-import { NAV_ITEMS, FULL_BLEED_ROUTES } from "@/lib/nav";
+import { FULL_BLEED_ROUTES } from "@/lib/nav";
 import { routeFacts } from "@/lib/pageFacts";
 import { useViewFacts } from "@/lib/viewFacts";
-import { CurrencySelector } from "./CurrencySelector";
-import { NotificationBell } from "./NotificationBell";
-import { GatewayIndicator } from "./GatewayIndicator";
-import { ServerSelector } from "./ServerSelector";
+import { ShellControls } from "./ShellControls";
+import { SideRail } from "./SideRail";
 
 /**
  * Full-bleed routes that carry a parameter, so an exact match cannot find them.
@@ -54,9 +50,6 @@ export function AppShell() {
 function AppShellBody() {
   const { server } = useServer();
   const { pathname, search } = useLocation();
-  // The Hub and an agent's workspace are Agents' pages (see the nav below).
-  const inAgentsSection = pathname === "/hub" || pathname.startsWith("/agents/");
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const { hasKeys, isLoading: keysLoading, isError: keysError } = useCredentials();
   const [reportOpen, setReportOpen] = useState(false);
@@ -109,109 +102,39 @@ function AppShellBody() {
   useViewFacts(() => routeFacts(pathname, search, queryClient));
 
   return (
-    <div className="flex h-screen flex-col">
-      {/* Top bar */}
-      <header className="flex h-12 shrink-0 items-center border-b border-[var(--color-border)] bg-[var(--color-surface)] px-4">
-        {/* Left: logo + nav. `min-w-0 flex-1` so this side gives way when the
-            window narrows, instead of pushing the controls on the right off
-            screen (the bar used to need ~1080px and never shrank). */}
-        <div className="flex min-w-0 flex-1 items-center gap-3 lg:gap-6">
-          <NavLink to="/" className="flex shrink-0 items-center gap-2 font-bold tracking-tight">
-            <img src="/condor_old.jpeg" alt="Condor" className="h-6 w-6 rounded-full" />
-            <span className="hidden text-sm sm:inline">Condor</span>
-          </NavLink>
+    <div className="flex h-screen flex-row">
+      {/* The rail replaces the 48px top bar. Onboarding's wizard should mount
+          on this root — not inside `main` — so it covers the rail too. PR #2
+          currently mounts it inside `main`; expect that conflict. */}
+      <SideRail onReport={() => setReportOpen(true)} />
+      <div className="flex min-w-0 flex-1 flex-col">
+        {/* Server, Gateway status and Switch Mode (light/dark). */}
+        <ShellControls />
 
-          {/* Labels drop to icons below ~1120px; past that, the strip scrolls
-              inside its own space rather than overflowing the page. */}
-          <nav className="flex min-w-0 items-center gap-1 overflow-x-auto [scrollbar-width:none]">
-            {NAV_ITEMS.map(({ to, icon: Icon, label }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={to === "/"}
-                title={label}
-                aria-label={label}
-                className={({ isActive }) =>
-                  `flex shrink-0 items-center gap-2 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors min-[1120px]:px-3 ${
-                    // `end` keeps `/` from matching every route, so the Hub and
-                    // an agent's own workspace are claimed for Agents by hand:
-                    // they are Agents' pages, and a nav with nothing lit there
-                    // left the reader with no idea where they were.
-                    // Solid gold with ink for the current page, muted for the
-                    // rest — Botcamp's sidebar (Hummingbot design system).
-                    isActive || (to === "/" && inAgentsSection)
-                      ? "bg-[var(--color-nav-active)] text-[var(--on-nav-active)] shadow-sm"
-                      : "text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]"
-                  }`
-                }
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                <span className="hidden min-[1120px]:inline">{label}</span>
-              </NavLink>
-            ))}
-          </nav>
-        </div>
+        {/* An update landed but this process is still the old one, so the bundle
+            in the browser is ahead of the API answering it. Above `main` for the
+            same reason the consent strip is: every page needs it, and the chat
+            workspace owns its own scrolling. Renders nothing the rest of the
+            time, which is nearly always. */}
+        <RelaunchBanner />
 
-        {/* Right: server selector + controls */}
-        <div className="ml-3 flex shrink-0 items-center gap-2 lg:gap-3">
-          <ServerSelector />
-          <GatewayIndicator />
-          <CurrencySelector />
+        {/* Asks once, for an install that has never answered (FEAT-023). Renders
+            nothing for everyone else, including on the chat workspace, which owns
+            its own scrolling — hence outside `main` rather than inside it. */}
+        <TelemetryConsentBanner />
 
-          <div className="flex items-center gap-1">
-            {/* Inside the ChatProvider on purpose: the bell reads the same
-                react-query cache the chat socket pushes live notifications
-                into, and the provider opens that socket on every route — not
-                only on the chat workspace — which is what makes the bell
-                update without a reload wherever the user is (FEAT-048). */}
-            <NotificationBell />
-
-            <button
-              onClick={() => setReportOpen(true)}
-              className="rounded p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-accent)]"
-              title="Report an issue"
-            >
-              <Bug className="h-4 w-4" />
-            </button>
-
-            <button
-              onClick={toggleTheme}
-              className="rounded p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-accent)]"
-              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            >
-              {/* Light/dark only — the colour-blind palette lives in
-                  Settings → Appearance, so this never reads as a third theme. */}
-              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </button>
-
-          </div>
-        </div>
-      </header>
-
-      {/* An update landed but this process is still the old one, so the bundle
-          in the browser is ahead of the API answering it. Above `main` for the
-          same reason the consent strip is: every page needs it, and the chat
-          workspace owns its own scrolling. Renders nothing the rest of the
-          time, which is nearly always. */}
-      <RelaunchBanner />
-
-      {/* Asks once, for an install that has never answered (FEAT-023). Renders
-          nothing for everyone else, including on the chat workspace, which owns
-          its own scrolling — hence outside `main` rather than inside it. */}
-      <TelemetryConsentBanner />
-
-      {/* Main content */}
-      <main
-        className={`relative flex-1 ${
-          isFullBleed ? "overflow-hidden" : "overflow-auto p-6"
-        }`}
-      >
-        <ErrorBoundary resetKey={pathname + server}>
-          <Outlet key={server} />
-        </ErrorBoundary>
-        {showKeysOverlay && <ConnectKeysOverlay />}
-      </main>
+        {/* Main content */}
+        <main
+          className={`relative flex-1 ${
+            isFullBleed ? "overflow-hidden" : "overflow-auto p-6"
+          }`}
+        >
+          <ErrorBoundary resetKey={pathname + server}>
+            <Outlet key={server} />
+          </ErrorBoundary>
+          {showKeysOverlay && <ConnectKeysOverlay />}
+        </main>
+      </div>
 
       <ReportIssueDialog open={reportOpen} onClose={() => setReportOpen(false)} />
 

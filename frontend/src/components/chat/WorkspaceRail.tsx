@@ -114,6 +114,16 @@ export function WorkspaceRail({
             {group.items.map((item) => (
               <RailButton key={item.id} {...item} />
             ))}
+            {/* Tiles that are all waiting on the same thing say so once. Three
+                dimmed tiles alone read as broken; the reason is the hint. */}
+            {group.items.every((item) => item.disabled) && (
+              <span
+                className="w-full px-1 pb-0.5 text-center text-[9px] leading-tight text-[var(--color-text-muted)]"
+                title={group.items[0]?.disabledHint}
+              >
+                Pick a server
+              </span>
+            )}
           </div>
         ))}
     </aside>
