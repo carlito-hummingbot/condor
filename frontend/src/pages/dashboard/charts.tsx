@@ -6,8 +6,6 @@
  * `MiniPriceChart` is shared with Explore's Live Bots cards.
  */
 
-import { useId } from "react";
-
 const UP = "var(--color-green)";
 const DOWN = "var(--color-red)";
 const GRID = "var(--color-border)";
@@ -179,16 +177,17 @@ export function Gauge({ value }: { value: number }) {
 }
 
 /**
- * The 7-day price line on a bot card: the mini chart between the P&L block and
- * the Exchange row, on Explore's Live Bots and the Dashboard's bot cards alike.
+ * The 7-day P&L bars on a bot card: the slot between the P&L block and the
+ * Exchange row, on Explore's Live Bots and the Dashboard's bot cards alike.
  *
- * About 88px tall across the card's full width, price ticks up the left edge
- * and the day labels along the bottom, values and labels both given by the
- * caller so each bot keeps its own sample series beside its card. One gradient
- * per instance, named from `useId`, or several cards on a page would share an
- * id and the second one would paint with the first one's fill.
+ * Drawn like the Dashboard's Daily P&L (Combined) — green above the zero line
+ * for a good day, red below it for a bad one, one bar per day, day labels along
+ * the bottom — shrunk to about 88px across the card. No gradient and no ids,
+ * so several cards on a page cannot share one.
  *
- * Sample data, and the label says so; nothing is fetched.
+ * The numbers are each card's own sample series, daily dollars oldest first,
+ * with a red day or two in different places per bot. Sample data; nothing is
+ * fetched.
  */
 export function MiniPriceChart({
   values,
@@ -199,54 +198,69 @@ export function MiniPriceChart({
   labels: readonly string[];
   pair: string;
 }) {
-  const gradientId = useId();
   const W = 300;
   const H = 88;
-  const left = 40;
+  const left = 34;
   const right = 6;
-  const top = 6;
+  const top = 12;
   const bottom = 18;
-  const max = Math.max(...values);
-  const min = Math.min(...values);
-  const span = max - min || 1;
-  const x = (i: number) => left + (i / Math.max(values.length - 1, 1)) * (W - left - right);
-  const y = (v: number) => top + (1 - (v - min) / span) * (H - top - bottom);
-  const line = values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
-  const area = `${left},${H - bottom} ${line} ${x(values.length - 1).toFixed(1)},${H - bottom}`;
-  // Three ticks: the top, middle and bottom of the range the series covers.
-  const ticks = [max, (max + min) / 2, min];
-  const decimals = max < 10 ? 4 : 0;
+  const hi = Math.max(0, ...values);
+  const lo = Math.min(0, ...values);
+  const span = hi - lo || 1;
+  const plotH = H - top - bottom;
+  const y = (v: number) => top + ((hi - v) / span) * plotH;
+  const slot = (W - left - right) / values.length;
+  const bw = slot * 0.58;
+  // Just two guide labels, top and bottom, so the dollars fit a mini card.
+  const guides = [
+    { v: hi, text: `+${money(hi)}` },
+    { v: lo, text: lo < 0 ? `-${money(Math.abs(lo))}` : money(0) },
+  ];
 
   return (
     <svg
       viewBox={`0 0 ${W} ${H}`}
       className="h-[88px] w-full"
       role="img"
-      aria-label={`${pair} price over the last 7 days, sample data`}
+      aria-label={`${pair} daily P&L, last 7 days, sample data`}
     >
-      <defs>
-        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={UP} stopOpacity="0.28" />
-          <stop offset="100%" stopColor={UP} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      {ticks.map((t, i) => (
-        <g key={t}>
-          <line x1={left} x2={W - right} y1={y(t)} y2={y(t)} stroke={GRID} strokeWidth="1" strokeDasharray={i === 2 ? "0" : "2 3"} />
-          <text x={left - 4} y={y(t) + 3} textAnchor="end" fontSize="8" fill={MUTED} className="tabular-nums">
-            {t.toFixed(decimals)}
-          </text>
-        </g>
+      {guides.map((g) => (
+        <text key={g.text} x={left - 4} y={y(g.v) + 3} textAnchor="end" fontSize="7.5" fill={MUTED} className="tabular-nums">
+          {g.text}
+        </text>
       ))}
-      <polygon points={area} fill={`url(#${gradientId})`} />
-      <polyline points={line} fill="none" stroke={UP} strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
+      <line
+        x1={left}
+        x2={W - right}
+        y1={y(0)}
+        y2={y(0)}
+        stroke={MUTED}
+        strokeWidth="1"
+        opacity="0.6"
+        data-zero="true"
+      />
+      {values.map((v, i) => {
+        const x = left + i * slot + (slot - bw) / 2;
+        const top0 = v >= 0 ? y(v) : y(0);
+        return (
+          <rect
+            key={i}
+            x={x}
+            y={top0}
+            width={bw}
+            height={Math.max(Math.abs(y(v) - y(0)), v === 0 ? 1 : 1.5)}
+            rx="1"
+            fill={v >= 0 ? UP : DOWN}
+          />
+        );
+      })}
       {labels.map((label, i) => (
         <text
           key={label}
-          x={x(i)}
+          x={left + i * slot + slot / 2}
           y={H - 5}
-          textAnchor={i === 0 ? "start" : i === labels.length - 1 ? "end" : "middle"}
-          fontSize="8"
+          textAnchor="middle"
+          fontSize="7.5"
           fill={MUTED}
         >
           {label}

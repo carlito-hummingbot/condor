@@ -89,11 +89,11 @@ export interface LiveNowCard {
   volume: string;
   agentStarted: string;
   totalRuntime: string;
-  /** Seven sample closes, 22–28 Nov, around this card's pair. */
-  priceSeries: readonly number[];
+  /** Seven sample daily P&L dollars, 22–28 Nov, oldest first. A red day or two each. */
+  pnlSeries: readonly number[];
 }
 
-/** The seven day labels the Live Bots cards' mini charts share, ending 28 Nov. */
+/** The seven day labels the Live Bots cards' P&L bars share, ending 28 Nov. */
 export const PRICE_DAYS = ["22", "23", "24", "25", "26", "27", "28"] as const;
 
 /** One of the four Get Started lessons: a title, what it teaches, and its video's summary. */
@@ -696,7 +696,7 @@ export const LIVE_NOW: readonly LiveNowCard[] = [
     "volume": "$186,420",
     "agentStarted": "25-Nov-26 at 12:55 pm",
     "totalRuntime": "3D 2H 30Mins",
-    "priceSeries": [0.9999, 1.0001, 0.9998, 1.0002, 1.0001, 1.0003, 1.0002]
+    "pnlSeries": [412, 320, 240, -45, 510, 380, 295]
   },
   {
     "id": "live-agent-gateforum",
@@ -711,7 +711,7 @@ export const LIVE_NOW: readonly LiveNowCard[] = [
     "volume": "$842,950",
     "agentStarted": "26-Nov-26 at 9:40 am",
     "totalRuntime": "2D 5H 45Mins",
-    "priceSeries": [93180, 94060, 92740, 95310, 96020, 97419, 96880]
+    "pnlSeries": [820, 640, -310, 950, 420, 610, -180]
   },
   {
     "id": "live-agent-jev",
@@ -726,7 +726,7 @@ export const LIVE_NOW: readonly LiveNowCard[] = [
     "volume": "$24,310",
     "agentStarted": "28-Nov-26 at 12:55 pm",
     "totalRuntime": "2H 30Mins",
-    "priceSeries": [186.4, 188.1, 185.2, 189.6, 191.3, 190.4, 192.8]
+    "pnlSeries": [-60, 180, 240, -35, 310, 150, 280]
   },
   {
     "id": "live-strategy-pmm",
@@ -741,7 +741,7 @@ export const LIVE_NOW: readonly LiveNowCard[] = [
     "volume": "$96,240",
     "agentStarted": "27-Nov-26 at 8:05 am",
     "totalRuntime": "1D 7H 20Mins",
-    "priceSeries": [3284, 3312, 3268, 3345, 3390, 3402, 3431]
+    "pnlSeries": [228, 340, 290, 160, -70, 410, 260]
   },
   {
     "id": "live-strategy-grid",
@@ -756,7 +756,7 @@ export const LIVE_NOW: readonly LiveNowCard[] = [
     "volume": "$412,780",
     "agentStarted": "26-Nov-26 at 4:30 pm",
     "totalRuntime": "1D 22H 55Mins",
-    "priceSeries": [184.2, 186.9, 183.4, 188.7, 190.1, 189.3, 191.6]
+    "pnlSeries": [641, 480, 520, -240, 700, 380, -90]
   },
   {
     "id": "live-strategy-xemm",
@@ -771,7 +771,7 @@ export const LIVE_NOW: readonly LiveNowCard[] = [
     "volume": "$58,610",
     "agentStarted": "28-Nov-26 at 6:10 am",
     "totalRuntime": "9H 15Mins",
-    "priceSeries": [2.148, 2.171, 2.132, 2.196, 2.205, 2.189, 2.221]
+    "pnlSeries": [-45, 155, 210, 120, 300, 240, 180]
   }
 ];
 

@@ -118,7 +118,7 @@ function AgentCardView({ agent }: { agent: AgentCard }) {
         </div>
       </div>
       <div className="border-t border-[var(--color-border)] pt-2">
-        <MiniPriceChart values={agent.priceSeries} labels={PRICE_DAYS} pair={agent.pair} />
+        <MiniPriceChart values={agent.pnlSeries} labels={PRICE_DAYS} pair={agent.pair} />
       </div>
       <dl className="m-0 tabular-nums">
         {(

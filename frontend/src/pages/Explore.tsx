@@ -487,7 +487,7 @@ function LiveAgentCard({ item }: { item: LiveNowCard }) {
         </div>
       </div>
       <div className="border-t border-[var(--color-border)] pt-2">
-        <MiniPriceChart values={item.priceSeries} labels={PRICE_DAYS} pair={item.pair} />
+        <MiniPriceChart values={item.pnlSeries} labels={PRICE_DAYS} pair={item.pair} />
       </div>
       <dl className="m-0 tabular-nums">
         {rows.map(([label, value]) => (

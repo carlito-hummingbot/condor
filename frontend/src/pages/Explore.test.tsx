@@ -158,6 +158,35 @@ describe("Explore", () => {
     expect(panel().textContent).not.toContain("Improve");
   });
 
+  it("draws green and red P&L bars with a zero line and the seven day labels", async () => {
+    renderAt("/explore?tab=live-bots");
+    await flush();
+    const cards = [...panel().querySelectorAll('section[aria-label="Live bots"] article')] as HTMLElement[];
+    expect(cards).toHaveLength(6);
+
+    const redDays = cards.map((card) => {
+      const svg = card.querySelector('svg[role="img"]') as SVGElement;
+      expect(svg.getAttribute("aria-label")).toContain("daily P&L");
+      expect(svg.getAttribute("aria-label")).toContain("sample data");
+      const green = [...svg.querySelectorAll('rect[fill="var(--color-green)"]')];
+      const red = [...svg.querySelectorAll('rect[fill="var(--color-red)"]')];
+      expect(green.length).toBeGreaterThan(0);
+      expect(red.length).toBeGreaterThan(0);
+      expect(svg.querySelectorAll('[data-zero="true"]')).toHaveLength(1);
+      // One bar per day, and the day labels under them.
+      expect(green.length + red.length).toBe(7);
+      for (const day of ["22", "23", "24", "25", "26", "27", "28"]) {
+        expect(svg.textContent).toContain(day);
+      }
+      return red.map((bar) => bar.getAttribute("x")).join(",");
+    });
+
+    // Red days are not in the same place on every card.
+    expect(new Set(redDays).size).toBeGreaterThan(1);
+    // No price ticks survive from the old price line.
+    expect(panel().textContent).not.toContain("1.0003");
+  });
+
   it("puts the chart after the P&L block and the Exchange row before the other rows", async () => {
     renderAt("/explore?tab=live-bots");
     await flush();

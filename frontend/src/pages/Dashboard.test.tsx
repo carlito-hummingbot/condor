@@ -151,9 +151,13 @@ describe("Dashboard", () => {
         "Agent Started",
         "Total Runtime",
       ]);
-      // The 7-day line sits after the P&L block and before the rows.
-      const chart = card.querySelector('svg[role="img"]');
-      expect(chart?.getAttribute("aria-label")).toContain("sample data");
+      // The 7-day bars sit after the P&L block and before the rows.
+      const chart = card.querySelector('svg[role="img"]') as SVGElement;
+      expect(chart.getAttribute("aria-label")).toContain("daily P&L");
+      expect(chart.getAttribute("aria-label")).toContain("sample data");
+      expect(chart.querySelectorAll('rect[fill="var(--color-green)"]').length).toBeGreaterThan(0);
+      expect(chart.querySelectorAll('rect[fill="var(--color-red)"]').length).toBeGreaterThan(0);
+      expect(chart.querySelectorAll('[data-zero="true"]')).toHaveLength(1);
       const dl = card.querySelector("dl")!;
       expect(chart!.compareDocumentPosition(dl) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
       expect(card.textContent).toContain("22");
