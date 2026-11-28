@@ -10,13 +10,26 @@
  * @vitest-environment jsdom
  */
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { emptyDraft, readDraft } from "./draftStore";
 import { Build } from "./Build";
+
+const { getPreferences } = vi.hoisted(() => ({
+  getPreferences: vi.fn(async () => ({ profile: { display_name: "Ada" } })),
+}));
+
+vi.mock("@/lib/api", async (original) => {
+  const actual = await original<typeof import("@/lib/api")>();
+  return { ...actual, api: { ...actual.api, getPreferences } };
+});
+vi.mock("@/lib/auth", () => ({
+  useAuth: () => ({ token: "t", user: { id: 1, username: "local", first_name: "Local", role: "admin" } }),
+}));
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean;
@@ -37,16 +50,19 @@ function Where() {
 }
 
 function renderAt(path: string) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   act(() => {
     root.render(
-      <MemoryRouter initialEntries={[path]}>
-        <Routes>
-          <Route path="/build" element={<Build />} />
-          <Route path="/labs" element={<Build />} />
-          <Route path="/explore" element={<p>explore</p>} />
-        </Routes>
-        <Where />
-      </MemoryRouter>,
+      <QueryClientProvider client={client}>
+        <MemoryRouter initialEntries={[path]}>
+          <Routes>
+            <Route path="/build" element={<Build />} />
+            <Route path="/labs" element={<Build />} />
+            <Route path="/explore" element={<p>explore</p>} />
+          </Routes>
+          <Where />
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
   });
 }

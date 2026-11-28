@@ -1,22 +1,33 @@
 /**
- * The Design stage: the guide's required-field gate, the options that depend on
- * the choices above them, the live draft panel, the jump into the chat, a
- * canned assistant reply, the design notes, and "I'm done designing".
+ * The Design stage: a five-step wizard (Starting point, Trading Style, Markets,
+ * Limits, Review) with progress dots, then the design chat.
  *
- * Showcase only: the component is mounted on its own with a local draft, the
- * way the shell mounts it, and no request is made.
+ * Mounted on its own with a local draft, the way the shell mounts it, and with
+ * the providers the page has in the app (the heading reads the profile name
+ * through the preferences query). Nothing here makes a request.
  *
  * @vitest-environment jsdom
  */
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { CATALOG_ITEMS } from "../sample/catalog";
 import { emptyDraft } from "../draftStore";
 import type { Draft, StageId } from "../types";
-import Design from "./Design";
+
+const prefs = vi.hoisted(() => ({ current: { profile: { display_name: "Ada" } } as Record<string, unknown> }));
+
+vi.mock("@/lib/api", async (original) => {
+  const actual = await original<typeof import("@/lib/api")>();
+  return { ...actual, api: { ...actual.api, getPreferences: async () => prefs.current } };
+});
+vi.mock("@/lib/auth", () => ({
+  useAuth: () => ({ token: "t", user: { id: 1, username: "local", first_name: "Local", role: "admin" } }),
+}));
+
+const { default: Design } = await import("./Design");
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean;
@@ -44,99 +55,72 @@ function Harness({ initial, onGo }: { initial?: Partial<Draft>; onGo: (stage: St
 }
 
 function render(initial?: Partial<Draft>, onGo: (stage: StageId) => void = () => {}) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   act(() => {
-    root.render(<Harness initial={initial} onGo={onGo} />);
+    root.render(
+      <QueryClientProvider client={client}>
+        <Harness initial={initial} onGo={onGo} />
+      </QueryClientProvider>,
+    );
   });
 }
 
 const text = () => container.textContent ?? "";
-
-/** The canned reply lands on a 600ms timer; poll rather than guess at load. */
-async function waitForText(fragment: string, timeout = 5000) {
-  const started = Date.now();
-  while (Date.now() - started < timeout) {
-    if (text().includes(fragment)) return;
-    await flush(100);
-  }
-  throw new Error(`timed out waiting for "${fragment}"`);
-}
-const draftNow = () =>
-  JSON.parse(container.querySelector('[data-testid="draft"]')?.textContent ?? "{}") as Draft;
-const summary = () => container.querySelector("aside")?.textContent ?? "";
-
-function button(name: string | RegExp) {
-  return [...container.querySelectorAll("button")].find((b) =>
-    typeof name === "string" ? b.textContent?.trim() === name : name.test(b.textContent ?? ""),
-  ) as HTMLButtonElement | undefined;
-}
-
-function radio(name: string | RegExp) {
-  return [...container.querySelectorAll('[role="radio"]')].find((b) =>
-    typeof name === "string" ? b.textContent?.trim() === name : name.test(b.textContent ?? ""),
-  ) as HTMLButtonElement | undefined;
-}
-
-/** The market-type group's LP, not the strategy-type LP chip. */
-function marketRadio(name: string) {
-  const group = container.querySelector('[role="radiogroup"][aria-label="Market type"]');
-  return [...(group?.querySelectorAll('[role="radio"]') ?? [])].find(
-    (b) => b.textContent?.trim() === name,
-  ) as HTMLButtonElement | undefined;
-}
-
-function byLabel(label: string) {
-  return container.querySelector(`[aria-label="${label}"]`) as HTMLElement | null;
-}
+const draft = () => JSON.parse(container.querySelector('[data-testid="draft"]')!.textContent ?? "{}") as Draft;
 
 async function click(el: Element | null | undefined) {
   await act(async () => {
-    (el as HTMLElement).click();
+    (el as HTMLElement | undefined)?.click();
   });
   await flush();
 }
 
-/** Type into a controlled input the way a browser does: value setter + input. */
-async function typeInto(el: HTMLInputElement | HTMLTextAreaElement, value: string) {
-  const proto = el instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
-  const setter = Object.getOwnPropertyDescriptor(proto, "value")?.set;
+const button = (name: string | RegExp) =>
+  [...container.querySelectorAll("button")].find((b) =>
+    typeof name === "string" ? b.textContent?.trim() === name : name.test(b.textContent ?? ""),
+  ) as HTMLButtonElement | undefined;
+
+/** The Next / Back pair under the step card. */
+const next = () => button(/^(Next|Start designing)$/);
+const back = () => button("Back");
+
+/** The dots, in order. */
+const dots = () => [...container.querySelectorAll('nav[aria-label="Design progress"] button')] as HTMLButtonElement[];
+const currentDot = () => dots().findIndex((d) => d.getAttribute("aria-current") === "step");
+/** "Step 2 of 5: Trading Style" — the caption under the dots. */
+const stepLabel = () => container.querySelector('nav[aria-label="Design progress"] p')?.textContent ?? "";
+
+/** Type into a controlled field the way a browser does. */
+async function type(el: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement, value: string) {
+  const proto = el instanceof HTMLSelectElement ? window.HTMLSelectElement.prototype : el instanceof HTMLTextAreaElement ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
+  const setter = Object.getOwnPropertyDescriptor(proto, "value")!.set!;
   await act(async () => {
-    setter?.call(el, value);
-    el.dispatchEvent(new Event("input", { bubbles: true }));
+    setter.call(el, value);
+    el.dispatchEvent(new Event(el instanceof HTMLSelectElement ? "change" : "input", { bubbles: true }));
   });
   await flush();
 }
 
-async function choose(el: HTMLSelectElement | null, value: string) {
-  if (!el) throw new Error("no select");
-  const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set;
-  await act(async () => {
-    setter?.call(el, value);
-    el.dispatchEvent(new Event("change", { bubbles: true }));
-  });
+const field = (id: string) => container.querySelector(`#${id}`) as HTMLInputElement | HTMLSelectElement | null;
+const radio = (name: string) =>
+  [...container.querySelectorAll('[role="radio"]')].find((r) => r.textContent?.trim() === name) as
+    | HTMLButtonElement
+    | undefined;
+
+/** Walk steps 1–3 with valid answers so a test can start where it cares. */
+async function toLimits(patch: Partial<Draft> = {}, onGo: (stage: StageId) => void = () => {}) {
+  render({ botKind: "strategy", startingPoint: "scratch", strategyType: "Market Making", spreads: "0.1", ...patch }, onGo);
   await flush();
-}
-
-const pairInput = () => container.querySelector("#design-pair") as HTMLInputElement;
-const exchangeSelect = () => container.querySelector("#design-exchange") as HTMLSelectElement;
-
-/** Fill the six required fields, leaving the title to the suggestion. */
-async function fillGuide() {
-  await click(radio("Strategy"));
-  await click(radio("Market Making"));
-  await choose(exchangeSelect(), "Binance");
+  await click(next()); // 1 → 2
+  await click(next()); // 2 → 3
+  await type(field("design-exchange")!, "Binance");
   await click(radio("Spot"));
-  await typeInto(pairInput(), "BTC-USDT");
-}
-
-async function openChat() {
-  render();
-  await flush();
-  await fillGuide();
-  await click(button("Start designing"));
-  await flush();
+  await type(field("design-pairs")!, "BTC-USDT");
+  await click(next()); // 3 → 4
 }
 
 beforeEach(() => {
+  prefs.current = { profile: { display_name: "Ada" } };
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   container = document.createElement("div");
   document.body.appendChild(container);
@@ -148,202 +132,245 @@ afterEach(() => {
   container.remove();
 });
 
-describe("Design guide", () => {
-  it("keeps Start designing disabled and names every required field still empty", async () => {
+describe("Design wizard", () => {
+  it("greets the person by the name onboarding stored", async () => {
     render();
     await flush();
+    await flush();
+    expect(text()).toContain("What are we building, Ada?");
+  });
 
-    expect(button("Start designing")?.disabled).toBe(true);
-    expect(text()).toContain(
-      "Still needed: Bot type, Strategy or agent type, Target exchange, Market type, Market pair, Desired title.",
+  it("falls back to the plain 'algo trader' when no name is stored", async () => {
+    prefs.current = {};
+    render();
+    await flush();
+    await flush();
+    expect(text()).toContain("What are we building, algo trader?");
+  });
+
+  it("opens on Starting point, with five dots and a step counter", async () => {
+    render();
+    await flush();
+    expect(currentDot()).toBe(0);
+    expect(dots()).toHaveLength(5);
+    expect(dots().map((d) => d.getAttribute("aria-label"))).toEqual([
+      "Step 1 of 5",
+      "Step 2 of 5",
+      "Step 3 of 5",
+      "Step 4 of 5",
+      "Step 5 of 5",
+    ]);
+    expect(stepLabel()).toBe("Step 1 of 5: Starting point");
+    // Starting point is on step 1, not later.
+    expect(text()).toContain("Start from scratch");
+    expect(text()).toContain("Bot type");
+    // Later steps are not clickable yet.
+    expect(dots()[4].disabled).toBe(true);
+  });
+
+  it("calls the second question Trading Style, and nothing says 'Strategy or agent type'", async () => {
+    render({ botKind: "strategy", startingPoint: "scratch" });
+    await flush();
+    await click(next());
+    expect(stepLabel()).toBe("Step 2 of 5: Trading Style");
+    expect(text()).toContain("Trading Style");
+    expect(text()).not.toContain("Strategy or agent type");
+    expect(container.querySelector('[role="radiogroup"][aria-label="Trading Style"]')).toBeTruthy();
+  });
+
+  it("puts exchange, market type and pairs on one Markets step, with no old Markets picker", async () => {
+    render({ botKind: "strategy", startingPoint: "scratch", strategyType: "Market Making" });
+    await flush();
+    await click(next());
+    await click(next());
+    expect(stepLabel()).toBe("Step 3 of 5: Markets");
+    expect(field("design-exchange")).toBeTruthy();
+    expect(container.querySelector('[role="radiogroup"][aria-label="Market type"]')).toBeTruthy();
+    expect(field("design-pairs")).toBeTruthy();
+    // The old "Markets" 1 / 2 / 10 picker and the pair combobox are gone.
+    expect(container.querySelector('[role="radiogroup"][aria-label="How many markets"]')).toBeNull();
+    expect(container.querySelector('[role="combobox"]')).toBeNull();
+  });
+
+  it("turns comma entries into chips, drops duplicates and flags a bad pair", async () => {
+    render({ botKind: "strategy", startingPoint: "scratch", strategyType: "Market Making" });
+    await flush();
+    await click(next());
+    await click(next());
+    await type(field("design-exchange")!, "Binance");
+    await click(radio("Spot"));
+
+    await type(field("design-pairs")!, "btc-usdt, eth-usdt, BTC-USDT");
+    const chips = [...container.querySelectorAll('ul[aria-label="Market pair(s) entries"] li')].map((li) =>
+      li.textContent?.replace("×", "").trim(),
     );
+    expect(chips).toEqual(["BTC-USDT", "ETH-USDT"]);
+    expect(draft().pairs).toEqual(["BTC-USDT", "ETH-USDT"]);
 
-    await fillGuide();
+    await type(field("design-pairs")!, "BTC-USDT, NOPE");
+    expect(text()).toContain("Not reading as a valid entry: NOPE");
+    // The good entry still counts, so Next is not blocked by the bad one.
+    expect(next()!.disabled).toBe(false);
 
-    // The title was suggested from the type and the pair, so nothing is missing.
-    expect(draftNow().title).toBe("BTC-USDT Market Making Bot");
-    expect(button("Start designing")?.disabled).toBe(false);
-    expect(text()).toContain("Ready: the assistant will take it from here.");
+    // A field with nothing valid blocks Next.
+    await type(field("design-pairs")!, "NOPE");
+    expect(next()!.disabled).toBe(true);
   });
 
-  it("shows the summary panel in step as the guide is filled", async () => {
-    render();
+  it("greys the pair field under Dynamic, unblocks Next, and restores the text", async () => {
+    render({ botKind: "strategy", startingPoint: "scratch", strategyType: "Market Making" });
     await flush();
-    await fillGuide();
+    await click(next());
+    await click(next());
+    await type(field("design-exchange")!, "Binance");
+    await click(radio("Spot"));
+    await type(field("design-pairs")!, "BTC-USDT");
 
-    expect(summary()).toContain("Market Making");
-    expect(summary()).toContain("Binance");
-    expect(summary()).toContain("Spot");
-    expect(summary()).toContain("BTC-USDT");
-    expect(summary()).toContain("BTC-USDT Market Making Bot");
+    const dynamic = () => container.querySelector('input[type="checkbox"]') as HTMLInputElement;
+    await click(dynamic());
 
-    await typeInto(container.querySelector("#design-title") as HTMLInputElement, "Churn v2");
-    expect(summary()).toContain("Churn v2");
+    const input = field("design-pairs") as HTMLInputElement;
+    expect(input.disabled).toBe(true);
+    expect(input.getAttribute("aria-disabled")).toBe("true");
+    expect(input.tabIndex).toBe(-1);
+    expect(draft().pairsDynamic).toBe(true);
+    expect(next()!.disabled).toBe(false);
+
+    // The typed text is kept while the field is off…
+    await click(dynamic());
+    expect((field("design-pairs") as HTMLInputElement).value).toBe("BTC-USDT");
+    expect((field("design-pairs") as HTMLInputElement).disabled).toBe(false);
   });
 
-  it("enables LP only for the LP type or a DEX, and says why not", async () => {
-    render();
-    await flush();
-    await choose(exchangeSelect(), "Binance");
+  it("shows Spreads only for Market Making, and keeps what was typed across a switch", async () => {
+    await toLimits();
+    expect(text()).toContain("Spreads (%)");
+    await type(field("design-spreads")!, "0.1, 0.3");
+    expect(draft().spreads).toBe("0.1, 0.3");
 
-    expect(marketRadio("LP")?.disabled).toBe(true);
-    expect(text()).toContain("LP needs the LP strategy type or a DEX such as Meteora.");
+    // Back to Trading Style, choose Directional: Spreads leaves the step.
+    await click(back());
+    await click(back());
+    await click(radio("Directional"));
+    await click(next());
+    await click(next());
+    expect(text()).not.toContain("Spreads (%)");
+    expect(draft().spreads).toBe("0.1, 0.3");
 
-    // A DEX with pools enables LP on its own.
-    await choose(exchangeSelect(), "Meteora (DEX)");
-    expect(marketRadio("LP")?.disabled).toBe(false);
-
-    // The LP type enables it on any venue.
-    await choose(exchangeSelect(), "Binance");
-    expect(marketRadio("LP")?.disabled).toBe(true);
-    await click(radio("LP"));
-    expect(marketRadio("LP")?.disabled).toBe(false);
+    // Back again to Market Making: the typed spreads are still there.
+    await click(back());
+    await click(back());
+    await click(radio("Market Making"));
+    await click(next());
+    await click(next());
+    expect(text()).toContain("Spreads (%)");
+    expect((field("design-spreads") as HTMLInputElement).value).toBe("0.1, 0.3");
   });
 
-  it("lists the chosen exchange's pairs and drops a pair the new venue lacks", async () => {
-    render();
-    await flush();
-    await choose(exchangeSelect(), "Binance");
+  it("requires Target Profit and Stop Loss as positive numbers, prefilled with nothing", async () => {
+    await toLimits();
+    expect((field("design-target-profit") as HTMLInputElement).value).toBe("");
+    expect((field("design-stop-loss") as HTMLInputElement).value).toBe("");
+    expect(next()!.disabled).toBe(true);
+    expect(text()).toContain("Target Profit is required.");
+    expect(text()).toContain("Stop Loss is required.");
 
-    await typeInto(pairInput(), "SOL");
-    expect(container.querySelector('[role="listbox"]')?.textContent).toContain("SOL-USDC");
+    await type(field("design-target-profit")!, "2");
+    await type(field("design-stop-loss")!, "0");
+    expect(text()).toContain("Stop Loss must be greater than 0.");
 
-    await click(container.querySelector('[role="option"]'));
-    expect(draftNow().pair).toBe("SOL-USDC");
-
-    await choose(exchangeSelect(), "Bybit");
-    // Bybit's sample list has SOL-USDT, not SOL-USDC: the stale pair is gone.
-    expect(draftNow().pair).toBe(null);
-    await typeInto(pairInput(), "SOL");
-    const listed = container.querySelector('[role="listbox"]')?.textContent ?? "";
-    expect(listed).toContain("SOL-USDT");
-    expect(listed).not.toContain("SOL-USDC");
+    await type(field("design-stop-loss")!, "1.5");
+    expect(text()).not.toContain("Stop Loss must be greater than 0.");
   });
 
-  it("fills How it works from the choices and the import chooser", async () => {
-    render();
-    await flush();
-    await fillGuide();
-
-    await click(button("Suggest from my choices"));
-    expect(draftNow().howItWorks).toContain("Binance spot BTC-USDT");
-    expect((container.querySelector("#design-how") as HTMLTextAreaElement).value).toContain(
-      "quotes both sides",
+  it("has no preset Max Positions: no default, no 1/3/5 buttons, Fixed needs a number", async () => {
+    await toLimits();
+    expect(draft().maxPositionsMode).toBeNull();
+    expect(field("design-max-positions")).toBeNull();
+    const quickPicks = [...container.querySelectorAll("button")].filter((b) =>
+      ["1", "3", "5"].includes(b.textContent?.trim() ?? ""),
     );
+    expect(quickPicks).toHaveLength(0);
 
-    // Import: the Explore sample list, the paste box, the sample file.
-    await click(radio(/^Import/));
-    await click(button(new RegExp(CATALOG_ITEMS[0].name)));
-    expect(draftNow().startingPoint).toBe("import");
-    expect(draftNow().title.length).toBeGreaterThan(0);
+    await type(field("design-target-profit")!, "2");
+    await type(field("design-stop-loss")!, "1.5");
+    expect(next()!.disabled).toBe(true);
 
-    await click(button("Paste"));
-    await typeInto(container.querySelector("textarea[aria-label='Paste a bot description']") as HTMLTextAreaElement, "Quote ETH on Bybit.");
-    await click(button("Use this text"));
-    expect(draftNow().howItWorks).toBe("Quote ETH on Bybit.");
+    await click(radio("Dynamic"));
+    expect(text()).toContain("Depends on your budget");
+    expect(field("design-max-positions")).toBeNull();
+    expect(next()!.disabled).toBe(false);
 
-    await click(button("File"));
-    await click(button("Import sample"));
-    expect(draftNow().howItWorks).toContain("Sample file");
-  });
-});
-
-describe("Design chat", () => {
-  it("starts designing: the guide collapses and the chat opens with three bullets and one question", async () => {
-    await openChat();
-
-    expect(container.querySelector("#design-guide")).toBe(null);
-    expect(text()).toContain("Edit guide");
-    expect(text()).toContain("Design with the assistant");
-
-    const bullets = container.querySelectorAll('[role="log"] li');
-    expect(bullets).toHaveLength(3);
-    expect(bullets[0].textContent).toContain("Market Making");
-    expect(text()).toContain("Before Backtest:");
-
-    // Focus lands on the chat's heading when the chat appears.
-    expect(document.activeElement?.textContent).toBe("Design with the assistant");
-
-    // The chip bar carries the draft's values.
-    expect(text()).toContain("BTC-USDT Market Making Bot");
+    await click(radio("Fixed"));
+    expect(next()!.disabled).toBe(true);
+    await type(field("design-max-positions")!, "2.5");
+    expect(text()).toContain("Max positions must be a whole number.");
+    await type(field("design-max-positions")!, "4");
+    expect(next()!.disabled).toBe(false);
+    expect(draft().maxPositions).toBe(4);
   });
 
-  it("answers a typed reply with canned text, without a request", async () => {
-    await openChat();
-
-    await typeInto(
-      container.querySelector("input[aria-label='Reply to the assistant']") as HTMLInputElement,
-      "Please add a 2% stop-loss.",
-    );
-    await click(byLabel("Send reply"));
-
-    expect(text()).toContain("Please add a 2% stop-loss.");
-    expect(text()).toContain("Assistant is writing…");
-
-    await waitForText("a leg that runs past that is closed");
-    expect(text()).not.toContain("Assistant is writing…");
-  });
-
-  it("grows Design notes with each accepted suggestion and answers it", async () => {
-    await openChat();
-    expect(text()).toContain("Nothing yet. Accept a suggestion");
-
-    await click(button("Add a stop-loss"));
-    await waitForText("Added a 2% stop-loss on each position.");
-    expect(text()).toContain("Stop-loss: close a position that moves 2% against entry.");
-
-    await click(button("Explain how it works"));
-    await waitForText("Short version: it quotes both sides");
-    expect(container.querySelectorAll("ol li")).toHaveLength(2);
-  });
-
-  it("finishes the design, writing designDone and moving to Backtest", async () => {
-    const goTo = vi.fn();
-    render(undefined, goTo);
-    await flush();
-    await fillGuide();
-    await click(button("Start designing"));
-
-    await click(button("I'm done designing"));
-
-    expect(draftNow().designDone).toBe(true);
-    expect(goTo).toHaveBeenCalledWith("backtest");
-  });
-
-  it("opens a returning, finished draft in its chat and treats Escape as harmless", async () => {
-    render({
+  it("starts an older saved draft at step 1 without crashing", async () => {
+    // The old shape: no pairs, no limits, a single pair and the old market quantity.
+    const old = {
       botKind: "agent",
-      strategyType: "Funding Rate",
-      exchange: "Bybit",
-      marketType: "Perps",
-      pair: "ETH-USDT",
+      strategyType: "LP",
+      exchange: "Meteora",
+      marketType: "LP",
+      pair: "SOL-USDC",
       marketQty: 2,
       maxPositions: 3,
-      startingPoint: "scratch",
-      howItWorks: "Collect funding, stay neutral.",
-      title: "ETH Funding Agent",
-      designDone: true,
-    });
+      startingPoint: "import",
+      howItWorks: "old notes",
+      title: "Old draft",
+    } as unknown as Partial<Draft>;
+    render(old);
     await flush();
+    expect(currentDot()).toBe(0);
+    expect(stepLabel()).toBe("Step 1 of 5: Starting point");
+    // It keeps what it had and fills the rest with empties.
+    expect(draft().title).toBe("Old draft");
+    expect(draft().pairs).toEqual([]);
+    expect(draft().maxPositionsMode).toBeNull();
+  });
 
-    expect(text()).toContain("Design with the assistant");
-    expect(text()).toContain("Design done");
-
-    await act(async () => {
-      container.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
-      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
-    });
+  it("keeps the answers when Back is used", async () => {
+    render({ botKind: "strategy", startingPoint: "scratch", strategyType: "Market Making" });
     await flush();
+    await click(next());
+    await click(next());
+    await type(field("design-exchange")!, "Binance");
+    await type(field("design-pairs")!, "BTC-USDT, ETH-USDT");
+    await click(back());
+    await click(next());
+    expect((field("design-exchange") as HTMLSelectElement).value).toBe("Binance");
+    expect((field("design-pairs") as HTMLInputElement).value).toBe("BTC-USDT, ETH-USDT");
+  });
 
+  it("reviews the answers, then opens the chat and finishes on Backtest", async () => {
+    const goTo = vi.fn();
+    await toLimits({}, goTo);
+    await type(field("design-target-profit")!, "2");
+    await type(field("design-stop-loss")!, "1.5");
+    await click(radio("Fixed"));
+    await type(field("design-max-positions")!, "4");
+    await click(next());
+
+    expect(stepLabel()).toBe("Step 5 of 5: Review");
+    expect(text()).toContain("Trading Style");
+    expect(text()).toContain("BTC-USDT");
+    expect(text()).toContain("2%");
+    expect(text()).toContain("1.5%");
+    expect(text()).toContain("Max positions");
+
+    await type(field("design-title")!, "BTC-USDT Market Making Bot");
+    await click(next());
+    // The chat is open now.
     expect(text()).toContain("Design with the assistant");
-    expect(draftNow().designDone).toBe(true);
-    expect(draftNow().title).toBe("ETH Funding Agent");
-
-    // Back to guide reopens the form with everything still in it.
-    await click(button("Back to guide"));
-    expect(container.querySelector("#design-guide")).not.toBe(null);
-    expect((container.querySelector("#design-title") as HTMLInputElement).value).toBe(
-      "ETH Funding Agent",
-    );
+    const done = button(/I'm done designing/);
+    expect(done, "the chat should offer I'm done designing").toBeTruthy();
+    await click(done);
+    expect(draft().designDone).toBe(true);
+    expect(goTo).toHaveBeenCalledWith("backtest");
   });
 });
