@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Condor proposal: Explore: Learn, Try, Go Live</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main>
+
+<!-- EDITING: plain HTML, one <section> per heading. See README.md in this folder.
+     Add a row to the "Refinement log" for every change. Keep screenshots in assets/. -->
+
+<nav class="top"><a href="index.html">All proposals</a></nav>
+
+<h1>Explore: Learn, Try, Go Live</h1>
+<p class="meta">Status: <strong>in review, built in the showcase only</strong> &middot; Built on the throwaway showcase branch, no PR yet &middot; Last updated: 2026-11-28</p>
+<p class="lede">The second door in the rail stops being a place that only lists agents. It becomes Explore: a short video and one line for every strategy and every agent, then one action. Watch it, try it in Labs, and if it earns a place, run it live on the Dashboard.</p>
+
+<h2 id="why">Why</h2>
+<p>Today the second door opens the Agent Hub: a list of published agents with descriptions and no video. On an install that has not signed in to Botcamp it does not even show the list, only a sign-in box. A trader who is curious about what an agent does, and whether it is worth importing, cannot tell from that page.</p>
+<p>Strategies and agents are also two different things, and they are mixed. A <strong>strategy</strong> is a rule-based setup: fixed rules decide when to quote, enter and exit. An <strong>agent</strong> is an AI-driven one: a model decides, inside limits you set. In one list, a reader cannot tell which of the two they are looking at, or which one they should start with.</p>
+<p>People learn faster by watching than by reading. So every entry leads with a video, then one line, then one button. The path a trader actually takes is Explore, then Try in Labs, then live on the Dashboard, and each step should be one screen with one job. That is why the page is split into tabs: Overview, Strategies, Agents, What's new, one block on screen at a time, with the tab kept in the address so a reload or a shared link opens where it left off.</p>
+
+<h2 id="before">Before</h2>
+<figure class="wide"><img src="assets/before-agent-hub.png" alt="The Agent Hub page on the ui-redesign build: a Pull agents button, a paragraph about installing agents, and a sign-in box for Botcamp where the agent list would be"><figcaption>The Agent Hub today: no agent list until you sign in to Botcamp, and no video anywhere on the page.</figcaption></figure>
+
+<h2 id="after">After</h2>
+<p>Four tabs under the title. Each tab is a list with one job, and the two lists open with their own one-line definition, so nobody has to guess which is which.</p>
+<p><strong>Strategy</strong> &mdash; a rule-based setup: fixed rules decide when to quote, enter and exit.<br>
+<strong>Agent</strong> &mdash; an AI-driven setup: a model decides, inside the limits you set.</p>
+
+<figure class="wide"><img src="assets/explore-1-overview.png" alt="Explore, Overview tab, in the dark theme: three Start here cards, a Next livestream card, a Live now row with agent and strategy cards, and three teasers for the other tabs"><figcaption><strong>Overview.</strong> One visit is enough to see what is new, what is worth watching next, and what is running right now.</figcaption></figure>
+
+<figure class="wide"><img src="assets/explore-2-strategies.png" alt="Explore, Strategies tab: the strategy definition line, then ten rows with a video thumbnail first, name, one line, risk and difficulty chips, a Docs link and a Try in Labs button"><figcaption><strong>Strategies.</strong> The ten strategy families from the Hummingbot docs, each one video first, then one line, a risk and a difficulty chip, and a single action: Try in Labs.</figcaption></figure>
+
+<figure class="wide"><img src="assets/explore-3-agents.png" alt="Explore, Agents tab: the agent definition line, the Source filter chips, and a grid of video-first cards for the fourteen Agent Builders Cup agents with their builder, venue and score"><figcaption><strong>Agents.</strong> The same card for AI-driven entries, with the Source filter set to Botcamp Hackathon: the 14 agents from the Agent Builders Cup, each with its builder, venue and race score.</figcaption></figure>
+
+<h3>How the Source filter works</h3>
+<p>One row of chips above the agent list, each with a count: <strong>All</strong> &middot; <strong>Hummingbot</strong> &middot; <strong>Botcamp Hackathon</strong> &middot; <strong>Community</strong>. A chip shows only the agents of that source; All brings the full list back. The 14 hackathon agents sit under <em>Botcamp Hackathon</em>, so they are one click away instead of a separate page, and the count says how many are behind the chip before anyone clicks it. Today the counts are 17 in total: 14 real hackathon agents, 2 sample community agents and 1 sample Hummingbot entry, because there is no published Hummingbot or community list to load yet.</p>
+
+<figure class="wide"><img src="assets/explore-4-whats-new.png" alt="Explore, What's new tab: one timeline of livestream, X and Discord items with dates and one-line summaries, then a Follow card with the YouTube, X and Discord links"><figcaption><strong>What's new.</strong> The three things a trader wants to hear about, in one timeline: livestream episodes, X posts and Discord announcements, with the real Follow links underneath.</figcaption></figure>
+
+<figure class="phone"><div class="phone-frame x2"><img src="assets/explore-5-phone-agents.png" alt="Explore on a 390 pixel wide phone: the Agents tab with a scrolling tab row and filter chips above stacked video-first cards"></div><figcaption><strong>Phone.</strong> On a 390 px phone the four tabs scroll sideways in one row, the cards stack, and the bottom bar says Explore. One tab, one list, no second menu.</figcaption></figure>
+
+<p class="sources">Note: the images above are mocks. Everything marked sample is sample data, except the 14 hackathon agents, which are real.</p>
+
+<h2 id="notes">Notes</h2>
+<ol>
+  <li><strong>Content is dummy where it is marked sample.</strong> The 14 hackathon agents are real: names, builders, venues, race scores and descriptions come from the Botcamp <a href="https://www.botcamp.xyz/hackathons/agent-builders-cup-1">Agent Builders Cup</a> page and one page per agent. Every video is a placeholder marked "to be recorded", because the Agent Hub has no clips today. The feed sources for livestream, X and Discord are still to be decided; only the three Follow links are real.</li>
+  <li><strong>The layout and design are not final.</strong> They will be redesigned by Sofi.</li>
+  <li><strong>The rename is shown in the showcase only.</strong> This page and the showcase say Explore; the rail PRs (#3, #6, #25) and the other proposal pages still say Agents until the rename is approved. Renaming them is one round of work, not something to do piecemeal.</li>
+</ol>
+
+<h2 id="later">Functionality to build later (after the UI is approved)</h2>
+<ul>
+  <li>Real video hosting and an inline player on every card (the cards are thumbnails and a play button today).</li>
+  <li>Real feeds for the What's new timeline: YouTube uploads, X posts and Discord announcements from the official channels.</li>
+  <li>Import into Labs from a card, so "Try in Labs" loads something instead of opening a placeholder.</li>
+  <li>Live performance cards from real data instead of the sample P&amp;L, orders and runtime.</li>
+  <li>Ratings and an imports count per entry, so a beginner can tell what other people actually run.</li>
+  <li>Personalised recommendations in Start here, from what the install already runs.</li>
+</ul>
+
+<h2 id="rollout">Rollout</h2>
+<p>Built on the throwaway showcase branch to test the idea. No PR for the product itself, and no merge: the rename and the page reach the rail PRs only after the direction is approved.</p>
+<table>
+  <thead><tr><th>Piece</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td>The 2nd rail item and the phone tab bar renamed to Explore (compass icon), <code>/hub</code> redirecting to <code>/explore</code></td><td class="s tweak">Showcase only</td></tr>
+    <tr><td>Four tabs with the tab in the address (<code>?tab=</code>)</td><td class="s tweak">Showcase only</td></tr>
+    <tr><td>The Source filter and the video-first cards</td><td class="s tweak">Showcase only</td></tr>
+    <tr><td>Content: 14 real hackathon agents, 10 documented strategies, 3 real channel links, the rest sample</td><td class="s ok">Content pack written</td></tr>
+    <tr><td>Real video clips</td><td class="s todo">Not built: no clips exist yet</td></tr>
+    <tr><td>Real feeds for livestream, X and Discord</td><td class="s todo">Not built: sources to decide</td></tr>
+    <tr><td>Import into Labs from a card</td><td class="s todo">Not built</td></tr>
+    <tr><td>This proposal page</td><td class="s tweak">In review, PR #13</td></tr>
+  </tbody>
+</table>
+
+<h2 id="decision">Decision requested</h2>
+<div class="callout"><p>Approve Explore as the name of the second door, the four tabs (Overview, Strategies, Agents, What's new), the video-first card with one action, and the Source filter that holds the 14 hackathon agents. Two things are still missing and only you can supply them: the video clips, and the real sources for the livestream, X and Discord feed.</p></div>
+
+<h2 id="log">Refinement log</h2>
+<p>Newest first. Add a row for every change that comes out of review.</p>
+<table>
+  <thead><tr><th>Date</th><th>Change</th><th>Reason / source</th><th>PR</th></tr></thead>
+  <tbody>
+    <tr><td>2026-11-28</td><td>Page written. Explore renames the second door and splits into four tabs. Two mock layouts were made (top tabs, and a persistent second vertical layer) and top tabs was chosen: the second layer would take 180 to 220 px from the video cards and would need a drawer on a phone, and it only earns its place at six or more sections. Every entry is video first with one action; the Source filter carries the 14 hackathon agents. Content: 14 real agents from the Agent Builders Cup, 10 strategies verified on the Hummingbot docs, 3 real channel links, everything else sample, all videos to be recorded</td><td>User: rename the second door to Explore; keep strategies and agents as separate lists with their own definition; video first; dummy content is fine. Layout decided with the two layout mocks</td><td>#13</td></tr>
+  </tbody>
+</table>
+
+</main>
+</body>
+</html>
