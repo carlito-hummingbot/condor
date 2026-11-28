@@ -14,6 +14,10 @@ import {
   planStepIds,
   readinessLoading,
   readinessRows,
+  groupMissingModels,
+  isDetected,
+  preferredModel,
+  splitModelOptions,
   stepsForPlan,
   type Readiness,
   isTradingSurface,
@@ -493,5 +497,80 @@ describe("readiness check", () => {
     expect(readinessLoading({ ...ready, keys: "loading" })).toBe(true);
     expect(readinessLoading({ ...ready, modelStatus: "loading" })).toBe(true);
     expect(readinessLoading({ ...ready, keys: "error", modelStatus: "error" })).toBe(false);
+  });
+});
+
+describe("model step detection", () => {
+  const rows = [
+    { key: "claude-code", label: "Claude Code", ready: true, detail: "installed and logged in" },
+    { key: "gemini", label: "Gemini CLI", ready: false, detail: "not installed" },
+    { key: "ollama:", label: "Ollama", ready: undefined },
+    { key: "openrouter:", label: "OpenRouter", ready: true, picker: true },
+  ];
+
+  it("lists only what this machine can run as found", () => {
+    const { found, other } = splitModelOptions(rows);
+    expect(found.map((row) => row.key)).toEqual(["claude-code"]);
+    expect(other.map((row) => row.key)).toEqual(["gemini", "ollama:", "openrouter:"]);
+  });
+
+  it("never calls an unprobed row or a picker found", () => {
+    expect(splitModelOptions([rows[2], rows[3]]).found).toEqual([]);
+    expect(splitModelOptions([]).found).toEqual([]);
+  });
+});
+
+describe("model step rows", () => {
+  it("names the recommended model on the primary button, else the first found", () => {
+    const found = [{ key: "codex" }, { key: "claude-acp:sonnet" }, { key: "gemini" }];
+    expect(preferredModel(found)?.key).toBe("claude-acp:sonnet");
+    expect(preferredModel(found.slice(2))?.key).toBe("gemini");
+    expect(preferredModel([])).toBeNull();
+  });
+
+  it("shows one row per provider that is not found, with what to run", () => {
+    const rows = groupMissingModels([
+      { key: "claude-code", label: "Claude Code", ready: false, detail: "not installed" },
+      { key: "claude-acp:opus", label: "Claude (ACP) — Opus", ready: false, detail: "not installed — npm i" },
+      { key: "claude-acp:sonnet", label: "Claude (ACP) — Sonnet", ready: false, detail: "not installed — npm i" },
+      { key: "codex", label: "ChatGPT Codex", ready: true, detail: "installed and logged in" },
+      { key: "ollama:", label: "Ollama", detail: undefined },
+      { key: "openrouter:", label: "OpenRouter", ready: false, picker: true },
+    ]);
+    expect(rows.map((row) => row.label)).toEqual(["Claude Code", "Claude (ACP)", "Ollama"]);
+    expect(rows[1].detail).toBe("not installed — npm i");
+    expect(rows[2].detail).toBe("Could not be checked from here.");
+  });
+});
+
+describe("detected means proven ready", () => {
+  it("uses state when the backend sends it", () => {
+    expect(isDetected({ state: "ready", ready: true })).toBe(true);
+    expect(isDetected({ state: "unverified", ready: true })).toBe(false);
+    expect(isDetected({ state: "missing", ready: false })).toBe(false);
+  });
+
+  it("falls back to ready when state is absent", () => {
+    expect(isDetected({ ready: true })).toBe(true);
+    expect(isDetected({ ready: false })).toBe(false);
+    expect(isDetected({})).toBe(false);
+  });
+
+  it("never calls a picker detected", () => {
+    expect(isDetected({ state: "ready", ready: true, picker: true })).toBe(false);
+  });
+
+  it("keeps an unproven login out of found and preselect, and gives it a Connect row", () => {
+    const rows = [
+      { key: "gemini", label: "Gemini CLI", ready: true, state: "unverified" as const, detail: "installed; run `npx @google/gemini-cli` once and log in" },
+      { key: "codex", label: "ChatGPT Codex", ready: true, state: "ready" as const, detail: "installed and logged in" },
+      { key: "copilot", label: "GitHub Copilot CLI", ready: false, state: "missing" as const, detail: "not installed" },
+    ];
+    const { found } = splitModelOptions(rows);
+    expect(found.map((row) => row.key)).toEqual(["codex"]);
+    expect(preferredModel(found)?.key).toBe("codex");
+    const missing = groupMissingModels(rows);
+    expect(missing.map((row) => row.key)).toEqual(["gemini", "copilot"]);
+    expect(missing[0].detail).toContain("log in");
   });
 });

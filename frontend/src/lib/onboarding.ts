@@ -553,6 +553,89 @@ export function withActiveAgentKey(
   return { agent: { ...existing, active_agent_key: agentKey } };
 }
 
+/**
+ * Whether the backend proved this model is usable here: installed and logged in
+ * (`state: "ready"`). An installed tool whose login cannot be proven is
+ * `"unverified"` and is not detected, even though `ready` is true for it. A
+ * backend that does not send `state` (older, or the probe failed) falls back to
+ * `ready`, which is the looser flag.
+ */
+export function isDetected(agent: {
+  ready?: boolean;
+  state?: "ready" | "unverified" | "missing";
+  picker?: boolean;
+}): boolean {
+  if (agent.picker) return false;
+  return agent.state !== undefined ? agent.state === "ready" : agent.ready === true;
+}
+
+/**
+ * Split the model catalogue for the setup screen. "found" is what this machine
+ * can run right now and the backend proved it (see `isDetected`). A row the
+ * backend could not probe, or could not prove, is not called found. Pickers
+ * (OpenRouter, custom) open a list and are never a one-click connection, so they
+ * stay in "other".
+ */
+export function splitModelOptions<
+  T extends {
+    ready?: boolean;
+    state?: "ready" | "unverified" | "missing";
+    picker?: boolean;
+  },
+>(agents: readonly T[]): { found: T[]; other: T[] } {
+  const found = agents.filter(isDetected);
+  const other = agents.filter((agent) => !found.includes(agent));
+  return { found, other };
+}
+
+/** The model Condor suggests when several are found, if it is among them. */
+export const RECOMMENDED_MODEL_KEY = "claude-acp:sonnet";
+
+/** Which found model the primary button names: the recommended one, else the first. */
+export function preferredModel<T extends { key: string }>(found: readonly T[]): T | null {
+  return found.find((row) => row.key === RECOMMENDED_MODEL_KEY) ?? found[0] ?? null;
+}
+
+export interface MissingModelRow {
+  key: string;
+  label: string;
+  /** What to run on this machine, or why it could not be checked. */
+  detail: string;
+}
+
+/**
+ * Rows that are not detected, one per provider. Four Claude models that all say
+ * "not installed" are one row, named for the provider rather than for the model.
+ * An installed tool whose login is unproven is here too, with its own sentence
+ * ("run claude once and log in"). A row the backend could not probe says so
+ * instead of showing an empty line.
+ */
+export function groupMissingModels<
+  T extends {
+    key: string;
+    label: string;
+    ready?: boolean;
+    state?: "ready" | "unverified" | "missing";
+    picker?: boolean;
+    detail?: string;
+  },
+>(agents: readonly T[]): MissingModelRow[] {
+  const groups = new Map<string, T[]>();
+  for (const agent of agents) {
+    if (agent.picker || isDetected(agent)) continue;
+    const base = agent.key.split(":")[0];
+    groups.set(base, [...(groups.get(base) ?? []), agent]);
+  }
+  return [...groups.values()].map((rows) => {
+    const first = rows[0];
+    return {
+      key: first.key,
+      label: rows.length > 1 ? first.label.split(" — ")[0] : first.label,
+      detail: rows.find((row) => row.detail)?.detail ?? "Could not be checked from here.",
+    };
+  });
+}
+
 /** A ready model is confirmed. Anything else is a choice. */
 export function modelStepMode(ready: boolean | null | undefined): "confirm" | "choose" {
   return ready === true ? "confirm" : "choose";
