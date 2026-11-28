@@ -1,5 +1,6 @@
 import { useCallback, useSyncExternalStore } from "react";
 
+import { persistAppearance } from "@/lib/appearancePrefs";
 import { DISPLAY_CURRENCY_KEY } from "@/lib/sessionState";
 
 export type DisplayCurrency = "USDT" | "BTC" | "BRL" | "EUR";
@@ -40,6 +41,7 @@ export function useDisplayCurrency() {
     currentCurrency = c;
     localStorage.setItem(DISPLAY_CURRENCY_KEY, c);
     listeners.forEach((l) => l());
+    persistAppearance({ currency: c });
   }, []);
 
   return {

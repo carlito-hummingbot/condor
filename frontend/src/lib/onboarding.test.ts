@@ -4,6 +4,7 @@ import {
   STEP_DEFS,
   advance,
   buildPreferenceUpdates,
+  canContinueAlerts,
   canJumpTo,
   dashboardTitleFrom,
   describeModel,
@@ -21,6 +22,7 @@ import {
   onboardingPending,
   prefillName,
   resolveServerGate,
+  savedAppearanceToApply,
   restartedOnboarding,
   resumeIndex,
   retreat,
@@ -206,12 +208,7 @@ describe("step flow", () => {
   });
 
   it("ships the steps this build renders, with done last in the full list", () => {
-    expect(installedStepDefs().map((step) => step.id)).toEqual([
-      "profile",
-      "model",
-      "connect",
-      "done",
-    ]);
+    expect(installedStepDefs().map((step) => step.id)).toEqual(STEP_DEFS.map((step) => step.id));
     expect(STEP_DEFS.map((step) => step.id)).toEqual([
       "profile",
       "model",
@@ -224,8 +221,36 @@ describe("step flow", () => {
       "model",
       "connect",
       "look",
-      "alerts",
     ]);
+    expect(canContinueAlerts(null)).toBe(false);
+    expect(canContinueAlerts("yes")).toBe(true);
+    expect(canContinueAlerts("no")).toBe(true);
+    const locked = { status: "ready" as const, canChange: false, envOverridden: false };
+    const pinned = { status: "ready" as const, canChange: true, envOverridden: true };
+    expect(canContinueAlerts(null, locked)).toBe(true);
+    expect(canContinueAlerts(null, pinned)).toBe(true);
+    expect(canContinueAlerts(null, { status: "loading", canChange: true, envOverridden: false })).toBe(false);
+    expect(canContinueAlerts(null, { status: "error", canChange: true, envOverridden: false })).toBe(true);
+    expect(
+      savedAppearanceToApply({
+        storedTheme: "light",
+        storedColorblind: null,
+        storedCurrency: "EUR",
+        theme: "dark",
+        colorblind: true,
+        currency: "USDT",
+      }),
+    ).toEqual({ colorblind: true });
+    expect(
+      savedAppearanceToApply({
+        storedTheme: null,
+        storedColorblind: "1",
+        storedCurrency: null,
+        theme: "dark",
+        colorblind: false,
+        currency: "BTC",
+      }),
+    ).toEqual({ theme: "dark", currency: "BTC" });
     expect(installedStepDefs().at(-1)?.id).toBe("done");
   });
 

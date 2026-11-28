@@ -80,7 +80,7 @@ export const STEP_DEFS = [
   { id: "model", title: "AI model", skippable: true },
   { id: "connect", title: "Connect where you trade", skippable: true },
   { id: "look", title: "Look & units", skippable: true },
-  { id: "alerts", title: "Stay in the loop", skippable: true },
+  { id: "alerts", title: "Stay in the loop", skippable: false },
   { id: "done", title: "You're set", skippable: false },
 ] as const;
 
@@ -102,7 +102,44 @@ export interface StepDef {
  * Steps this build actually renders. `done` stays last. Insert a new id here
  * when its screen ships; the order always follows `STEP_DEFS`.
  */
-export const INSTALLED_STEP_IDS = ["profile", "model", "connect", "done"] as const;
+export const INSTALLED_STEP_IDS = ["profile", "model", "connect", "look", "alerts", "done"] as const;
+
+/**
+ * Telemetry has no default when this seat can change it. A seat that cannot
+ * (not the admin, or `CONDOR_TELEMETRY` pinned) may continue without a write
+ * the API would refuse. A failed read must not trap the step either.
+ */
+export function canContinueAlerts(
+  choice: "yes" | "no" | null,
+  gate?: { status: "loading" | "error" | "ready"; canChange: boolean; envOverridden: boolean },
+): boolean {
+  if (!gate) return choice === "yes" || choice === "no";
+  if (gate.status === "loading") return false;
+  if (gate.status === "error" || !gate.canChange || gate.envOverridden) return true;
+  return choice === "yes" || choice === "no";
+}
+
+/**
+ * Apply a saved appearance only where this browser has not chosen one.
+ * A later change in Settings or the top bar lives in localStorage and must
+ * survive the next reload.
+ */
+export function savedAppearanceToApply(input: {
+  storedTheme: string | null;
+  storedColorblind: string | null;
+  storedCurrency: string | null;
+  theme?: "dark" | "light";
+  colorblind?: boolean;
+  currency?: string;
+}): { theme?: "dark" | "light"; colorblind?: boolean; currency?: string } {
+  const out: { theme?: "dark" | "light"; colorblind?: boolean; currency?: string } = {};
+  const themeUnset =
+    input.storedTheme !== "dark" && input.storedTheme !== "light" && input.storedTheme !== "colorblind";
+  if (themeUnset && (input.theme === "dark" || input.theme === "light")) out.theme = input.theme;
+  if (input.storedColorblind === null && input.colorblind === true) out.colorblind = true;
+  if (!input.storedCurrency && input.currency) out.currency = input.currency;
+  return out;
+}
 
 export function installedStepDefs(): StepDef[] {
   const installed = new Set<string>(INSTALLED_STEP_IDS);
@@ -188,7 +225,7 @@ export interface OnboardingSignals {
    * The wizard is already on screen. A server the user just picked can make
    * the credentials probe load, then fail, and that must not dismiss setup.
    */
-  wizardEngaged: boolean;
+  wizardEngaged?: boolean;
 }
 
 export function isOnboardingComplete(prefs: UserPreferences | undefined): boolean {

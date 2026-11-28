@@ -1,5 +1,6 @@
 import { useCallback, useSyncExternalStore } from "react";
 
+import { persistAppearance } from "@/lib/appearancePrefs";
 import { COLORBLIND_KEY, THEME_KEY } from "@/lib/sessionState";
 
 /**
@@ -70,6 +71,7 @@ export function useTheme() {
   const setTheme = useCallback((t: Theme) => {
     localStorage.setItem(THEME_KEY, t);
     set({ ...current, theme: t });
+    persistAppearance({ theme: t });
   }, []);
 
   const toggleTheme = useCallback(() => {
@@ -80,6 +82,7 @@ export function useTheme() {
     if (on) localStorage.setItem(COLORBLIND_KEY, "1");
     else localStorage.removeItem(COLORBLIND_KEY);
     set({ ...current, colorblind: on });
+    persistAppearance({ colorblind: on });
   }, []);
 
   return { theme, setTheme, toggleTheme, colorblind, setColorblind };
