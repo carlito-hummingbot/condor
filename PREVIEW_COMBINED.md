@@ -11,9 +11,14 @@ Merged heads, in order:
 4. feat/test-connection-endpoint (#16) 6e80e930 (backend)
 5. fix/server-status-staleness (#17) 64fb7a75 (backend)
 6. feat/model-readiness-state (#24) d38d8939 (backend)
-7. ui/panel-rail-v2 (#25) ad8e9ffd: contains the rail stack #3 b5a1bd0d, #4 5728adcf, #6 d617fd5e, #7 0b81a167 (More removed; Settings panel with three groups; avatar Account dialog; four-tab phone bar; Labs page)
-8. ui/onboarding-model-connect (#23) a35c6f81: contains #2, #9, #11, #12, #14, #21, #22
-9. showcase/onboarding-walkthrough 59f2599b: the Designer's wizard fixes (one throwaway branch, no PR)
+7. ui/panel-rail-v2 (#25) 095f382c: the rail stack #3 6c02cdd3, #4 668265c4, #6 74d8cdf4, #7 77bf1e5c (More removed; Settings
+   panel with three groups; avatar Account dialog; four-tab phone bar; Labs page) plus the 2nd-door rename round (see below)
+8. ui/panel-rail-v2 rename round 095f382c, merged here as 32297323: Explore door with a compass, Settings "Agents" rows unchanged
+9. ui/onboarding-model-connect (#23) a35c6f81: contains #2, #9, #11, #12, #14, #21, #22
+10. showcase/onboarding-walkthrough 59f2599b: the Designer's wizard fixes (one throwaway branch, no PR)
+
+Showcase-only, on no PR branch and not meant to be merged: the `/explore` page (`pages/Explore.tsx`, with `/hub`
+redirecting to it), the `/` sample Dashboard and the chat at `/chat`. In the rail PRs the door is Explore at `/hub`.
 
 Conflicts: AppShell.tsx (rail shell + wizard/keys banner/telemetry gate in `main`), lib/api.ts (login
 fix dropped the unused getAuthMode). Duplicate preference plumbing: lib/preferences.ts removed,
@@ -33,7 +38,7 @@ the real Dashboard is a later proposal.
 - The old chat home moved to `/chat`. Chat links that arrive on `/` with a chat query (`?panel=`, `?conversation=`,
   `?agent=`, `?ask=`, `?desk=`, `?who=`, `?loop=`, `?run=`) are forwarded to `/chat` with the query intact (`pages/Home.tsx`).
   `/agents`, the Ctrl/Cmd+K shortcut, "Back to your agents" and the chat's own "leave Hub" now go to `/chat`.
-  The Agents rail door also lights on `/chat`.
+  On `/chat` no rail door lights: the chat is not a door of its own.
 - `/?onboarding=1` and `/welcome` stay on the Dashboard; the first-run wizard shows over its page area.
 - Small shell fix: the right-hand column of `AppShell` got `min-h-0`, so a long page scrolls inside `main` on a phone.
 - Live Agents cards also show two extra sample rows after Volume: `Agent Started` (e.g. `25-Nov-26 at 12:55 pm`) and
@@ -50,6 +55,26 @@ the real Dashboard is a later proposal.
 
 Showcase-only difference: `pages/Dashboard.tsx` shows the saved dashboard title (set in the Account dialog or the
 wizard) as its heading, and "Condor Dashboard" when none is saved. Nothing else in the stack was changed.
+
+## Rail rename round (095f382c, merged as 32297323)
+
+`origin/ui/panel-rail-v2` 095f382c (the rail stack plus the 2nd-door rename: Explore with a compass, Settings
+"Agents" rows unchanged) merged in with `git merge`. Its diff here is only the rename: 6 files, +47/−43. Four
+conflicts, all resolved for the showcase:
+
+- `lib/nav.ts`: the door keeps the showcase's target and active rule (`/explore`, `/hub` redirecting to it) and the
+  showcase's doc wording; the rail PRs' generic wording is taken for the Dashboard comment and the Settings-id note.
+- `AppShell.nav.test.ts`, `MobileTabBar.test.tsx`, `SideRail.test.tsx`: the showcase's expectations are kept
+  (`/explore`, not `/hub` or `/agents/`), with the PRs' "Settings row" wording.
+- `SideRail.tsx`, `MobileTabBar.tsx`: header comments merged cleanly.
+
+Checked on this merge: vitest 286 files / 2923 tests pass, `tsc -b` clean, eslint clean on the six conflicted files,
+`npm run build` OK (the existing chunk-size warning). In a browser on a demo mock: rail reads Dashboard · Explore
+(compass, lit on `/explore`) · Labs, then the Settings gear and avatar; the 390 px bar reads Dashboard · Explore ·
+Labs · Account; Explore's tabs count 10 strategies / 17 agents / 8 news and the source chips 17 / 1 / 14 / 2; the
+Dashboard Live Agents cards keep their Agent Started and Total Runtime rows; `/hub` lands on `/explore`; the first-run
+wizard, a key saved at Connect, `/welcome` and Settings > Appearance > Run setup again all behave; the chat's Panels
+drawer on a phone stops exactly at the bar.
 ## Onboarding walkthrough fixes (showcase/onboarding-walkthrough 59f2599b)
 
 Merged with `git merge` (merge commit 4f04bc67). One conflict, comment-only: in `lib/onboarding.ts` both sides
@@ -74,10 +99,11 @@ every PR branch untouched, sample Dashboard routing (`/` Dashboard, `/chat` chat
 
 ## Explore page (showcase only)
 
-The 2nd rail door is **Explore** (`/explore`) in this showcase build: a compass icon, the phone tab bar shows
-Dashboard · Explore · Labs · Account, and `/hub` redirects to `/explore`, so the old Agent Hub page is unreachable
-here. Showcase only: the rail PRs (#3, #6, #25) and the other proposal pages still say Agents until the user approves
-the rename. The page is an ordinary padded, scrolling page, so the chat still lives at `/chat`.
+The 2nd rail door is **Explore** in this showcase build: a compass icon, the phone tab bar shows
+Dashboard · Explore · Labs · Account, and the door opens the catalogue at `/explore`; `/hub` redirects to `/explore`,
+so the old Agent Hub page is unreachable here. The rename is in the rail PRs now (#3, #4, #6, #7, #25): label and
+icon only, the route there stays `/hub`. The Settings "Agents" rows keep their name. The page is an ordinary padded,
+scrolling page, so the chat still lives at `/chat`.
 
 - **One sample-data module**, `pages/explore/sampleData.ts`, typed from the content pack: the 14 real Botcamp Agent
   Builders Cup agents, the 10 strategy names verified against the Hummingbot docs, the 3 verified channel links, and
