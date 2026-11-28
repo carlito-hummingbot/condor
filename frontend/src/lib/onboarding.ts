@@ -71,11 +71,14 @@ export interface PreferencePatch {
 }
 
 /**
- * The six dots of the finished wizard, in order. A build may render only a
- * prefix of the work (`INSTALLED_STEP_IDS`); later steps stay in this list so
- * the order cannot drift when they land.
+ * Every step the wizard can show, in order. A run shows only the ones that
+ * `planStepIds` keeps: "check" opens it, and "model" and "connect" appear only
+ * when the install still needs them. A build may render only some of the work
+ * (`INSTALLED_STEP_IDS`); later steps stay in this list so the order cannot
+ * drift when they land.
  */
 export const STEP_DEFS = [
+  { id: "check", title: "Your setup", skippable: false },
   { id: "profile", title: "Make it yours", skippable: false },
   { id: "model", title: "AI model", skippable: true },
   { id: "connect", title: "Connect where you trade", skippable: true },
@@ -102,7 +105,126 @@ export interface StepDef {
  * Steps this build actually renders. `done` stays last. Insert a new id here
  * when its screen ships; the order always follows `STEP_DEFS`.
  */
-export const INSTALLED_STEP_IDS = ["profile", "model", "connect", "look", "alerts", "done"] as const;
+export const INSTALLED_STEP_IDS = [
+  "check",
+  "profile",
+  "model",
+  "connect",
+  "look",
+  "alerts",
+  "done",
+] as const;
+
+/** What the readiness check could read from this install. */
+export interface Readiness {
+  server: { name: string; online: boolean } | null;
+  /** The model Condor will use, or null when none is chosen. */
+  model: DetectedModel | null;
+  /** Whether the model catalogue has been read. */
+  modelStatus: "loading" | "error" | "loaded";
+  /** Exchange keys or a Gateway wallet. "error" is an outage, not "none". */
+  keys: "loading" | "error" | "none" | "some";
+  /** Gateway only matters for DEX trading, so it is never a required step. */
+  gateway: "loading" | "unknown" | "running" | "off";
+}
+
+/** "pending" is a read still in flight; "unknown" is one that failed. Neither is "missing". */
+export type ReadinessStatus = "ok" | "todo" | "optional" | "pending" | "unknown";
+
+export interface ReadinessRow {
+  id: "server" | "model" | "keys" | "gateway";
+  label: string;
+  status: ReadinessStatus;
+  detail: string;
+}
+
+/**
+ * One row per thing setup may or may not have done, read from the install.
+ * "ok" is done, "todo" needs the user, "optional" can wait, and "unknown"
+ * means a read has not finished or failed, which is never reported as missing.
+ */
+export function readinessRows(r: Readiness): ReadinessRow[] {
+  const server: ReadinessRow = !r.server
+    ? { id: "server", label: "Server", status: "todo", detail: "No Hummingbot API server is configured." }
+    : r.server.online
+      ? { id: "server", label: "Server", status: "ok", detail: `Connected to ${r.server.name}.` }
+      : {
+          id: "server",
+          label: "Server",
+          status: "todo",
+          detail: `${r.server.name} is configured but not responding. It may still be starting.`,
+        };
+
+  let model: ReadinessRow;
+  if (r.modelStatus === "loading") {
+    model = { id: "model", label: "AI model", status: "pending", detail: "Checking…" };
+  } else if (r.modelStatus === "error") {
+    model = { id: "model", label: "AI model", status: "unknown", detail: "Could not check the model list." };
+  } else if (!r.model) {
+    model = { id: "model", label: "AI model", status: "todo", detail: "No model is chosen. The chat cannot answer yet." };
+  } else if (r.model.ready === true) {
+    model = { id: "model", label: "AI model", status: "ok", detail: `${r.model.label} is ready.` };
+  } else if (r.model.ready === false) {
+    model = {
+      id: "model",
+      label: "AI model",
+      status: "todo",
+      detail: `${r.model.label} still needs a login or install on this machine.`,
+    };
+  } else {
+    model = { id: "model", label: "AI model", status: "todo", detail: `${r.model.label} is chosen but not confirmed ready.` };
+  }
+
+  const keys: ReadinessRow =
+    r.keys === "some"
+      ? { id: "keys", label: "Exchange or wallet", status: "ok", detail: "A key or wallet is connected." }
+      : r.keys === "none"
+        ? {
+            id: "keys",
+            label: "Exchange or wallet",
+            status: "todo",
+            detail: "None yet. Portfolio and trading stay locked until you add one.",
+          }
+        : r.keys === "error"
+          ? { id: "keys", label: "Exchange or wallet", status: "unknown", detail: "Could not check. Settings, Keys & Wallets has it." }
+          : { id: "keys", label: "Exchange or wallet", status: "pending", detail: "Checking…" };
+
+  const gateway: ReadinessRow =
+    r.gateway === "running"
+      ? { id: "gateway", label: "DEX Gateway", status: "ok", detail: "Running." }
+      : r.gateway === "off"
+        ? { id: "gateway", label: "DEX Gateway", status: "optional", detail: "Not set up. Only needed for DEX trading." }
+        : { id: "gateway", label: "DEX Gateway", status: "optional", detail: "Not checked." };
+
+  return [server, model, keys, gateway];
+}
+
+/** True while any row is still being read. The summary waits instead of guessing. */
+export function readinessLoading(r: Readiness): boolean {
+  return r.modelStatus === "loading" || r.keys === "loading";
+}
+
+/**
+ * The steps this run shows, by id. Name, look and alerts are preferences with
+ * no way to detect them, so they always appear. The model and the exchange step
+ * appear only when the install still needs them; a read that failed is left
+ * out rather than guessed, because the user can still reach both in Settings.
+ */
+export function planStepIds(r: Readiness): StepId[] {
+  const ids: StepId[] = ["check", "profile"];
+  if (r.modelStatus === "loaded" && r.model?.ready !== true) ids.push("model");
+  if (r.keys === "none") ids.push("connect");
+  ids.push("look", "alerts", "done");
+  return ids;
+}
+
+/** The step defs for a plan, in plan order. Unknown ids are dropped. */
+export function stepsForPlan(ids: readonly string[]): StepDef[] {
+  const installed = new Set<string>(INSTALLED_STEP_IDS);
+  return ids
+    .map((id) => STEP_DEFS.find((step) => step.id === id))
+    .filter((step): step is (typeof STEP_DEFS)[number] => !!step && installed.has(step.id));
+}
 
 /**
  * Telemetry has no default when this seat can change it. A seat that cannot
