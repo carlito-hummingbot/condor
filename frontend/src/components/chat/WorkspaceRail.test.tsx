@@ -1,5 +1,6 @@
 /**
- * Tiles that are all waiting on a server say so once, under the group.
+ * Tiles that are all waiting on a server say so once, under the group, and
+ * on a phone the rail is a drawer that stays hidden until it is asked for.
  *
  * @vitest-environment jsdom
  */
@@ -58,5 +59,60 @@ describe("WorkspaceRail", () => {
   it("adds no note when a tile can be opened", () => {
     render([{ id: "desk", items: [item("Portfolio", false), item("Bots", true)] }]);
     expect(container.textContent).not.toContain("Pick a server");
+  });
+
+  it("is hidden below md until opened, and always a strip from md up", () => {
+    render([{ id: "desk", items: [item("Portfolio", false)] }]);
+    const closed = container.querySelector('[data-testid="workspace-rail"]')!;
+    expect(closed.className).toContain("max-md:hidden");
+    expect(closed.className).toContain("md:flex");
+    expect(closed.getAttribute("data-mobile-open")).toBe("false");
+
+    act(() =>
+      root.render(
+        <WorkspaceRail groups={[{ id: "desk", items: [item("Portfolio", false)] }]} mobileOpen />,
+      ),
+    );
+    const open = container.querySelector('[data-testid="workspace-rail"]')!;
+    expect(open.className).toContain("max-md:absolute");
+    expect(open.className).not.toContain("max-md:hidden");
+    expect(open.getAttribute("data-mobile-open")).toBe("true");
+  });
+
+  it("closes the drawer after a tile is picked", () => {
+    const picked: string[] = [];
+    let closed = 0;
+    const tile = { ...item("Portfolio", false), onToggle: () => picked.push("Portfolio") };
+    act(() =>
+      root.render(
+        <WorkspaceRail
+          groups={[{ id: "desk", items: [tile] }]}
+          mobileOpen
+          onMobileClose={() => closed++}
+        />,
+      ),
+    );
+    act(() => {
+      (container.querySelector('button[aria-label="Portfolio"]') as HTMLButtonElement).click();
+    });
+    expect(picked).toEqual(["Portfolio"]);
+    expect(closed).toBe(1);
+  });
+
+  it("has its own way out on a phone, because the drawer covers the bar's toggle", () => {
+    let closed = 0;
+    act(() =>
+      root.render(
+        <WorkspaceRail
+          groups={[{ id: "desk", items: [item("Portfolio", false)] }]}
+          mobileOpen
+          onMobileClose={() => closed++}
+        />,
+      ),
+    );
+    const hide = container.querySelector('button[aria-label="Hide panels"]') as HTMLButtonElement;
+    expect(hide.className).toContain("md:hidden");
+    act(() => hide.click());
+    expect(closed).toBe(1);
   });
 });
