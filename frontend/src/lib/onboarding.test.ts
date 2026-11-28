@@ -10,7 +10,6 @@ import {
   DEFAULT_DISPLAY_NAME,
   displayNameFrom,
   forceOnboarding,
-  DONE_ACTIONS,
   installedStepDefs,
   planStepIds,
   readinessLoading,
@@ -247,11 +246,6 @@ describe("step flow", () => {
       }),
     ).toEqual({ theme: "dark", currency: "BTC" });
     expect(installedStepDefs().at(-1)?.id).toBe("done");
-  });
-
-  it("leaves the last step with deploy and the hub", () => {
-    expect(DONE_ACTIONS.map((action) => action.title)).toEqual(["Deploy a bot", "Browse agents"]);
-    expect(DONE_ACTIONS.map((action) => action.to)).toEqual(["/bots", "/hub"]);
   });
 });
 

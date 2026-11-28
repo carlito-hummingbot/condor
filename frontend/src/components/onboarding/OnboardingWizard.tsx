@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 
 import { Button } from "@/components/ui/Button";
 import { useCredentials } from "@/hooks/useCredentials";
@@ -53,7 +53,6 @@ export function OnboardingWizard() {
   const { server, setServer } = useServer();
   const { data: prefs } = useUserPreferences();
   const patch = usePatchPreferences();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [params, setParams] = useSearchParams();
   const [action, setAction] = useState<WizardAction | null>(null);
@@ -204,22 +203,18 @@ export function OnboardingWizard() {
     [STEPS, flow, save, step.id, step.skippable],
   );
 
-  const finish = useCallback(
-    async (to?: string) => {
-      const saved = await save({
-        onboarding: {
-          completed_at: new Date().toISOString(),
-          last_step: "done",
-          skipped: flow.skipped,
-          skipped_all: false,
-        },
-      });
-      if (!saved) return;
-      clearForce();
-      if (to) navigate(to);
-    },
-    [clearForce, flow.skipped, navigate, save],
-  );
+  const finish = useCallback(async () => {
+    const saved = await save({
+      onboarding: {
+        completed_at: new Date().toISOString(),
+        last_step: "done",
+        skipped: flow.skipped,
+        skipped_all: false,
+      },
+    });
+    if (!saved) return;
+    clearForce();
+  }, [clearForce, flow.skipped, save]);
 
   const skipAll = useCallback(async () => {
     const saved = await save({
@@ -308,7 +303,7 @@ export function OnboardingWizard() {
                 <DoneStep
                   prefs={preferences}
                   busy={busy}
-                  onFinish={(to) => void finish(to)}
+                  onFinish={() => void finish()}
                   onBind={onBind}
                 />
               )}
