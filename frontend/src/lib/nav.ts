@@ -1,7 +1,7 @@
 import {
-  Bot,
   Brain,
   Bug,
+  Compass,
   Download,
   FlaskConical,
   KeyRound,
@@ -43,20 +43,22 @@ import {
  * that browser rather than a second door onto the same records. `/floor`
  * redirects to `/bots`.
  *
- * Hub joined it in FEAT-153 and left it again. `/hub` mounts the Agents
+ * Hub joined it in FEAT-153 and left it again. `/hub` mounts the agent
  * workspace with its transcript column swapped for the catalogue, so a tab of
- * its own sat beside Agents saying the same thing twice. Its door was the card
- * at the foot of the Agents rail.
+ * its own sat beside the chat saying the same thing twice. Its door was the
+ * card at the foot of the rail.
  *
  * The top bar is a left icon rail now. Three doors in the main group:
- * Dashboard, Agents and Labs. Dashboard is `/` (the chat home until the stats
- * page lands). Agents is `/hub`, the Agents workspace, and stays lit on an
- * agent's own page. Labs is `/labs`, built in a later change; until then it
- * shows the ordinary not-found page inside the shell. The Settings gear sits
- * at the foot of the rail, above the avatar, and opens a panel beside the rail
- * with every Settings tab people reach for, in three groups, and Report an
- * Issue. Portfolio, Trade, DEX, Routines and Bots have no door in the nav for
- * now; their routes still work by address.
+ * Dashboard, Explore and Labs. Dashboard is `/` (the chat home until the stats
+ * page lands). Explore is `/hub`, today's Agent Hub under its new name, and
+ * stays lit on an agent's own page. The Explore catalogue page (tabs Overview,
+ * Strategies, Agents and What's new) is still to be built; until it lands the
+ * door opens the Hub and the route stays `/hub`. Labs is `/labs`, built in a
+ * later change; until then it shows the ordinary not-found page inside the
+ * shell. The Settings gear sits at the foot of the rail, above the avatar, and
+ * opens a panel beside the rail with every Settings tab people reach for, in
+ * three groups, and Report an Issue. Portfolio, Trade, DEX, Routines and Bots
+ * have no door in the nav for now; their routes still work by address.
  */
 export interface NavEntry {
   id: string;
@@ -68,7 +70,7 @@ export interface NavEntry {
 /** Rail, top group. The logo is not an entry: it is the brand, and it never lights. */
 export const RAIL_TOP: readonly NavEntry[] = [
   { id: "dashboard", to: "/", icon: LayoutDashboard, label: "Dashboard" },
-  { id: "agents", to: "/hub", icon: Bot, label: "Agents" },
+  { id: "explore", to: "/hub", icon: Compass, label: "Explore" },
   { id: "labs", to: "/labs", icon: FlaskConical, label: "Labs" },
 ];
 
@@ -94,7 +96,8 @@ export const REPORT_ISSUE: ReportEntry = { id: "report", label: "Report an Issue
  * groups and no group titles. Each `to` is a Settings tab (`/settings?tab=...`).
  * The phone's Account sheet reads this same list.
  *
- * Ids: "agents" is also a rail door, so the Settings one is `set-agents`.
+ * Ids: the Settings row for agent configuration is `set-agents`; the rail door
+ * that opens the catalogue is `explore`.
  * Notifications and Admin are Settings tabs with no row here: they stay
  * reachable inside the Settings page.
  */
@@ -135,13 +138,13 @@ export type RailOverlayId = "settings" | "account";
 /** The gear at the foot of the rail. It opens the Settings panel; it is not a link. */
 export const SETTINGS_ICON = Settings;
 
-/** The chat home only. The Hub and an agent's page belong to Agents now. */
+/** The chat home only. The Explore door and an agent's page are elsewhere. */
 export function isDashboardActive(pathname: string): boolean {
   return pathname === "/";
 }
 
-/** The Agents workspace: the Hub, and a single agent's page. */
-export function isAgentsActive(pathname: string): boolean {
+/** The Explore door: today's Agent Hub, and a single agent's page. */
+export function isExploreActive(pathname: string): boolean {
   return pathname === "/hub" || pathname.startsWith("/agents/");
 }
 
@@ -176,8 +179,8 @@ export function isRailEntryActive(id: string, pathname: string, search: string):
   switch (id) {
     case "dashboard":
       return isDashboardActive(pathname);
-    case "agents":
-      return isAgentsActive(pathname);
+    case "explore":
+      return isExploreActive(pathname);
     case "labs":
       return isLabsActive(pathname);
     case "settings":
