@@ -104,11 +104,13 @@ function AgentCardView({ agent }: { agent: AgentCard }) {
             ["Pair", agent.pair],
             ["Filled Orders Qty", agent.filledOrders.toLocaleString("en-US")],
             ["Volume", usd(agent.volume)],
+            ["Agent Started", agent.agentStarted],
+            ["Total Runtime", agent.totalRuntime],
           ] as const
         ).map(([label, value]) => (
-          <div key={label} className="flex items-baseline justify-between border-t border-[var(--color-border)] py-2.5 text-[14.5px]">
-            <dt className="text-[var(--color-text-muted)]">{label}</dt>
-            <dd className="m-0 font-semibold">{value}</dd>
+          <div key={label} className="flex items-baseline justify-between gap-3 border-t border-[var(--color-border)] py-2.5 text-[14.5px]">
+            <dt className="shrink-0 text-[var(--color-text-muted)]">{label}</dt>
+            <dd className="m-0 min-w-0 text-right font-semibold">{value}</dd>
           </div>
         ))}
       </dl>

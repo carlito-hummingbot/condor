@@ -36,6 +36,8 @@ the real Dashboard is a later proposal.
   The Agents rail door also lights on `/chat`.
 - `/?onboarding=1` and `/welcome` stay on the Dashboard; the first-run wizard shows over its page area.
 - Small shell fix: the right-hand column of `AppShell` got `min-h-0`, so a long page scrolls inside `main` on a phone.
+- Live Agents cards also show two extra sample rows after Volume: `Agent Started` (e.g. `25-Nov-26 at 12:55 pm`) and
+  `Total Runtime` (e.g. `3D 2H 30Mins`), with different dummy values per card.
 
 ## Rail stack update (ad8e9ffd)
 

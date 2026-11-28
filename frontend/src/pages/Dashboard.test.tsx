@@ -23,6 +23,7 @@ vi.mock("@/lib/auth", () => ({
 
 const { Dashboard } = await import("./Dashboard");
 const { Home } = await import("./Home");
+const { SAMPLE } = await import("./dashboard/sampleData");
 const { isChatLink } = await import("@/lib/chatLinks");
 
 declare global {
@@ -98,7 +99,7 @@ describe("Dashboard", () => {
     expect(container.textContent).toContain("Welcome back, Ada.");
   });
 
-  it("shows the three live agents with their subtitles and only the four fields", async () => {
+  it("shows the three live agents with their subtitles and the five field rows", async () => {
     renderAt("/", <Dashboard />);
     await flush();
     const cards = [...container.querySelectorAll('section[aria-label="Live agents"] article')];
@@ -106,7 +107,35 @@ describe("Dashboard", () => {
     expect(cards.map((c) => c.querySelector("p")?.textContent)).toEqual(["Binance (spot)", "Gate (perps)", "Meteora"]);
     for (const card of cards) {
       expect(card.textContent).toContain("Realized / Unrealized");
-      expect([...card.querySelectorAll("dt")].map((d) => d.textContent)).toEqual(["Pair", "Filled Orders Qty", "Volume"]);
+      expect([...card.querySelectorAll("dt")].map((d) => d.textContent)).toEqual([
+        "Pair",
+        "Filled Orders Qty",
+        "Volume",
+        "Agent Started",
+        "Total Runtime",
+      ]);
+    }
+    const started = cards.map((c) => c.querySelectorAll("dd")[3]?.textContent);
+    const runtime = cards.map((c) => c.querySelectorAll("dd")[4]?.textContent);
+    expect(started).toEqual(["25-Nov-26 at 12:55 pm", "26-Nov-26 at 9:40 am", "28-Nov-26 at 12:55 pm"]);
+    expect(runtime).toEqual(["3D 2H 30Mins", "2D 5H 45Mins", "2H 30Mins"]);
+  });
+
+  it("keeps every sample value different for each live agent", () => {
+    const fields = [
+      "pnl",
+      "pnlPct",
+      "realized",
+      "unrealized",
+      "pair",
+      "filledOrders",
+      "volume",
+      "agentStarted",
+      "totalRuntime",
+    ] as const;
+    for (const field of fields) {
+      const values = SAMPLE.agents.map((a) => a[field]);
+      expect(new Set(values).size, `${field} repeats across the live agents`).toBe(SAMPLE.agents.length);
     }
   });
 

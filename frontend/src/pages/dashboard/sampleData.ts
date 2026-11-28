@@ -16,6 +16,9 @@ export interface AgentCard {
   pair: string;
   filledOrders: number;
   volume: number;
+  /** Sample timestamps and runs, relative to a fixed sample "now" of 28-Nov-26 at 3:25 pm. */
+  agentStarted: string;
+  totalRuntime: string;
 }
 
 export interface NewsItem {
@@ -86,6 +89,8 @@ export const SAMPLE = {
       pair: "USDC-USDT",
       filledOrders: 1_284,
       volume: 186_420,
+      agentStarted: "25-Nov-26 at 12:55 pm",
+      totalRuntime: "3D 2H 30Mins",
     },
     {
       title: "GateForum",
@@ -97,6 +102,8 @@ export const SAMPLE = {
       pair: "BTC-USDT perp",
       filledOrders: 312,
       volume: 842_950,
+      agentStarted: "26-Nov-26 at 9:40 am",
+      totalRuntime: "2D 5H 45Mins",
     },
     {
       title: "JEV",
@@ -108,6 +115,8 @@ export const SAMPLE = {
       pair: "SOL-USDC",
       filledOrders: 74,
       volume: 24_310,
+      agentStarted: "28-Nov-26 at 12:55 pm",
+      totalRuntime: "2H 30Mins",
     },
   ] satisfies AgentCard[],
 } as const;
