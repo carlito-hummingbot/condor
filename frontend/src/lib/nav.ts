@@ -3,7 +3,7 @@ import {
   Bug,
   Compass,
   Download,
-  FlaskConical,
+  Hammer,
   KeyRound,
   LayoutDashboard,
   Mic,
@@ -49,13 +49,14 @@ import {
  * card at the foot of the rail.
  *
  * The top bar is a left icon rail now. Three doors in the main group:
- * Dashboard, Explore and Labs. Dashboard is `/` (the chat home until the stats
+ * Dashboard, Explore and Build. Dashboard is `/` (the chat home until the stats
  * page lands). Explore is `/explore`, the catalogue of strategies and agents;
  * it used to be Agents at `/hub`, and `/hub` now redirects here. The showcase
  * is the only branch with that page: in the rail PRs the door keeps `/hub`
- * until the catalogue lands. Labs is `/labs`, a placeholder page for now
- * (Design, Backtest, Test Run and Diagnose come later); `/strategies` redirects
- * to it. The Settings gear sits at the foot of the rail, above the avatar, and
+ * until the catalogue lands. Build is `/build`, the five stages one bot goes
+ * through (Design, Backtest, Dry Run, Deploy, Improve); it was Labs, a
+ * placeholder, and the rail PRs still say Labs until the rename is approved.
+ * `/labs` and `/strategies` redirect to it. The Settings gear sits at the foot of the rail, above the avatar, and
  * opens a panel beside the rail with every Settings tab people reach for, in
  * three groups, and Report an Issue. Portfolio, Trade, DEX, Routines and Bots
  * have no door in the nav for now; their routes still work by address.
@@ -71,7 +72,7 @@ export interface NavEntry {
 export const RAIL_TOP: readonly NavEntry[] = [
   { id: "dashboard", to: "/", icon: LayoutDashboard, label: "Dashboard" },
   { id: "explore", to: "/explore", icon: Compass, label: "Explore" },
-  { id: "labs", to: "/labs", icon: FlaskConical, label: "Labs" },
+  { id: "build", to: "/build", icon: Hammer, label: "Build" },
 ];
 
 /** Report an Issue is not a route: it opens the existing dialog. */
@@ -148,8 +149,9 @@ export function isExploreActive(pathname: string): boolean {
   return pathname === "/explore";
 }
 
-export function isLabsActive(pathname: string): boolean {
-  return pathname === "/labs" || pathname.startsWith("/labs/");
+/** The Build page. `/labs` and `/strategies` redirect here, so they never match. */
+export function isBuildActive(pathname: string): boolean {
+  return pathname === "/build" || pathname.startsWith("/build/");
 }
 
 function onSettingsPage(pathname: string): boolean {
@@ -181,8 +183,8 @@ export function isRailEntryActive(id: string, pathname: string, search: string):
       return isDashboardActive(pathname);
     case "explore":
       return isExploreActive(pathname);
-    case "labs":
-      return isLabsActive(pathname);
+    case "build":
+      return isBuildActive(pathname);
     case "settings":
       return isSettingsActive(pathname);
     default: {

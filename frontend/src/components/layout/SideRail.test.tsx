@@ -120,15 +120,15 @@ describe("SideRail", () => {
     renderAt("/explore");
     await flush();
     expect(currentLabels()).toEqual(["Explore"]);
-    rerenderAt("/labs");
+    rerenderAt("/build");
     await flush();
-    expect(currentLabels()).toEqual(["Labs"]);
+    expect(currentLabels()).toEqual(["Build"]);
   });
 
-  it("lights Labs on /labs", async () => {
-    renderAt("/labs");
+  it("lights Build on /build", async () => {
+    renderAt("/build");
     await flush();
-    expect(currentLabels()).toEqual(["Labs"]);
+    expect(currentLabels()).toEqual(["Build"]);
   });
 
   it("lights Settings on a Settings page, whatever the tab, and marks the open tab in the panel", async () => {
@@ -155,7 +155,7 @@ describe("SideRail", () => {
     await flush();
     const nav = container.querySelector('nav[aria-label="Primary"]')!;
     const labels = [...nav.querySelectorAll("a span, button span")].map((el) => el.textContent);
-    expect(labels).toEqual(["Dashboard", "Explore", "Labs", "Settings"]);
+    expect(labels).toEqual(["Dashboard", "Explore", "Build", "Settings"]);
     expect(nav.textContent).not.toContain("More");
     expect(nav.querySelector('[aria-label*="otification"]')).toBeNull();
   });
@@ -167,7 +167,7 @@ describe("SideRail", () => {
     const order = [...nav.querySelectorAll("a, button")].map(
       (el) => el.getAttribute("aria-label") || el.textContent?.trim(),
     );
-    expect(order.slice(-5)).toEqual(["Dashboard", "Explore", "Labs", "Settings", "Algo Trader"]);
+    expect(order.slice(-5)).toEqual(["Dashboard", "Explore", "Build", "Settings", "Algo Trader"]);
   });
 
   it("shows Algo Trader's initials and opens the account menu", async () => {
@@ -488,13 +488,13 @@ describe("SideRail", () => {
     });
 
     it("lights only Settings while the panel is open, not the page behind it", async () => {
-      renderAt("/labs");
+      renderAt("/build");
       await flush();
-      expect(lit()).toEqual(["Labs"]);
+      expect(lit()).toEqual(["Build"]);
       await click(button("Settings"));
       expect(lit()).toEqual(["Settings"]);
       await click(button("Settings"));
-      expect(lit()).toEqual(["Labs"]);
+      expect(lit()).toEqual(["Build"]);
     });
 
     it("lights Settings on every Settings tab when closed", async () => {
@@ -545,7 +545,7 @@ describe("SideRail", () => {
     });
 
     it("clears the avatar's lit state after Logout", async () => {
-      renderAt("/labs");
+      renderAt("/build");
       await flush();
       const avatar = container.querySelector('button[aria-label="Algo Trader"]') as HTMLButtonElement;
       await click(avatar);
@@ -554,7 +554,7 @@ describe("SideRail", () => {
       ) as HTMLElement;
       await click(logoutItem);
       expect(avatar.className).not.toContain("ring-2");
-      expect(lit()).toEqual(["Labs"]);
+      expect(lit()).toEqual(["Build"]);
     });
   });
 });

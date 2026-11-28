@@ -138,7 +138,7 @@ describe("MobileTabBar", () => {
     expect(links).toEqual([
       ["Dashboard", "/"],
       ["Explore", "/explore"],
-      ["Labs", "/labs"],
+      ["Build", "/build"],
     ]);
     const buttons = Array.from(container.querySelectorAll("nav button")).map((b) =>
       b.getAttribute("aria-label"),

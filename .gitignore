@@ -8,7 +8,10 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-build/
+# Root only: setuptools' output. `build/` used to match any directory of that
+# name, which silently hid the app's own `frontend/src/pages/build` (the Build
+# page) from git.
+/build/
 develop-eggs/
 dist/
 downloads/

@@ -21,7 +21,7 @@ import {
   SETTINGS_GROUPS,
   isExploreActive,
   isDashboardActive,
-  isLabsActive,
+  isBuildActive,
   isRailEntryActive,
   isRailItemLit,
   isReportEntry,
@@ -38,9 +38,9 @@ describe("the nav", () => {
     expect(paths).not.toContain("/floor");
   });
 
-  it("has exactly Dashboard, Explore and Labs on the rail, and no More", () => {
-    expect(RAIL_TOP.map((item) => item.label)).toEqual(["Dashboard", "Explore", "Labs"]);
-    expect(RAIL_TOP.map((item) => item.to)).toEqual(["/", "/explore", "/labs"]);
+  it("has exactly Dashboard, Explore and Build on the rail, and no More", () => {
+    expect(RAIL_TOP.map((item) => item.label)).toEqual(["Dashboard", "Explore", "Build"]);
+    expect(RAIL_TOP.map((item) => item.to)).toEqual(["/", "/explore", "/build"]);
   });
 
   it("has the Settings panel in three groups, in this order", () => {
@@ -85,7 +85,7 @@ describe("active state", () => {
     expect(isDashboardActive("/")).toBe(true);
     expect(isDashboardActive("/hub")).toBe(false);
     expect(isDashboardActive("/agents/alpha")).toBe(false);
-    expect(isDashboardActive("/labs")).toBe(false);
+    expect(isDashboardActive("/build")).toBe(false);
   });
 
   it("lights Explore on /explore, not on the old Hub or the chat", () => {
@@ -97,10 +97,11 @@ describe("active state", () => {
     expect(isExploreActive("/bots")).toBe(false);
   });
 
-  it("lights Labs on /labs and below it", () => {
-    expect(isLabsActive("/labs")).toBe(true);
-    expect(isLabsActive("/labs/new")).toBe(true);
-    expect(isLabsActive("/laboratory")).toBe(false);
+  it("lights Build on /build and below it, and not on the old addresses", () => {
+    expect(isBuildActive("/build")).toBe(true);
+    expect(isBuildActive("/build/design")).toBe(true);
+    expect(isBuildActive("/labs")).toBe(false);
+    expect(isBuildActive("/builder")).toBe(false);
   });
 
   it("lights Settings on every Settings page, whatever the tab", () => {
@@ -157,7 +158,7 @@ describe("lit state with an overlay open", () => {
   it("lights only the opener, whatever the route", () => {
     expect(isRailItemLit("dashboard", "settings", "/", "")).toBe(false);
     expect(isRailItemLit("settings", "settings", "/", "")).toBe(true);
-    expect(isRailItemLit("labs", "settings", "/labs", "")).toBe(false);
+    expect(isRailItemLit("build", "settings", "/build", "")).toBe(false);
     expect(isRailItemLit("account", "account", "/", "")).toBe(true);
     expect(isRailItemLit("settings", "account", "/settings", "?tab=voice")).toBe(false);
     expect(isRailItemLit("explore", "account", "/explore", "")).toBe(false);

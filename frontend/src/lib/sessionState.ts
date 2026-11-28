@@ -83,6 +83,21 @@ export const ROUTINE_CONFIG_KEY_PREFIX = "routine_config:";
  */
 export const CHAT_DRAFT_KEY_PREFIX = "condor.chat.draft:";
 
+/**
+ * The Build page's draft (pages/build/draftStore): what one strategy or agent
+ * is, how far through the five stages it got, and the drafts set aside under
+ * "My drafts". Three names, one record each.
+ *
+ * CLEARED, for the reason `CHAT_DRAFT_KEY_PREFIX` is: it is the outgoing user's
+ * unfinished work, and it would otherwise open under the next person's name.
+ * They are written to `sessionStorage` rather than `localStorage` — the demo
+ * only has to survive a refresh, not a browser restart — so logout does not
+ * reach them; the tab closing does.
+ */
+export const BUILD_DRAFT_KEY = "condor.build.draft.v1";
+export const BUILD_DRAFTS_KEY = "condor.build.drafts.v1";
+export const BUILD_ORIGIN_KEY = "condor.build.origin.v1";
+
 // ── KEPT keys ──
 //
 // Declared here and deliberately absent from SESSION_KEYS below, each with the

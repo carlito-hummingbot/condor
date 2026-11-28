@@ -26,7 +26,7 @@ import { NotFound } from "@/pages/NotFound";
 import { Portfolio } from "@/pages/Portfolio";
 import { Routines } from "@/pages/Routines";
 import { Settings } from "@/pages/Settings";
-import { Labs } from "@/pages/Labs";
+import { Build } from "@/pages/build/Build";
 
 /**
  * Sends a visitor without a session to the login, and remembers where they
@@ -152,11 +152,14 @@ export default function App() {
                   element={<Navigate to="/bots?population=terminated&group=bot" replace />}
                 />
                 <Route path="/routines" element={<Routines />} />
-                {/* Labs: a placeholder page for now. `/strategies` was this page's
-                    first address, so old links keep working. `/?panel=loops`
+                {/* Build: one bot's five stages (showcase only; the rail PRs
+                    still call the door Labs). `/labs` was the placeholder's
+                    address and `/strategies` the page before that, so both
+                    redirect here and old links keep working. `/?panel=loops`
                     still opens the strategies list inside the chat. */}
-                <Route path="/labs" element={<Labs />} />
-                <Route path="/strategies" element={<Navigate to="/labs" replace />} />
+                <Route path="/build" element={<Build />} />
+                <Route path="/labs" element={<Navigate to="/build" replace />} />
+                <Route path="/strategies" element={<Navigate to="/build" replace />} />
                 <Route path="/reports" element={<Navigate to="/routines?tab=reports" replace />} />
                 {/* `/agents` has pointed at the home since the fleet grid
                     was deleted, and the home is the conversation with every
