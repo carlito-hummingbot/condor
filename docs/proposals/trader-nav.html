@@ -16,7 +16,7 @@
 
 <h1>Simplify Navigation to Essentials</h1>
 <p class="meta">Status: <strong>in review</strong> &middot; No PR of its own: the rail PRs #3, #4, #6 and #7 into <code>ui-redesign</code> already build it (see <a href="side-rail.html">the side-rail proposal</a>) &middot; Last updated: 2026-11-28</p>
-<p class="lede">Cut the main navigation from seven page links to three doors, each named after something a trader does: <strong>Dashboard</strong> to check, <strong>Agents</strong> to learn, <strong>Labs</strong> to build. The look stays the same. What changes is what the user sees first and what each door is for.</p>
+<p class="lede">Cut the main navigation from seven page links to three doors, each named after something a trader does: <strong>Dashboard</strong> to check, <strong>Explore</strong> to learn and try, <strong>Labs</strong> to build. The look stays the same. What changes is what the user sees first and what each door is for.</p>
 
 <h2 id="why">Why</h2>
 <p>Today's navigation items are not coherent or intuitive about what to do first. First-time users end up clicking everywhere to find out what each button is for.</p>
@@ -31,13 +31,13 @@
   <thead><tr><th>Door</th><th>The trader's job</th><th>What it holds</th><th>Today</th></tr></thead>
   <tbody>
     <tr><td><strong>Dashboard</strong></td><td>Check</td><td>Portfolio, Bots and Markets in one place. The production view: what is running and how it is doing.</td><td class="s tweak">Opens the chat home. The stats page is the next proposal.</td></tr>
-    <tr><td><strong>Agents</strong></td><td>Learn</td><td>Find and learn about community agents, like a marketplace. An agent that looks useful is imported into Labs to test, not straight into production.</td><td class="s tweak">Opens the existing Agent Hub (<code>/hub</code>). Import into Labs is not built.</td></tr>
+    <tr><td><strong>Explore</strong></td><td>Learn and try</td><td>Community strategies and agents, each with a video: what it does and whether it is worth importing. One that looks useful is imported into Labs to test, not straight into production.</td><td class="s tweak">Opens the existing Agent Hub at <code>/hub</code>; the Explore page itself is the separate <a href="explore.html">Explore proposal</a>. Import into Labs is not built.</td></tr>
     <tr><td><strong>Labs</strong></td><td>Build</td><td>Design agents, Backtest, Test Run and Diagnose. The development view: where agents are made and proven before they go live.</td><td class="s todo">Placeholder page. The four tools still have to be built.</td></tr>
   </tbody>
 </table>
 <h2 id="after">After</h2>
 <div class="rail-demo">
-  <figure><img src="assets/trader-nav-rail.png" alt="Close-up of the left rail in the dark theme: the Condor logo, then Dashboard (lit), Agents and Labs, each with its name under the icon"></figure>
+  <figure><img src="assets/trader-nav-rail.png" alt="Close-up of the left rail in the dark theme: the Condor logo, then Dashboard (lit), Explore with a compass and Labs, each with its name under the icon"></figure>
 </div>
 
 <h2 id="rollout">Rollout</h2>
@@ -45,22 +45,23 @@
 <table>
   <thead><tr><th>PR</th><th>What it gives this proposal</th><th>Status</th><th>Still missing</th></tr></thead>
   <tbody>
-    <tr><td>#3</td><td>The rail: Dashboard, Agents, Labs, Settings; the top bar reduced to Local, Gateway status and Switch Mode</td><td class="s ok">Built, tested</td><td>Dashboard still opens the chat home</td></tr>
+    <tr><td>#3</td><td>The rail: Dashboard, Explore, Labs, Settings; the top bar reduced to Local, Gateway status and Switch Mode</td><td class="s ok">Built, tested</td><td>Dashboard still opens the chat home</td></tr>
     <tr><td>#4</td><td>The account menu: name, role, Logout</td><td class="s ok">Built, tested</td><td>&mdash;</td></tr>
-    <tr><td>#6</td><td>The same doors as a bottom tab bar on phones (Dashboard, Agents, Labs, Account)</td><td class="s ok">Built, tested</td><td>&mdash;</td></tr>
-    <tr><td>#7</td><td>The Labs door and its page</td><td class="s todo">Placeholder only</td><td>Design, Backtest, Test Run, Diagnose; import from Agents</td></tr>
+    <tr><td>#6</td><td>The same doors as a bottom tab bar on phones (Dashboard, Explore, Labs, Account)</td><td class="s ok">Built, tested</td><td>&mdash;</td></tr>
+    <tr><td>#7</td><td>The Labs door and its page</td><td class="s todo">Placeholder only</td><td>Design, Backtest, Test Run, Diagnose; import from Explore</td></tr>
   </tbody>
 </table>
-<p>The Agents door opens the Agent Hub that already exists. Making it a real marketplace, and the import into Labs, are later work.</p>
+<p>The Explore door opens the Agent Hub that already exists, at <code>/hub</code>. The Explore page (tabs, videos, the Source filter) is a separate proposal, and the import into Labs is later work.</p>
 
 <h2 id="decision">Decision requested</h2>
-<div class="callout"><p>Approve Dashboard, Agents and Labs as the three main navigation items. No new PR is needed: it is built by the rail PRs #3, #4, #6 and #7.</p></div>
+<div class="callout"><p>Approve Dashboard, Explore and Labs as the three main navigation items. No new PR is needed: it is built by the rail PRs #3, #4, #6 and #7.</p></div>
 
 <h2 id="log">Refinement log</h2>
 <p>Newest first. Add a row for every change that comes out of review.</p>
 <table>
   <thead><tr><th>Date</th><th>Change</th><th>Reason / source</th><th>PR</th></tr></thead>
   <tbody>
+    <tr><td>2026-11-28</td><td>The middle door is <strong>Explore</strong> with a compass icon, not Agents: <strong>Dashboard to check, Explore to learn and try, Labs to build</strong>. The route still opens the Hub at <code>/hub</code>; the Explore page is a separate proposal. The rail picture is retaken with the compass; the Settings row called Agents is unchanged</td><td>User approved the rename; rail PRs #3 to #25 are pushed with it</td><td>#3, #4, #6, #7, #25</td></tr>
     <tr><td>2026-11-28</td><td>The After close-up is retaken and now ends at Labs; the text that listed a fourth rail item is removed from the picture description, the rollout and the table</td><td>User review; PR #3 at <code>b5a1bd0d</code></td><td>#13</td></tr>
     <tr><td>2026-11-27</td><td>Revised after review: the page is renamed "Simplify Navigation to Essentials"; the Why is now two short paragraphs; the page is trimmed to Why, Before, Proposal, After, Rollout and Decision; Before and After show only their images; the part of the Proposal about what moves out of the main three is removed</td><td>User review of the proposal</td><td>#13</td></tr>
     <tr><td>2026-11-27</td><td>Linked to the Dashboard proposal page (<code>dashboard-home.html</code>) from a "Next proposal" line</td><td>The Dashboard proposal was written</td><td>#13</td></tr>
