@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Condor proposal: Build — from idea to live bot</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main>
+
+<!-- EDITING: plain HTML, one <section> per heading. See README.md in this folder.
+     Add a row to the "Refinement log" for every change. Keep screenshots in assets/. -->
+
+<nav class="top"><a href="index.html">All proposals</a></nav>
+
+<h1>Build: From Idea to Live Bot</h1>
+<p class="meta">Status: <strong>in review, built in the showcase only</strong> &middot; Shell and the five stages exist as patches; the rail rename round covers the door &middot; Last updated: 2026-11-28</p>
+<p class="lede">The third door stops being a shelf of four loose tools. It becomes one path a trader walks with a single bot: design it, backtest it, dry-run it, send it live, then improve it. Every stage hands a finished draft to the next, and every stage answers one question.</p>
+
+<h2 id="why">Why</h2>
+<p>Today the third door is called Labs and it holds four tools: Design, Backtest, Test Run and Diagnose. Nothing says which one comes first, what "done" looks like, or what a person who has an idea is supposed to do with it. A trader arrives with "I want to quote this pair", sees a toolbox, and has to invent the order themselves.</p>
+<p>Turning an idea into a live bot is one journey, not four tools: decide what to build, test it on history, watch it on live data without money, send it live with limits, then make it better from what actually happened. Each of those steps answers a single question and produces a finished draft for the next one, so the page should read as one guided path with five stages, and the stage you are in should be obvious from the moment the page opens.</p>
+<p>The name should be a verb, next to Explore. Explore is for finding something to run; Build is for making it live. Build also names what the page produces, a bot that trades, rather than the tools used inside it.</p>
+
+<h2 id="stages">The five stages</h2>
+<p>Five stages, in this order: <strong>Design</strong> (what are we building?), <strong>Backtest</strong> (did it work on this data, after costs?), <strong>Dry Run</strong> (does it still work on live data with no orders sent?), <strong>Deploy</strong> (what are the limits, and is it really meant to go live?), <strong>Improve</strong> (what did it do, and what should change?). The numbered stepper carries the stage, and the tab row under it does the same job with a shorter label; both are shown here on purpose (see the notes).</p>
+<table>
+  <thead><tr><th>Stage</th><th>The question it answers</th><th>What you leave with</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Design</strong></td><td>What are we building?</td><td>A draft: type, venue, pair, size, limits, your own words for how it works, a title, and the assistant's notes</td></tr>
+    <tr><td><strong>Backtest</strong></td><td>Did it work on this data, after costs?</td><td>A run you can read: return, drawdown, win rate, Sharpe, trades, fees, and the equity line against buy-and-hold</td></tr>
+    <tr><td><strong>Dry Run</strong></td><td>Does it still work on live data with no orders sent?</td><td>A paper session beside the backtest, the fills it would have taken, and a readiness list</td></tr>
+    <tr><td><strong>Deploy</strong></td><td>What are the limits, and is it really meant to go live?</td><td>Pre-flight checks, capital and stops, a typed confirmation, and the live state</td></tr>
+    <tr><td><strong>Improve</strong></td><td>What did it do, and what should change?</td><td>Live against the predictions, health, suggestions and versions — and a v2 draft back at Design</td></tr>
+  </tbody>
+</table>
+
+<h3>1. Design — the guide, then the assistant</h3>
+<p><strong>Flow.</strong> Nine answers, then a conversation. The form is short on purpose: each answer is one click or one field, and the right-hand card fills in as you go, so the draft is visible the whole time. <strong>Start designing</strong> asks the assistant to reflect the answers back in one paragraph and to ask the next question that matters; from there the design is refined in chat until the trader marks it done. The guide stays one click away (<em>Edit guide</em>), so a wrong answer is never a dead end.</p>
+<figure class="wide"><img src="assets/build-1-design.png" alt="The Build page, Design stage: the numbered stepper with Design active and the tab row under it, the Design guide form with bot type, strategy or agent type chips, target exchange and market pair, and a Your draft card on the right listing what is still needed"><figcaption>The Design guide: nine answers, with the draft filling in beside them and the list of what is still missing.</figcaption></figure>
+
+<p><strong>The fields.</strong> The same ten answers appear in the draft contract, the Design guide and the Backtest and Deploy summaries, so nothing has to be re-entered later.</p>
+<table>
+  <thead><tr><th>Field</th><th>Choices or form</th><th>Why it is asked</th></tr></thead>
+  <tbody>
+    <tr><td>Bot type</td><td>Strategy or Agent</td><td>Sets which list and which later stages apply; a strategy is rule-based, an agent is AI-driven</td></tr>
+    <tr><td>Strategy or agent type</td><td>Market Making, Arbitrage, Funding Rate, Cross Exchange MM, Directional, LP</td><td>Picks the template and the risk profile the assistant starts from</td></tr>
+    <tr><td>Target exchange</td><td>Binance, Bybit, Gate, … (sample list)</td><td>The venue the bot will trade; it decides the pairs and the connectors</td></tr>
+    <tr><td>Market type</td><td>Spot, Perps, LP</td><td>Changes the order types, the fees and what a hedge means</td></tr>
+    <tr><td>Market pair</td><td>BTC-USDT, ETH-USDT, … (follows the venue)</td><td>The one market this bot trades</td></tr>
+    <tr><td>Market quantity</td><td>1, 2, 10 …</td><td>How many markets the bot may hold at once</td></tr>
+    <tr><td>Max positions</td><td>1, 3, 5 …</td><td>The hard cap on open positions, carried into the Deploy limits</td></tr>
+    <tr><td>Starting point</td><td>Import, or start from scratch</td><td>Import opens the Explore catalogue; scratch starts from the type template</td></tr>
+    <tr><td>How it works</td><td>Free text, in your words</td><td>The assistant's brief, and the only field no template can fill in</td></tr>
+    <tr><td>Desired title</td><td>Free text</td><td>Names the bot on the Dashboard, in Improve, and in the typed Deploy confirmation</td></tr>
+  </tbody>
+</table>
+
+<figure class="wide"><img src="assets/build-2-design-chat.png" alt="The Design stage with the assistant open: the draft as a row of chips, Edit guide on the right, the chat with a sample assistant reply and a typed reply, and a Design notes panel holding an accepted suggestion"><figcaption>Design with the assistant: the draft as chips, canned sample replies, and accepted suggestions written into Design notes.</figcaption></figure>
+
+<h3>2. Backtest — one run, one question</h3>
+<p><strong>Flow.</strong> Confirm what is being tested, run it, read the verdict. The run is stated in one line (range, interval, starting capital) so a result can never be mistaken for a different setup. The results lead with the six figures a trader judges first — net return, max drawdown, win rate, Sharpe, trades, fees — then the equity line against buy-and-hold, because a strategy that loses to holding the coin has not earned a deploy.</p>
+<figure class="wide"><img src="assets/build-3-backtest.png" alt="The Backtest stage: the draft line as chips, a results header for 90 days of 5 minute candles with 10,000 dollars, six KPI cards including net return 18.4 percent and max drawdown 7.2 percent, and an equity chart against buy-and-hold"><figcaption>Backtest: one run, six figures, and the equity line against buy-and-hold. Sample results.</figcaption></figure>
+
+<h3>3. Dry Run — the backtest meets a clock</h3>
+<p><strong>Flow.</strong> Start a paper session against the live book, then compare it with the backtest side by side. Nothing is sent to an exchange. The table deliberately compares shape rather than size, since an hour of paper cannot earn ninety days of return, and it says so under each row. A readiness list below decides whether Deploy should be opened at all.</p>
+<figure class="wide"><img src="assets/build-4-dry-run.png" alt="The Dry Run stage: a Paper beside backtest table comparing return, drawdown, win rate, Sharpe and fills with the difference column, a fills table, and a Ready to go live checklist"><figcaption>Dry Run: the paper session beside the backtest, with a readiness list for going live. Sample results.</figcaption></figure>
+
+<h3>4. Deploy — pre-flight, limits, then one confirmation</h3>
+<p><strong>Flow.</strong> A pre-flight list, a risk and capital form, a review card, then a typed confirmation. Deploy is the only stage that can move money, so it is the only stage with a second gate: the operator types the bot title or the word DEPLOY, and the dialog repeats any check that is still open before it will continue. The picture below is the state after that gate: the bot is live.</p>
+<figure class="wide"><img src="assets/build-5-deploy.png" alt="The Deploy stage after deploying: the stepper with the first three stages ticked and Deploy active, then a card reading Your bot is live, paused, with the deployed venue, capital, a See it on the Dashboard button and a Go to Improve button"><figcaption>Deploy, after the typed confirmation: live and paused, with the two ways forward. Sample data: nothing was deployed.</figcaption></figure>
+
+<h3>5. Improve — read, suggest, iterate</h3>
+<p><strong>Flow.</strong> Compare, diagnose, decide, version. Live results are read against the backtest and the dry run with signed deltas, so a trader can see where reality beat or missed the prediction. Health cards cover the operational questions (fill rate, latency, errors, uptime, inventory skew). Each suggestion carries its reason, expected impact and risk, and can be accepted, dismissed or sent back to Backtest. <strong>Create v2 draft</strong> keeps v1 live and opens Design with the flags reset.</p>
+<figure class="wide"><img src="assets/build-6-improve.png" alt="The Improve stage: a Live badge and Pause bot button, a Live against the predictions chart and table with live, backtest and dry run columns and signed differences, and health cards below"><figcaption>Improve: live against the predictions, with signed deltas and the health of the running bot. Sample data.</figcaption></figure>
+
+<figure class="phone"><div class="phone-frame x2"><img src="assets/build-7-phone-design.png" alt="The Build page at 390 pixels wide: the title and sample data badge, Step 1 of 5 Design, a horizontally scrolling tab row, the Design guide stacked in one column, and the phone bar with Dashboard, Explore, Build and Account, Build lit"></div><figcaption>At 390 px: one column, the stage in words as well as dots, the tab row scrolls sideways, and the phone bar reads Dashboard, Explore, Build, Account.</figcaption></figure>
+
+<h2 id="continuity">Continuity: one bot, many doors</h2>
+<p>A bot is not built in one sitting, and it does not belong to one page. A trader meets it in Explore, watches it on the Dashboard, and comes back to it a week later. So the draft is carried between pages, and each entry point says where the bot came from.</p>
+<figure class="wide"><img src="assets/build-8-explore-improve.png" alt="The Explore Agents tab with the Botcamp Hackathon source filter active and agent cards, each with a Use as starting point button and an Improve this button"><figcaption>Every Explore card carries two ways in: <em>Use as starting point</em> for a copy, and <em>Improve this</em> for a v2.</figcaption></figure>
+<table>
+  <thead><tr><th>From</th><th>Opens</th><th>What is prefilled</th></tr></thead>
+  <tbody>
+    <tr><td>Explore card → <em>Use as starting point</em></td><td>Design guide</td><td>The item's fields, title "&lt;name&gt; (copy)", starting point Import</td></tr>
+    <tr><td>Explore card → <em>Improve this</em></td><td>Design chat</td><td>The same fields, title "&lt;name&gt; v2", chat open with the guide behind <em>Edit guide</em></td></tr>
+    <tr><td>Dashboard → Live Agents → <em>Improve</em></td><td>Improve</td><td>The live bot as v1, with the earlier stages marked done and deployed</td></tr>
+    <tr><td>Design → <em>Import</em> chooser</td><td>Design</td><td>The same catalogue of 14 Explore agents</td></tr>
+    <tr><td>Improve → <em>Create v2 draft</em></td><td>Design</td><td>Title "… v2", all four stage flags reset; v1 stays live</td></tr>
+    <tr><td>Backtest → <em>Refine the design</em></td><td>Design</td><td>The draft unchanged</td></tr>
+    <tr><td>Deploy success</td><td>Dashboard or Improve</td><td>— (the bot is already live; both doors are offered)</td></tr>
+    <tr><td>Improve → <em>Back to Explore</em></td><td>Explore</td><td>— (the way back to the catalogue)</td></tr>
+  </tbody>
+</table>
+<figure class="wide"><img src="assets/build-9-improve-from-explore.png" alt="The Build page opened from Explore with a dismissible banner reading Based on Churn, Explore, sample, with a Change link; the draft row shows Agent, Market Making, Binance, Spot, USD1-USDT, Import and the title Churn v2, and the assistant chat is open"><figcaption>Improve this: Design opens with the chat ready and a dismissible banner naming where the bot came from.</figcaption></figure>
+<p>The draft survives a refresh, and the header says so. Opening Build with work in progress offers <em>Continue where you left off</em> with Resume, Start new or Discard, and a link that meets an existing draft asks whether to replace it or keep both. <em>My drafts</em> keeps the last few.</p>
+<figure class="wide"><img src="assets/build-10-resume.png" alt="The Build page with a breadcrumb Explore then Based on Churn, a Continue where you left off card for Churn (copy) at the Design stage with Resume, Start new and Discard, the banner, and the Design guide filled in for an Agent"><figcaption>Coming back: the resume card, the breadcrumb back to Explore, and the draft exactly as it was left.</figcaption></figure>
+<p><strong>Stage guards are gentle.</strong> Opening Deploy before a backtest or a dry run shows a notice with <em>Go to Backtest</em> and <em>Continue anyway</em>. Nothing is locked, because the operator may know what they are doing — but nothing is silent either.</p>
+
+<h2 id="name">The name</h2>
+<p>Four candidates, in the order the team raised them. The door is the same in all four; only the word changes.</p>
+<table>
+  <thead><tr><th>Name</th><th>For</th><th>Against</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Build</strong> <span class="s ok">recommended</span></td><td>A verb next to Explore; names the outcome, not the tools; works on the rail at 10 px and in a sentence ("Build a bot")</td><td>Generic on its own; needs the page to carry the meaning</td></tr>
+    <tr><td>Studio</td><td>Suggests a workbench and craft; sounds finished and premium</td><td>Vague about trading; reads like a media tool</td></tr>
+    <tr><td>Workshop</td><td>Honest about it being a place where things are made and tested</td><td>Long on a narrow rail, and a little hobbyist for real capital</td></tr>
+    <tr><td>Lab / Labs</td><td>What it is called today; familiar to anyone already using it</td><td>A lab is where you experiment, not where you put money to work; the fifth stage (Improve) is not a lab at all</td></tr>
+  </tbody>
+</table>
+<div class="callout"><p>Approve <strong>Build</strong> as the name of the third door, and the five-stage path (Design, Backtest, Dry Run, Deploy, Improve) with one picture per stage. Two things are for review only: the two tab rows, and the wording of the name itself. The page is sample data throughout: no bot is created, backtested or deployed.</p></div>
+
+<h2 id="notes">Notes</h2>
+<ol>
+  <li><strong>Sample data throughout.</strong> Every figure, session, suggestion and check is sample. Nothing calls the API, no key is read and no order is sent; the Design assistant's replies are canned text.</li>
+  <li><strong>The layout and design are not final.</strong> They will be redesigned by Sofi.</li>
+  <li><strong>The rename is showcase-only for now.</strong> The rail PRs still say Labs; the rename to Build is one round of work across the rail, the phone bar and the pictures, and it lands after approval.</li>
+  <li><strong>Two rows of tabs are intentional for this review.</strong> The numbered stepper carries the order and the done ticks; the tab row under it carries the labels at a readable size. They do the same job, so the real designer may merge them into one; both are shown so the team can compare.</li>
+  <li><strong>Four tools become five stages.</strong> The placeholder text on the rail PRs names Design, Backtest, Test Run and Diagnose. Diagnose folds into Improve, and Deploy and Dry Run become stages of their own; the PR placeholder text is to be updated after approval.</li>
+  <li><strong>One copy detail to settle.</strong> The guide's headline says "nine answers" while the form asks ten (market quantity and max positions are asked separately). Say which count to use.</li>
+</ol>
+
+<h2 id="later">Functionality to build later (after the UI is approved)</h2>
+<ul>
+  <li>The Design assistant as a real chat (it is canned sample text today), writing accepted suggestions into the draft.</li>
+  <li>A real backtest engine over historical candles, with fees, slippage and a run you can duplicate with one change.</li>
+  <li>A real dry run against the live book, with fills, latency and a session that ends itself.</li>
+  <li>A real deploy: key checks against the venue, balance reads, limit enforcement and notifications.</li>
+  <li>Improve reading real session history instead of sample numbers, plus the Diagnose tools folded in.</li>
+  <li>Drafts stored per user on the server rather than in the browser session, so they follow the account.</li>
+  <li>Import from Explore into a real catalogue, and the 14 Botcamp agents runnable rather than described.</li>
+  <li>Version history with a diff between v1 and v2, and one-click rollback to a version that was live.</li>
+</ul>
+
+<h2 id="rollout">Rollout</h2>
+<table>
+  <thead><tr><th>Piece</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td>The Build page, the stepper, the draft store and the continuity between pages</td><td class="s tweak">Built in the showcase</td></tr>
+    <tr><td>The five stages (Design, Backtest, Dry Run, Deploy, Improve)</td><td class="s tweak">Built in the showcase</td></tr>
+    <tr><td>The third door renamed to Build</td><td class="s tweak">Showcase only; rail PRs still say Labs</td></tr>
+    <tr><td>This proposal page</td><td class="s tweak">In review, PR #13</td></tr>
+  </tbody>
+</table>
+
+<h2 id="log">Refinement log</h2>
+<p>Newest first. Add a row for every change that comes out of review.</p>
+<table>
+  <thead><tr><th>Date</th><th>Change</th><th>Reason / source</th><th>PR</th></tr></thead>
+  <tbody>
+    <tr><td>2026-11-28</td><td>Page written: the third door becomes Build with five stages instead of four tools, one picture per stage, the Design guide fields as a table, the continuity table (Explore, Dashboard, Import, v2, Refine, Deploy success, Back to Explore) with the resume card and the gentle guards, the four name options with a recommendation, the notes and the later list</td><td>User: rename the third door, five stages with a recommended flow and form, no real functionality except the navigation. Pictures from the integrated showcase build</td><td>#13</td></tr>
+  </tbody>
+</table>
+
+</main>
+</body>
+</html>

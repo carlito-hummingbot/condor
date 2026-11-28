@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Condor proposal: Dashboard as the default home page</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main>
+
+<!-- EDITING: plain HTML, one <section> per heading. See README.md in this folder.
+     Add a row to the "Refinement log" for every change. Keep screenshots in assets/. -->
+
+<nav class="top"><a href="index.html">All proposals</a></nav>
+
+<h1>Dashboard as the Default Home Page</h1>
+<p class="meta">Status: <strong>in review, not built</strong> &middot; No code PR exists yet: this page only proposes &middot; Last updated: 2026-11-28</p>
+<p class="lede">Open Condor on a page made for a trader's routine: how the portfolio changed, what the bots are doing, what the market is doing, the top news. Today the home page is a chat with agents. The chat stays, one step further out.</p>
+
+<h2 id="why">Why</h2>
+<p>What a trader looks at most of the time is how much the portfolio has changed, what the status of the bots is, what is happening in the market, the top news and a few BTC statistics. The team's estimate is that this is about 99% of the time, and that chatting with an agent to ask a question is the other 1%. This is an estimate, not a measurement: Condor has no usage analytics yet.</p>
+<p>A chat page does not match a trader's normal routine at any time of day. It can also be intimidating for beginners, who may never even click the Portfolio tab. The product owner felt this as a trader using Condor, and still does.</p>
+<p>Today's home page is agent-centric, closer to a developer's tool. It would serve traders better if it were Portfolio, Market and Trader centric, with the chat one step away.</p>
+
+<h2 id="before">Before</h2>
+<p><strong>What is missing for a trader:</strong> no balance, no profit or loss, nothing about the market, no news. All of it sits behind other tabs or behind a question typed into the chat.</p>
+<figure class="wide"><img src="assets/before-topnav-desktop.png" alt="Condor home on the ui-redesign build: the Agents page with the chat list on the left, an empty Ask Condor message box in the middle and a tasks panel on the right"></figure>
+
+<h2 id="after">After</h2>
+<p>The home page shows the trader's funds: balances and P&amp;L status, including daily and hourly. This is what most traders care about above everything else. Then it shows the BTC chart and the top news, which directly affect those funds. Then it shows the status of the trader's live agents.</p>
+<figure class="wide"><a href="assets/dashboard-home-after.png"><img src="assets/dashboard-home-after.png" alt="Mock of the Condor Dashboard in the dark theme with sample data: the title Condor Dashboard with a welcome greeting, four cards (Combined Funds, Combined P&amp;L, BTC Meter, BTC Price Timeframes), Daily and Hourly P&amp;L bar charts, a BTC hourly chart, a Top News card with five links, and below them three Live Agents cards (Stable Churn, GateForum and JEV), each with P&amp;L, realized and unrealized, pair, filled orders, volume, when its agent started and its total runtime"></a></figure>
+<p class="sources">Note: Image above is a mock with sample data.</p>
+
+<h2 id="notes">Notes</h2>
+<ol>
+  <li><strong>The contents are for the team to fine-tune and decide.</strong> Suggestions are welcome.</li>
+  <li><strong>The layout and design are not final.</strong> They will be redesigned by Sofi.</li>
+</ol>
+
+<h2 id="rollout">Rollout</h2>
+<p><strong>Not built yet. There is no code PR for this proposal.</strong> This page only proposes. If the direction is approved, the work would be:</p>
+<table>
+  <thead><tr><th>Piece</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td>A Dashboard page, and <code>/</code> opening it instead of the chat home</td><td class="s todo">Not built</td></tr>
+    <tr><td>Data for funds, profit and loss, live agents and BTC price</td><td class="s todo">Not built, data to decide</td></tr>
+    <tr><td>BTC Meter and Top News data</td><td class="s todo">Not built, data to decide</td></tr>
+    <tr><td>A way into the chat from the Dashboard</td><td class="s todo">Not built, to decide</td></tr>
+    <tr><td>Empty state for a new user, and setup ending on the Dashboard</td><td class="s todo">Not built</td></tr>
+  </tbody>
+</table>
+
+<h2 id="decision">Decision requested</h2>
+<div class="callout"><p>Approve the direction: the Dashboard, not the chat, becomes the default home page, with its contents decided by the team and its design by Sofi. Nothing is built, so no PR is waiting.</p></div>
+
+<h2 id="log">Refinement log</h2>
+<p>Newest first. Add a row for every change that comes out of review.</p>
+<table>
+  <thead><tr><th>Date</th><th>Change</th><th>Reason / source</th><th>PR</th></tr></thead>
+  <tbody>
+    <tr><td>2026-11-28</td><td>The After picture is retaken on the renamed rail (Dashboard, Explore with a compass, Labs, then Settings and the avatar); the page content is unchanged, including the Live Agents rows</td><td>The second door is Explore (user approved the rename); the picture is taken on the rail stack tip <code>095f382c</code></td><td>#13</td></tr>
+    <tr><td>2026-11-28</td><td>The Live Agents cards gain two rows after Volume: <strong>Agent Started</strong> (<code>25-Nov-26 at 12:55 pm</code>) and <strong>Total Runtime</strong> (<code>3D 2H 30Mins</code>), with a different value for each card (GateForum <code>26-Nov-26 at 9:40 am</code> / <code>2D 5H 45Mins</code>; JEV <code>28-Nov-26 at 12:55 pm</code> / <code>2H 30Mins</code>); the mock's sample "now" is 28-Nov-26 at 3:25 PM, which the runtimes add up to; the picture is retaken on the current rail build at 1280 by 1400 at 2x (2560 by 2800)</td><td>User request. Sample data only: Condor does not report an agent's start time or runtime yet</td><td>#13</td></tr>
+    <tr><td>2026-11-28</td><td>The After picture is retaken on the updated left rail (Dashboard, Explore, Labs, then Settings and the avatar); the page content is the same</td><td>User review; PR #3 at <code>b5a1bd0d</code></td><td>#13</td></tr>
+    <tr><td>2026-11-27</td><td>Revised after review: the Why is now three short paragraphs; the page is trimmed to Why, Before, After, Notes, Rollout and Decision; the Before keeps only what is missing for a trader and has no caption; the After text now explains what the page is for instead of describing the picture, and its note is shortened; the table under the picture is removed; the picture gains a "Live Agents" row of three cards (Stable Churn, GateForum, JEV) with sample data, and is retaken at 1280 by 1300 at 2x (2560 by 2600); the mock source is updated to match</td><td>User review of the proposal</td><td>#13</td></tr>
+    <tr><td>2026-11-27</td><td>First version: reasons for the change, the current Agents home as "Before", a mock Dashboard with sample data on the real rail and top bar as "After" (the mock is kept in <code>assets/dashboard-mock.html</code>), notes, and a statement that nothing is built</td><td>User request for a proposal on the Dashboard as the default home page. The reference pictures the user mentioned did not arrive, so the layout followed the written list</td><td>#13</td></tr>
+  </tbody>
+</table>
+
+</main>
+</body>
+</html>
