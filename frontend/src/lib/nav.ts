@@ -65,14 +65,6 @@ export interface NavEntry {
   label: string;
 }
 
-/**
- * Where the avatar popup's "Run setup again" row goes: the onboarding wizard's
- * own address. The wizard lives in the onboarding PRs, not this one, so this
- * branch only names the route; until they merge, `/welcome` is the ordinary
- * not-found page.
- */
-export const RUN_SETUP_PATH = "/welcome";
-
 /** Rail, top group. The logo is not an entry: it is the brand, and it never lights. */
 export const RAIL_TOP: readonly NavEntry[] = [
   { id: "dashboard", to: "/", icon: LayoutDashboard, label: "Dashboard" },
@@ -137,10 +129,6 @@ export const SETTINGS_ENTRIES: readonly NavEntry[] = SETTINGS_GROUPS.flat().filt
  * time: the Settings panel and (PR #4) the avatar popup, which adds "account".
  * The rail keeps this one value, so every open overlay has the same lit-state
  * rule (`isRailItemLit`).
- *
- * The popup's rows are user functions only — name, role, Account, Run setup
- * again, Logout — and "Run setup again" is the one that leaves the page
- * (`RUN_SETUP_PATH`).
  */
 export type RailOverlayId = "settings" | "account";
 
