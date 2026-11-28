@@ -59,20 +59,16 @@ async function click(el: Element | null | undefined) {
 }
 
 const tabs = () => [...container.querySelectorAll('[role="tab"]')] as HTMLButtonElement[];
+/** The number in "1 Design" is the stage's place in the lifecycle, not its name. */
 const tabNamed = (name: string) =>
-  tabs().find((t) => t.textContent?.trim() === name) as HTMLButtonElement;
+  tabs().find((t) => t.textContent?.replace(/^\d+\s*/, "").trim() === name) as HTMLButtonElement;
 const where = () => container.querySelector('[data-testid="where"]')?.textContent ?? "";
 const text = () => container.textContent ?? "";
 const button = (name: RegExp | string) =>
   [...container.querySelectorAll("button")].find((b) =>
     typeof name === "string" ? b.textContent?.trim() === name : name.test(b.textContent ?? ""),
   ) as HTMLButtonElement | undefined;
-/** The stepper's five items, top to bottom. */
-const steps = () =>
-  [...container.querySelectorAll('ol[aria-label="Build progress"] button')].map((b) => ({
-    label: b.textContent?.replace(/[✓1-5]/g, "").trim(),
-    active: b.getAttribute("aria-current") === "step",
-  }));
+
 
 beforeEach(() => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -94,11 +90,11 @@ describe("Build shell", () => {
     await flush();
 
     expect(tabs().map((t) => t.textContent?.trim())).toEqual([
-      "Design",
-      "Backtest",
-      "Dry Run",
-      "Deploy",
-      "Improve",
+      "1 Design",
+      "2 Backtest",
+      "3 Dry Run",
+      "4 Deploy",
+      "5 Improve",
     ]);
     expect(tabNamed("Design").getAttribute("aria-selected")).toBe("true");
     expect(text()).toContain("Sample data");
@@ -141,7 +137,7 @@ describe("Build shell", () => {
     expect(where()).toBe("/build?stage=design");
   });
 
-  it("shows the stepper's done/open states from the draft's flags, and still lets you jump", async () => {
+  it("draws one bar only: the numbered stages, with no second stepper", async () => {
     sessionStorage.setItem(
       "condor.build.draft.v1",
       JSON.stringify({ ...emptyDraft(), title: "Churn v2", designDone: true, backtestDone: true }),
@@ -149,15 +145,10 @@ describe("Build shell", () => {
     renderAt("/build?stage=dry-run");
     await flush();
 
-    expect(steps().map((s) => s.label)).toEqual(["Design", "Backtest", "Dry Run", "Deploy", "Improve"]);
-    expect(steps().filter((s) => s.active).map((s) => s.label)).toEqual(["Dry Run"]);
-    // The two finished stages carry a tick in the step, so the check reads the
-    // live state rather than a number.
-    expect(text()).toContain("✓");
-
-    const stepperButtons = [...container.querySelectorAll('ol[aria-label="Build progress"] button')];
-    await click(stepperButtons[4]);
-    expect(where()).toBe("/build?stage=improve");
+    expect(container.querySelectorAll('[role="tablist"]')).toHaveLength(1);
+    expect(container.querySelector("ol")).toBeNull();
+    expect(text()).not.toContain("Step 3 of 5");
+    expect(tabNamed("Dry Run").getAttribute("aria-selected")).toBe("true");
   });
 
   it("keeps the draft across a refresh and says so", async () => {
@@ -325,9 +316,11 @@ describe("Build shell", () => {
     expect(kept?.deployed).toBe(false);
   });
 
-  it("shows the phone's one-line step in place of the five-dot stepper", async () => {
+  it("keeps the same one bar on a phone, scrolling sideways instead of stacking", async () => {
     renderAt("/build?stage=dry-run");
     await flush();
-    expect(text()).toContain("Step 3 of 5: Dry Run");
+    expect(container.querySelectorAll('[role="tablist"]')).toHaveLength(1);
+    const list = container.querySelector('[role="tablist"]') as HTMLElement;
+    expect(list.className).toContain("overflow-x-auto");
   });
 });

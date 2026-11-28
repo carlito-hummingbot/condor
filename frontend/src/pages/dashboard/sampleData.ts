@@ -21,6 +21,14 @@ export interface AgentCard {
   totalRuntime: string;
 }
 
+export interface SentimentRow {
+  source: string;
+  mood: string;
+  /** -100 fearful to +100 greedy, the same scale as the BTC meter. */
+  score: number;
+  note: string;
+}
+
 export interface NewsItem {
   tag: string;
   headline: string;
@@ -71,6 +79,12 @@ export const SAMPLE = {
     22, 35, 18, -12, 40, 55, 31, 28, -8, 46, 62, 38, 25, 44, -15, 52, 71, 66, 48, 39, 57, 80,
     64, 73,
   ],
+  sentiments: [
+    { source: "X · crypto accounts", mood: "Greedy", score: 72, note: "Volume talk, few risk warnings." },
+    { source: "Funding rates", mood: "Greedy", score: 64, note: "Perps pay to be long on the majors." },
+    { source: "Discord · Botcamp", mood: "Neutral", score: 8, note: "Builders comparing drawdowns, not prices." },
+    { source: "News flow", mood: "Cautious", score: -18, note: "Rate-decision week keeps headlines hedged." },
+  ] satisfies SentimentRow[],
   news: [
     { tag: "Market", headline: "Bitcoin holds weekly gains on rising volume", ago: "1h" },
     { tag: "Macro", headline: "Traders eye rate-decision week", ago: "2h" },

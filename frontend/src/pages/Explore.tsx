@@ -1,4 +1,4 @@
-import { useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   ExternalLink,
   MessagesSquare,
@@ -8,6 +8,8 @@ import {
   X,
 } from "lucide-react";
 import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
+
+import { PageNav } from "@/components/nav/PageNav";
 
 import {
   AGENTS,
@@ -798,26 +800,12 @@ export function Explore() {
   const [params, setParams] = useSearchParams();
   const raw = params.get("tab");
   const tab: TabId = TABS.some((t) => t.id === raw) ? (raw as TabId) : "overview";
-  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
-
   const select = (id: TabId) => {
     setParams((prev) => {
       const next = new URLSearchParams(prev);
       next.set("tab", id);
       return next;
     });
-  };
-
-  const onTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
-    let next: number | null = null;
-    if (event.key === "ArrowRight") next = (index + 1) % TABS.length;
-    else if (event.key === "ArrowLeft") next = (index - 1 + TABS.length) % TABS.length;
-    else if (event.key === "Home") next = 0;
-    else if (event.key === "End") next = TABS.length - 1;
-    if (next === null) return;
-    event.preventDefault();
-    select(TABS[next].id);
-    tabRefs.current[next]?.focus();
   };
 
   return (
@@ -835,42 +823,23 @@ export function Explore() {
         </div>
       </header>
 
-      <div
-        role="tablist"
-        aria-label="Explore sections"
-        className="mt-4 flex gap-0.5 overflow-x-auto overflow-y-hidden border-b border-[var(--color-border)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
-        {TABS.map((t, i) => {
-          const active = t.id === tab;
-          return (
-            <button
-              key={t.id}
-              ref={(el) => {
-                tabRefs.current[i] = el;
-              }}
-              type="button"
-              role="tab"
-              id={`explore-tab-${t.id}`}
-              aria-selected={active}
-              aria-controls={`explore-panel-${t.id}`}
-              tabIndex={active ? 0 : -1}
-              onClick={() => select(t.id)}
-              onKeyDown={(e) => onTabKeyDown(e, i)}
-              className={`relative -mb-px inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-t-lg px-3 py-2.5 text-[15px] ${
-                active
-                  ? "font-semibold text-[var(--color-text)] after:absolute after:inset-x-2.5 after:-bottom-px after:h-0.5 after:rounded after:bg-[var(--color-primary)]"
-                  : "text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]"
-              }`}
-            >
-              {t.label}
-              {t.count !== undefined && (
+      <div className="mt-4">
+        <PageNav
+          label="Explore sections"
+          idPrefix="explore"
+          current={tab}
+          onSelect={(id) => select(id as TabId)}
+          items={TABS.map((t) => ({
+            id: t.id,
+            label: t.label,
+            badge:
+              t.count === undefined ? undefined : (
                 <span className="rounded-full bg-[var(--color-text-muted)]/15 px-1.5 text-[11px] font-semibold leading-[1.55] text-[var(--color-text-muted)]">
                   {t.count}
                 </span>
-              )}
-            </button>
-          );
-        })}
+              ),
+          }))}
+        />
       </div>
 
       <div

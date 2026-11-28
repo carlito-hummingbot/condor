@@ -1,5 +1,7 @@
 import { useState, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+
+import { PageNav } from "@/components/nav/PageNav";
 
 import { useDashboardTitle, useDisplayName } from "@/hooks/useDisplayName";
 import { formatDateTime } from "@/lib/formatters";
@@ -136,8 +138,26 @@ function AgentCardView({ agent }: { agent: AgentCard }) {
   );
 }
 
+type DashboardTab = "dashboard" | "live-bots" | "sentiments" | "news";
+
+const DASHBOARD_TABS: readonly { id: DashboardTab; label: string }[] = [
+  { id: "dashboard", label: "Dashboard" },
+  { id: "live-bots", label: "Live Bots" },
+  { id: "sentiments", label: "Sentiments" },
+  { id: "news", label: "News" },
+];
+
 export function Dashboard() {
   const name = useDisplayName();
+  const [params, setParams] = useSearchParams();
+  const raw = params.get("tab");
+  const tab: DashboardTab = DASHBOARD_TABS.some((t) => t.id === raw) ? (raw as DashboardTab) : "dashboard";
+  const select = (id: string) =>
+    setParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("tab", id);
+      return next;
+    });
   const savedTitle = useDashboardTitle();
   // The title chosen in Account or the wizard replaces the page heading; without one it reads "Condor Dashboard".
   const heading = savedTitle === DEFAULT_DASHBOARD_TITLE ? "Condor Dashboard" : savedTitle;
@@ -158,7 +178,20 @@ export function Dashboard() {
         </div>
       </header>
 
-      <section aria-label="Summary" className="mt-4 grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-4">
+        <PageNav
+          label="Dashboard sections"
+          idPrefix="dashboard"
+          current={tab}
+          onSelect={select}
+          items={DASHBOARD_TABS.map((t) => ({ id: t.id, label: t.label }))}
+        />
+      </div>
+
+      <div role="tabpanel" id={`dashboard-panel-${tab}`} aria-labelledby={`dashboard-tab-${tab}`}>
+      {tab === "dashboard" && (
+      <>
+      <section aria-label="Summary" className="mt-3 grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
         <Card title="Combined Funds">
           <div className="flex items-end justify-between gap-2">
             <div>
@@ -265,6 +298,79 @@ export function Dashboard() {
           <AgentCardView key={a.title} agent={a} />
         ))}
       </section>
+      </>
+      )}
+
+      {tab === "live-bots" && (
+        <section aria-label="Live bots" className="mt-3">
+          <div className="mb-2.5 flex flex-wrap items-center gap-3">
+            <h2 className="text-base font-semibold">Live Bots</h2>
+            <LiveDot label={`${SAMPLE.agents.length} running`} />
+            <SampleBadge />
+          </div>
+          <p className="mb-3 text-[13px] text-[var(--color-text-muted)]">
+            The same three sample bots as the Dashboard, on their own page. Sample data: nothing here refreshes.
+          </p>
+          <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 xl:grid-cols-3">
+            {SAMPLE.agents.map((a) => (
+              <AgentCardView key={a.title} agent={a} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {tab === "sentiments" && (
+        <section aria-label="Sentiments" className="mt-3">
+          <div className="mb-2.5 flex flex-wrap items-center gap-3">
+            <h2 className="text-base font-semibold">Sentiments</h2>
+            <SampleBadge />
+          </div>
+          <p className="mb-3 text-[13px] text-[var(--color-text-muted)]">
+            Where the mood sits, sample only: the meter on the Dashboard is the price side of the same idea.
+          </p>
+          <ul className="m-0 grid list-none grid-cols-1 gap-2.5 p-0 md:grid-cols-2">
+            {SAMPLE.sentiments.map((row) => (
+              <li
+                key={row.source}
+                className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3"
+              >
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-[13px] font-semibold">{row.source}</span>
+                  <b className={`whitespace-nowrap text-[13px] ${tone(row.score)}`}>
+                    {row.mood} {row.score > 0 ? "+" : ""}
+                    {row.score}
+                  </b>
+                </div>
+                <p className="mt-1 text-[12.5px] text-[var(--color-text-muted)]">{row.note}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {tab === "news" && (
+        <section aria-label="News" className="mt-3">
+          <div className="mb-2.5 flex flex-wrap items-center gap-3">
+            <h2 className="text-base font-semibold">News</h2>
+            <SampleBadge />
+          </div>
+          <p className="mb-3 text-[13px] text-[var(--color-text-muted)]">
+            The headlines from the Dashboard's Top News card. Sample text; the links go nowhere.
+          </p>
+          <ul className="m-0 list-none divide-y divide-[var(--color-border)] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-0">
+            {SAMPLE.news.map((n) => (
+              <li key={n.headline} className="flex items-baseline gap-3 px-4 py-2.5 text-[14px]">
+                <span className="shrink-0 rounded-[5px] bg-[var(--color-text-muted)]/15 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-[var(--color-text-muted)]">
+                  {n.tag}
+                </span>
+                <span className="min-w-0 flex-1">{n.headline}</span>
+                <span className="shrink-0 text-[12.5px] text-[var(--color-text-muted)]">{n.ago}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      </div>
     </div>
   );
 }

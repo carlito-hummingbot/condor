@@ -295,7 +295,7 @@ export function Build() {
       )}
 
       <div className="mt-4">
-        <BuildNav stage={stage} draft={draft} onStage={goTo} />
+        <BuildNav stage={stage} onStage={goTo} />
       </div>
 
       {showGuard && failed && (

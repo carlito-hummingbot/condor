@@ -85,12 +85,11 @@ export function draftName(draft: Draft): string {
 }
 
 /**
- * A stage's done/active/available state, read off the four flags. `active` is
- * the one being shown; a stage with its prerequisite missing is `available`,
- * not locked, because the demo must be free to jump.
+ * The stage whose flag `stage` is missing, for the guard's "You have not
+ * finished Design yet": Backtest without `designDone`, Dry Run without
+ * `backtestDone`, Deploy without `dryRunDone`, Improve without `deployed`.
+ * Null when the stage may go ahead.
  */
-export type StageState = "done" | "active" | "available";
-
 const PREREQUISITE: Record<StageId, keyof Draft | null> = {
   design: null,
   backtest: "designDone",
@@ -106,28 +105,6 @@ export function stageFailed(draft: Draft, stage: StageId): StageId | null {
   // The stage whose flag is missing: design before backtest, and so on.
   const order: StageId[] = ["design", "backtest", "dry-run", "deploy"];
   return order[STAGES.indexOf(stage) - 1] ?? null;
-}
-
-export function stageState(draft: Draft, stage: StageId, open: StageId): StageState {
-  if (stage === open) return "active";
-  if (isStageDone(draft, stage)) return "done";
-  return "available";
-}
-
-function isStageDone(draft: Draft, stage: StageId): boolean {
-  switch (stage) {
-    case "design":
-      return draft.designDone;
-    case "backtest":
-      return draft.backtestDone;
-    case "dry-run":
-      return draft.dryRunDone;
-    case "deploy":
-      return draft.deployed;
-    case "improve":
-      // Improve is the end of the line: there is nothing after it to finish.
-      return draft.deployed;
-  }
 }
 
 /** What the origin banner says, when the draft came from Explore or Dashboard. */
@@ -185,11 +162,6 @@ export function keepDraft(draft: Draft, stage: StageId, previous: SavedDraft[]):
 
 export function writeDrafts(list: SavedDraft[]): void {
   writeJson(LIST_KEY, list);
-}
-
-/** `Step 3 of 5: Dry Run` for the phone, where the five-dot stepper does not fit. */
-export function stepText(stage: StageId): string {
-  return `Step ${STAGES.indexOf(stage) + 1} of ${STAGES.length}: ${STAGE_LABEL[stage]}`;
 }
 
 /** Is `stage` one of the five? A bad `?stage=` falls back to Design. */

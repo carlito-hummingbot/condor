@@ -99,6 +99,42 @@ describe("Dashboard", () => {
     expect(container.textContent).toContain("Welcome back, Ada.");
   });
 
+  it("has the four page items, with Dashboard selected, and switches panels", async () => {
+    renderAt("/", <Dashboard />);
+    await flush();
+
+    const tabs = () => [...container.querySelectorAll('[role="tab"]')] as HTMLButtonElement[];
+    const named = (name: string) => tabs().find((t) => t.textContent?.trim() === name) as HTMLButtonElement;
+
+    expect(tabs().map((t) => t.textContent?.trim())).toEqual([
+      "Dashboard",
+      "Live Bots",
+      "Sentiments",
+      "News",
+    ]);
+    expect(named("Dashboard").getAttribute("aria-selected")).toBe("true");
+
+    const click = async (el: Element) =>
+      act(async () => {
+        (el as HTMLElement).click();
+        await new Promise((r) => setTimeout(r, 0));
+      });
+
+    await click(named("Live Bots"));
+    expect(named("Live Bots").getAttribute("aria-selected")).toBe("true");
+    expect(container.querySelector('[role="tabpanel"]')?.textContent).toContain("Stable Churn");
+
+    await click(named("Sentiments"));
+    expect(container.querySelector('[role="tabpanel"]')?.textContent).toContain("Funding rates");
+
+    await click(named("News"));
+    expect(container.querySelector('[role="tabpanel"]')?.textContent).toContain(
+      "Bitcoin holds weekly gains",
+    );
+    // Every panel but the Dashboard is labelled sample data.
+    expect(container.querySelector('[role="tabpanel"]')?.textContent).toContain("Sample");
+  });
+
   it("shows the three live agents with their subtitles and the five field rows", async () => {
     renderAt("/", <Dashboard />);
     await flush();
