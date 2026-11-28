@@ -7,6 +7,7 @@ import {
   buildPreferenceUpdates,
   dashboardTitleFrom,
   displayNameFrom,
+  withActiveAgentKey,
   type PreferencePatch,
   type UserPreferences,
 } from "@/lib/onboarding";
@@ -30,10 +31,16 @@ export function usePatchPreferences() {
   const qc = useQueryClient();
   const key = preferencesQuery().queryKey;
   return useMutation({
-    mutationFn: async (args: { patch: PreferencePatch; replaceOnboarding?: boolean }) => {
+    mutationFn: async (args: {
+      patch: PreferencePatch;
+      replaceOnboarding?: boolean;
+      /** Sent as the whole `agent` object, never a partial. */
+      agentKey?: string;
+    }) => {
       const cached = qc.getQueryData<UserPreferences>(key);
       const current = cached ?? (await api.getPreferences());
       const updates = buildPreferenceUpdates(current, args.patch, args.replaceOnboarding);
+      if (args.agentKey) Object.assign(updates, withActiveAgentKey(current, args.agentKey));
       return api.updatePreferences(updates);
     },
     onSuccess: (next) => {

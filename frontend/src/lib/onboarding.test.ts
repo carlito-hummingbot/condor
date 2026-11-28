@@ -17,6 +17,7 @@ import {
   markAnswered,
   markSkipped,
   modelAlreadyReady,
+  modelStepMode,
   onboardingPending,
   prefillName,
   resolveServerGate,
@@ -28,6 +29,7 @@ import {
   shouldShowWizard,
   startFlow,
   validateDisplayName,
+  withActiveAgentKey,
   type OnboardingSignals,
   type UserPreferences,
 } from "./onboarding";
@@ -204,7 +206,12 @@ describe("step flow", () => {
   });
 
   it("ships the steps this build renders, with done last in the full list", () => {
-    expect(installedStepDefs().map((step) => step.id)).toEqual(["profile", "connect", "done"]);
+    expect(installedStepDefs().map((step) => step.id)).toEqual([
+      "profile",
+      "model",
+      "connect",
+      "done",
+    ]);
     expect(STEP_DEFS.map((step) => step.id)).toEqual([
       "profile",
       "model",
@@ -318,6 +325,9 @@ describe("model already configured by setup", () => {
     });
     expect(saved).toEqual({ key: "claude-acp:sonnet", label: "Claude Sonnet", ready: true });
     expect(modelAlreadyReady(saved)).toBe(true);
+    expect(modelStepMode(saved?.ready)).toBe("confirm");
+    expect(modelStepMode(false)).toBe("choose");
+    expect(modelStepMode(null)).toBe("choose");
     expect(describeModel(null, { default_agent: "openrouter:", agents })).toBeNull();
     expect(describeModel(null, { default_agent: "custom:" })).toBeNull();
   });
@@ -342,6 +352,14 @@ describe("preference patches", () => {
     profile: { display_name: "Ada" },
     ui: { theme: "dark", dashboard_title: "Desk" },
   };
+
+  it("sets the model on a full copy of agent, keeping the other fields", () => {
+    const updates = withActiveAgentKey(current, "claude-acp:haiku");
+    expect(updates.agent).toEqual({
+      active_agent_key: "claude-acp:haiku",
+      chat_binding: { condor: "keep" },
+    });
+  });
 
   it("writes only the top-level keys it was given, and never agent", () => {
     const updates = buildPreferenceUpdates(current, {
