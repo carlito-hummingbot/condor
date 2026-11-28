@@ -12,7 +12,7 @@
  * Everything is sample state: no request leaves the page.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import {
   emptyDraft,
@@ -41,8 +41,6 @@ export interface BuildState {
   setDraft: (patch: Partial<Draft>) => void;
   origin: Origin | null;
   dismissOrigin: () => void;
-  /** Seed a draft from an entry point; parks it in `pending` when one is in the way. */
-  seed: (next: Seed) => void;
   /** The replacement waiting for an answer, when an entry point met a draft. */
   pending: Seed | null;
   replacePending: () => void;
@@ -59,22 +57,29 @@ export interface BuildState {
   canResume: boolean;
 }
 
-export function useDraft(): BuildState {
-  const [draft, setDraftState] = useState<Draft>(() => readDraft() ?? emptyDraft());
-  const [origin, setOrigin] = useState<Origin | null>(() => readOrigin());
+export function useDraft(linkSeed: Seed | null = null): BuildState {
+  // The starter is read once, during the first render: a stage reads the draft
+  // as it mounts (Design opens its chat from `designDone`), so a seed that
+  // arrived in an effect would be one render too late.
+  const [starter] = useState(() => {
+    const stored = readDraft();
+    const blocked = Boolean(stored && hasProgress(stored));
+    return { stored, blocked };
+  });
+  const [draft, setDraftState] = useState<Draft>(() =>
+    linkSeed && !starter.blocked ? linkSeed.draft : (starter.stored ?? emptyDraft()),
+  );
+  const [origin, setOrigin] = useState<Origin | null>(() =>
+    linkSeed && !starter.blocked ? linkSeed.origin : readOrigin(),
+  );
   const [savedDrafts, setSavedDrafts] = useState<SavedDraft[]>(() => readDrafts());
-  const [pending, setPending] = useState<Seed | null>(null);
+  // An entry point that met a draft with work in it waits for Replace / Keep both.
+  const [pending, setPending] = useState<Seed | null>(() =>
+    linkSeed && starter.blocked ? linkSeed : null,
+  );
   // Whether the page opened on a draft that was already there: the resume card
   // is about that draft, not one the demo just started typing into.
-  const [canResume] = useState(() => {
-    const stored = readDraft();
-    return Boolean(stored && hasProgress(stored));
-  });
-  // The latest draft, for the callbacks that decide whether one is in the way.
-  const latest = useRef<Draft>(draft);
-  useEffect(() => {
-    latest.current = draft;
-  }, [draft]);
+  const [canResume] = useState(() => !linkSeed && Boolean(starter.stored && hasProgress(starter.stored)));
 
   useEffect(() => {
     writeDraft(draft);
@@ -107,14 +112,6 @@ export function useDraft(): BuildState {
     setSavedDrafts((list) => keepDraft(draft, reachedStage(draft), list));
     apply(pending);
   }, [apply, draft, pending]);
-
-  const seed = useCallback(
-    (next: Seed) => {
-      if (seedFor(next, latest.current) === "ask") setPending(next);
-      else apply(next);
-    },
-    [apply],
-  );
 
   const cancelPending = useCallback(() => setPending(null), []);
 
@@ -153,7 +150,6 @@ export function useDraft(): BuildState {
     setDraft,
     origin,
     dismissOrigin,
-    seed,
     pending,
     replacePending,
     keepBothPending,
@@ -166,13 +162,4 @@ export function useDraft(): BuildState {
     discard,
     canResume,
   };
-}
-
-/**
- * Seeds a draft from an entry point's `?from=explore&item=<id>` (or Dashboard's
- * `?from=dashboard&item=<id>`), unless a draft with work in it is already
- * there — then the caller gets the question instead.
- */
-export function seedFor(seed: Seed, current: Draft): Seed | "ask" {
-  return hasProgress(current) ? "ask" : seed;
 }

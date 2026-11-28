@@ -13,7 +13,7 @@
  */
 
 import { X } from "lucide-react";
-import { useCallback, useEffect, useState, type ComponentType } from "react";
+import { useCallback, useState, type ComponentType } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { BuildNav } from "./BuildNav";
@@ -34,8 +34,19 @@ import type { StageId, StageProps } from "./types";
  * The stages whose own component is on the branch. A stage that is not here
  * draws `Placeholder`, so the page works while the other designers finish.
  */
-const STAGE_COMPONENTS: Partial<Record<StageId, ComponentType<StageProps>>> = {};
+const STAGE_COMPONENTS: Partial<Record<StageId, ComponentType<StageProps>>> = {
+  design: Design,
+  backtest: Backtest,
+  "dry-run": DryRun,
+  deploy: Deploy,
+  improve: Improve,
+};
 
+import Backtest from "./stages/Backtest";
+import Deploy from "./stages/Deploy";
+import Design from "./stages/Design";
+import DryRun from "./stages/DryRun";
+import Improve from "./stages/Improve";
 import Placeholder from "./stages/Placeholder";
 
 const CARD = "rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]";
@@ -53,6 +64,11 @@ function seedFromLink(from: string | null, item: string | null, intent: string |
         // Explore is a catalogue of running things: the draft starts as an
         // import, with the design still to be agreed.
         startingPoint: "import",
+        // "Improve this" opens the stage's chat rather than its guide, and the
+        // chat is the stage's own state: it is open once the design is agreed,
+        // which is what an improvement starts from. "Edit guide" brings the
+        // form back, and the design stays done.
+        designDone: intent === "improve",
       },
       origin: {
         from: "explore",
@@ -89,11 +105,15 @@ function seedFromLink(from: string | null, item: string | null, intent: string |
 
 export function Build() {
   const [params, setParams] = useSearchParams();
-  const state = useDraft();
+  // The entry point's link is read once, on the first render, so the seeded
+  // draft is what the stage mounts with (see `useDraft`).
+  const [linkSeed] = useState(() =>
+    seedFromLink(params.get("from"), params.get("item"), params.get("intent")),
+  );
+  const state = useDraft(linkSeed);
   const { draft, setDraft } = state;
   const stage = readStage(params.get("stage"));
   const from = params.get("from");
-  const item = params.get("item");
   const [guardsDismissed, setGuardsDismissed] = useState<StageId[]>([]);
   const [discardAsk, setDiscardAsk] = useState(false);
   const [draftsOpen, setDraftsOpen] = useState(false);
@@ -111,16 +131,6 @@ export function Build() {
     },
     [setParams],
   );
-
-  // An entry point seeds the draft once per link. The answers to "replace or
-  // keep both" are the page's, not the link's.
-  useEffect(() => {
-    const seed = seedFromLink(from, item, params.get("intent"));
-    if (!seed) return;
-    // A draft with work in it stays until the question is answered (`pending`).
-    state.seed(seed);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [from, item, params.get("intent")]);
 
   const Stage = STAGE_COMPONENTS[stage];
   const failed = stageFailed(draft, stage);
@@ -366,6 +376,22 @@ export function Build() {
           <Placeholder stage={stage} draft={draft} setDraft={setDraft} goTo={goTo} />
         )}
       </section>
+
+      {/* The lifecycle's way out at the end: back to the catalogue it came from.
+          The Improve stage is the other designer's file, so the link lives here. */}
+      {stage === "improve" && (
+        <p className="mt-4 text-[13px]">
+          <Link
+            to="/explore"
+            className="font-semibold text-[var(--color-primary)] underline-offset-2 hover:underline"
+          >
+            Back to Explore
+          </Link>{" "}
+          <span className="text-[var(--color-text-muted)]">
+            to find the next thing to run.
+          </span>
+        </p>
+      )}
 
       <p className="mt-6 text-[11.5px] text-[var(--color-text-muted)]">
         {STAGE_HINT[stage]}. Sample data only: nothing here trades, deploys or calls the API.

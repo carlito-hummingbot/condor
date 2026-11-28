@@ -279,11 +279,50 @@ describe("Build shell", () => {
     expect(text()).toContain("Draft: GateForum v2");
   });
 
-  it("renders a stage that has not landed yet as the placeholder, not a blank panel", async () => {
+  it("renders the stage that is on screen inside its tab panel", async () => {
     renderAt("/build?stage=backtest");
     await flush();
-    expect(text()).toContain("still being built");
+    expect(text()).toContain("Replay the design on past candles");
     expect(container.querySelector('[role="tabpanel"]')).toBeTruthy();
+  });
+
+  it("opens the Design chat, not the guide, for Improve this, with the banner saying so", async () => {
+    renderAt("/build?stage=design&from=explore&intent=improve&item=hb-agents%5Cchurn.html");
+    await flush();
+
+    // The chat is open (its guide is behind "Edit guide") and the draft is named v2.
+    expect(text()).toContain("Edit guide");
+    expect(text()).toContain("Draft: Churn v2");
+    expect(text()).toContain("Based on Churn (Explore, sample)");
+    // The guide's own form controls are not on screen.
+    expect(text()).not.toContain("Save and open the chat");
+  });
+
+  it("gives Improve a way back to the catalogue", async () => {
+    sessionStorage.setItem(
+      "condor.build.draft.v1",
+      JSON.stringify({ ...emptyDraft(), title: "Stable Churn v1", designDone: true, backtestDone: true, dryRunDone: true, deployed: true }),
+    );
+    renderAt("/build?stage=improve");
+    await flush();
+    const back = [...container.querySelectorAll("a")].find((a) => a.textContent?.trim() === "Back to Explore");
+    expect(back?.getAttribute("href")).toBe("/explore");
+  });
+
+  it("carries Improve's Create v2 draft back to Design with the flags reset", async () => {
+    sessionStorage.setItem(
+      "condor.build.draft.v1",
+      JSON.stringify({ ...emptyDraft(), title: "Stable Churn v1", designDone: true, backtestDone: true, dryRunDone: true, deployed: true }),
+    );
+    renderAt("/build?stage=improve");
+    await flush();
+
+    await click(button(/Create v2 draft/));
+    expect(where()).toBe("/build?stage=design");
+    const kept = readDraft();
+    expect(kept?.title).toBe("Stable Churn v2");
+    expect(kept?.designDone).toBe(false);
+    expect(kept?.deployed).toBe(false);
   });
 
   it("shows the phone's one-line step in place of the five-dot stepper", async () => {

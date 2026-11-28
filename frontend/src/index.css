@@ -1,6 +1,11 @@
 @import "tailwindcss";
 @import "./styles/hummingbot-ds.css";
 
+/* The Build page. Explicit because the repo's `.gitignore` once said `build/`,
+   which hides any directory of that name from Tailwind's automatic scan; the
+   rule is root-only now, and this keeps the page's classes found either way. */
+@source "./pages/build";
+
 /* ── Typefaces: Botcamp's (Hummingbot Foundation) ──
    Satoshi for text, Geist Mono for figures-in-code, the eyebrow and fences.
    Self-hosted from src/assets/fonts — never a font CDN: this dashboard runs on
