@@ -13,9 +13,17 @@ Merged heads, in order:
 6. feat/model-readiness-state (#24) d38d8939 (backend)
 7. ui/panel-rail-v2 (#25) 095f382c: the rail stack #3 6c02cdd3, #4 668265c4, #6 74d8cdf4, #7 77bf1e5c (More removed; Settings
    panel with three groups; avatar Account dialog; four-tab phone bar; Labs page) plus the 2nd-door rename round (see below)
-8. ui/panel-rail-v2 rename round 095f382c, merged here as 32297323: Explore door with a compass, Settings "Agents" rows unchanged
-9. ui/onboarding-model-connect (#23) a35c6f81: contains #2, #9, #11, #12, #14, #21, #22
-10. showcase/onboarding-walkthrough 59f2599b: the Designer's wizard fixes (one throwaway branch, no PR)
+8. ui/panel-rail-v2 rename round 095f382c, merged here as 40a1613f: Explore door with a compass, Settings "Agents" rows unchanged
+9. ui/onboarding-model-connect (#23) 24600a9f: contains #2, #9, #11, #12, #14, #21, #22
+10. showcase/onboarding-walkthrough 1b805308: the Designer's wizard fixes (one throwaway branch, no PR)
+
+Showcase final: `showcase/build-final` (head 738de4ea) adds the Build page and the AI-model step button on top of
+this branch, as patches; see "Build page (showcase only)" at the end.
+
+Heads above were re-read from origin on 2026-11-28 after the author-line fix: `docs/design-md` 9fc97562 and
+`preview/combined` fa74ff26 are the rewritten pair; `ui/onboarding-model-connect` 24600a9f and
+`showcase/onboarding-walkthrough` 1b805308 replaced a35c6f81 and 59f2599b. The rail PRs (#3 6c02cdd3, #4 668265c4,
+#6 74d8cdf4, #7 77bf1e5c, #25 095f382c) and #13 c67fefcf were not rewritten and keep their ids.
 
 Showcase-only, on no PR branch and not meant to be merged: the `/explore` page (`pages/Explore.tsx`, with `/hub`
 redirecting to it), the `/` sample Dashboard and the chat at `/chat`. In the rail PRs the door is Explore at `/hub`.
@@ -56,7 +64,7 @@ the real Dashboard is a later proposal.
 Showcase-only difference: `pages/Dashboard.tsx` shows the saved dashboard title (set in the Account dialog or the
 wizard) as its heading, and "Condor Dashboard" when none is saved. Nothing else in the stack was changed.
 
-## Rail rename round (095f382c, merged as 32297323)
+## Rail rename round (095f382c, merged as 40a1613f)
 
 `origin/ui/panel-rail-v2` 095f382c (the rail stack plus the 2nd-door rename: Explore with a compass, Settings
 "Agents" rows unchanged) merged in with `git merge`. Its diff here is only the rename: 6 files, +47/−43. Four
@@ -75,9 +83,9 @@ Labs · Account; Explore's tabs count 10 strategies / 17 agents / 8 news and the
 Dashboard Live Agents cards keep their Agent Started and Total Runtime rows; `/hub` lands on `/explore`; the first-run
 wizard, a key saved at Connect, `/welcome` and Settings > Appearance > Run setup again all behave; the chat's Panels
 drawer on a phone stops exactly at the bar.
-## Onboarding walkthrough fixes (showcase/onboarding-walkthrough 59f2599b)
+## Onboarding walkthrough fixes (showcase/onboarding-walkthrough 1b805308)
 
-Merged with `git merge` (merge commit 4f04bc67). One conflict, comment-only: in `lib/onboarding.ts` both sides
+Merged with `git merge` (merge commit 888434be in the rewritten history). One conflict, comment-only: in `lib/onboarding.ts` both sides
 already named the model constant `RECOMMENDED_MODEL_ID`, so only the doc comment differed; the Designer's fuller
 comment was kept and there is ONE definition.
 
@@ -119,3 +127,41 @@ scrolling page, so the chat still lives at `/chat`.
 - Existing tests changed: `AppShell.nav.test.ts`, `SideRail.test.tsx` and `MobileTabBar.test.tsx` now expect the
   Explore door and `/explore` instead of Agents at `/hub`.
 
+
+## Build page (showcase only)
+
+The third rail door is **Build** (`/build`) in this showcase: a hammer, the rail reads Dashboard · Explore · Build,
+and `/labs` and `/strategies` redirect to it. The rail PRs (#3, #6, #7, #25) still say Labs and still point at
+`/labs`, so the rename is showcase-only, like Explore's.
+
+One bot's life in five stages, with sample data throughout and no network calls:
+
+- **Design** — the guide ("What are we building?", nine answers) and the design chat, whose replies are canned.
+- **Backtest** — one run on sample candles: range and costs, six results, equity against buy-and-hold.
+- **Dry Run** — paper trading beside the backtest, fills, and a readiness checklist.
+- **Deploy** — pre-flight checks, risk and capital, a typed confirm, then the live state.
+- **Improve** — live against predictions and dry run, health cards, suggestions, version history, and Create v2
+  draft, which starts the next version back at Design.
+
+**Continuity, one bot across the pages:** every Explore agent and strategy card has "Use as starting point" and
+"Improve this" (`/build?from=explore&item=<id>`), each Dashboard Live Agent has "Improve"
+(`/build?stage=improve&from=dashboard&item=<id>`), and the Build page shows an origin banner and breadcrumb, a
+"Continue where you left off" card, "My drafts" (five), a Replace / Keep both question when a link meets a draft,
+and a gentle "you have not finished <stage>" notice. The draft is sample state in `sessionStorage`.
+
+**AI-model step:** the onboarding wizard's primary button is now an enabled Next when no model is detected, so a
+demo can click through; nothing is saved, and a detected model keeps its "Connect <model>" button. Showcase only:
+PR #23 keeps the disabled state.
+
+Added commits on `showcase/build-final` (subjects only):
+
+- Enable the AI model step's Next when no model is detected (showcase only)
+- Add the Build page shell: five stages, tabs, stepper, draft and resume
+- Carry one bot between Explore, Dashboard and Build
+- Build / Design: the guide form, the live draft panel and the design chat
+- Add the Backtest and Dry Run stages of Build
+- Build: Deploy and Improve stages
+- Wire the five stages into the page and open Design's chat from Improve this
+
+The `.gitignore` `build/` rule is root-only now (`/build/`) and `index.css` carries `@source "./pages/build"`, so
+`frontend/src/pages/build` is tracked and styled; before that the whole page was invisible to git and to Tailwind.
