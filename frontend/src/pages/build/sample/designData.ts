@@ -279,6 +279,98 @@ export function suggestTitle(draft: Draft): string {
   return `${parts.join(" ")} ${draft.botKind === "agent" ? "Agent" : "Bot"}`;
 }
 
+/* ── The guide's steps ─────────────────────────────────────────────────── */
+
+/** The Design stage's steps, in order. `review` is the summary that starts the chat. */
+export type DesignStepId = "starting" | "style" | "markets" | "limits" | "review";
+
+export const DESIGN_STEPS: readonly { id: DesignStepId; title: string }[] = [
+  { id: "starting", title: "Starting point" },
+  { id: "style", title: "Trading Style" },
+  { id: "markets", title: "Markets" },
+  { id: "limits", title: "Limits" },
+  { id: "review", title: "Review" },
+];
+
+/* ── Pairs and percentages, as typed ────────────────────────────────────── */
+
+/** BASE-QUOTE: letters and digits on both sides, e.g. BTC-USDT, 1INCH-USDT. */
+const PAIR_SHAPE = /^[A-Z0-9]{2,10}-[A-Z0-9]{2,10}$/;
+
+export interface ParsedPairs {
+  /** Every valid, normalised pair in typed order, duplicates dropped. */
+  valid: string[];
+  /** The entries that do not read as BASE-QUOTE, as typed (trimmed, uppercased). */
+  invalid: string[];
+}
+
+/** Split a comma list into pairs: trimmed, uppercased, de-duplicated, each shape-checked. */
+export function parsePairs(text: string): ParsedPairs {
+  const valid: string[] = [];
+  const invalid: string[] = [];
+  for (const raw of text.split(",")) {
+    const entry = raw.trim().toUpperCase();
+    if (!entry) continue;
+    if (!PAIR_SHAPE.test(entry)) {
+      if (!invalid.includes(entry)) invalid.push(entry);
+      continue;
+    }
+    if (!valid.includes(entry)) valid.push(entry);
+  }
+  return { valid, invalid };
+}
+
+/** The pair field is ready when it has one valid pair, or when the agent picks them. */
+export function pairsReady(draft: Draft): boolean {
+  return draft.pairsDynamic || parsePairs(draft.pairsText).valid.length > 0;
+}
+
+/** Spread percentages: positive numbers, comma separated, trimmed, de-duplicated. */
+export interface ParsedSpreads {
+  valid: number[];
+  invalid: string[];
+}
+
+export function parseSpreads(text: string): ParsedSpreads {
+  const valid: number[] = [];
+  const invalid: string[] = [];
+  for (const raw of text.split(",")) {
+    const entry = raw.trim();
+    if (!entry) continue;
+    const value = Number(entry);
+    if (!Number.isFinite(value) || value <= 0 || value > 100) {
+      if (!invalid.includes(entry)) invalid.push(entry);
+      continue;
+    }
+    if (!valid.includes(value)) valid.push(value);
+  }
+  return { valid, invalid };
+}
+
+/** Spreads are asked for, and count, only while the Trading Style is Market Making. */
+export function spreadsShown(draft: Draft): boolean {
+  return draft.strategyType === "Market Making";
+}
+
+/* ── The numeric limits ─────────────────────────────────────────────────── */
+
+/** Percent fields keep a plain number; the bounds are the form's own, not a promise. */
+export function percentError(value: number | null, label: string): string | null {
+  if (value === null || Number.isNaN(value)) return `${label} is required.`;
+  if (value <= 0) return `${label} must be greater than 0.`;
+  if (value > 100) return `${label} must be 100 or less.`;
+  return null;
+}
+
+/** Max Positions, when Fixed: a whole number, at least 1, no upper guessing beyond 100. */
+export function positionsError(value: number | null): string | null {
+  if (value === null || Number.isNaN(value)) return "Max positions is required.";
+  if (!Number.isInteger(value)) return "Max positions must be a whole number.";
+  if (value < 1) return "Max positions must be at least 1.";
+  if (value > 100) return "Max positions must be 100 or less.";
+  return null;
+}
+
 /* ── Gating ─────────────────────────────────────────────────────────────── */
 
 export interface RequiredField {
@@ -289,10 +381,10 @@ export interface RequiredField {
 
 export const REQUIRED_FIELDS: readonly RequiredField[] = [
   { key: "botKind", label: "Bot type", filled: (d) => Boolean(d.botKind) },
-  { key: "strategyType", label: "Strategy or agent type", filled: (d) => Boolean(d.strategyType) },
+  { key: "strategyType", label: "Trading Style", filled: (d) => Boolean(d.strategyType) },
   { key: "exchange", label: "Target exchange", filled: (d) => Boolean(d.exchange) },
   { key: "marketType", label: "Market type", filled: (d) => Boolean(d.marketType) },
-  { key: "pair", label: "Market pair", filled: (d) => Boolean(d.pair?.trim()) },
+  { key: "pair", label: "Market pair(s)", filled: (d) => d.pairsDynamic || d.pairs.length > 0 },
   { key: "title", label: "Desired title", filled: (d) => Boolean(d.title.trim()) },
 ];
 
@@ -301,22 +393,74 @@ export function missingRequired(draft: Draft): string[] {
   return REQUIRED_FIELDS.filter((field) => !field.filled(draft)).map((field) => field.label);
 }
 
-/** Every value the summary panel and the chip bar show, in form order. */
+/** What one step still needs, in the wizard's own order. Empty means Next may go on. */
+export function stepProblems(draft: Draft, step: DesignStepId): string[] {
+  const problems: string[] = [];
+  switch (step) {
+    case "starting":
+      if (!draft.botKind) problems.push("Bot type");
+      if (!draft.startingPoint) problems.push("Starting point");
+      return problems;
+    case "style":
+      if (!draft.strategyType) problems.push("Trading Style");
+      return problems;
+    case "markets": {
+      if (!draft.exchange) problems.push("Target exchange");
+      if (!draft.marketType) problems.push("Market type");
+      if (!draft.pairsDynamic && parsePairs(draft.pairsText).valid.length === 0) problems.push("Market pair(s)");
+      return problems;
+    }
+    case "limits": {
+      if (spreadsShown(draft) && parseSpreads(draft.spreads).valid.length === 0) problems.push("Spreads");
+      if (percentError(draft.targetProfit, "Target Profit")) problems.push("Target Profit");
+      if (percentError(draft.stopLoss, "Stop Loss")) problems.push("Stop Loss");
+      if (!draft.maxPositionsMode) problems.push("Max positions");
+      if (draft.maxPositionsMode === "fixed" && positionsError(draft.maxPositions)) problems.push("Max positions");
+      return problems;
+    }
+    case "review":
+      if (!draft.title.trim()) problems.push("Desired title");
+      return problems;
+  }
+}
+
+/** Every value the summary panel and the chip bar show, in step order. */
 export function draftRows(draft: Draft): { label: string; value: string }[] {
-  return [
+  const pairs = draft.pairsDynamic
+    ? "Dynamic (chosen by the agent)"
+    : draft.pairs.length > 0
+      ? draft.pairs.join(", ")
+      : "—";
+  const rows: { label: string; value: string }[] = [
     { label: "Bot type", value: draft.botKind === "agent" ? "Agent" : draft.botKind === "strategy" ? "Strategy" : "—" },
-    { label: "Type", value: draft.strategyType ?? "—" },
+    { label: "Trading Style", value: draft.strategyType ?? "—" },
     { label: "Exchange", value: draft.exchange ?? "—" },
     { label: "Market", value: draft.marketType ?? "—" },
-    { label: "Pair", value: draft.pair ?? "—" },
-    { label: "Markets", value: draft.marketQty ? `${draft.marketQty}` : "1 (default)" },
-    { label: "Max positions", value: draft.maxPositions ? `${draft.maxPositions}` : "3 (default)" },
+    { label: "Pairs", value: pairs },
+  ];
+  if (spreadsShown(draft)) {
+    const spreads = parseSpreads(draft.spreads).valid;
+    rows.push({ label: "Spreads", value: spreads.length ? `${spreads.join(", ")}%` : "—" });
+  }
+  rows.push(
+    { label: "Target profit", value: draft.targetProfit === null ? "—" : `${draft.targetProfit}%` },
+    { label: "Stop loss", value: draft.stopLoss === null ? "—" : `${draft.stopLoss}%` },
+    {
+      label: "Max positions",
+      value:
+        draft.maxPositionsMode === "dynamic"
+          ? "Dynamic (depends on budget)"
+          : draft.maxPositionsMode === "fixed" && draft.maxPositions
+            ? String(draft.maxPositions)
+            : "—",
+    },
     {
       label: "Starting point",
       value: draft.startingPoint === "import" ? "Import" : draft.startingPoint === "scratch" ? "From scratch" : "—",
     },
     { label: "Title", value: draft.title.trim() || "—" },
-  ];
+  );
+  return rows;
 }
 
 /* ── The design chat ────────────────────────────────────────────────────── */
