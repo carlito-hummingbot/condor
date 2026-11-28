@@ -213,44 +213,70 @@ describe("Explore", () => {
     expect(chart.textContent).toContain("28");
   });
 
-  it("shows the four lessons, underlined, with no video, build or import actions", async () => {
+  it("shows the four lessons as rows: a plain title, no panel, no toggle", async () => {
     renderAt("/explore");
     await flush();
+    expect(panel().textContent).toContain("Four short lessons. Play the video on a row.");
     for (const lesson of LESSONS) {
       expect(panel().textContent).toContain(lesson.title);
       expect(panel().textContent).toContain(lesson.description);
     }
-    const titles = [...panel().querySelectorAll("h3 button")] as HTMLButtonElement[];
-    expect(titles).toHaveLength(4);
-    expect(titles[0].className).toContain("underline");
-    for (const gone of ["Watch", "Try in Build", "Import", "video coming"]) {
+    // Plain headings, not buttons: a title neither opens nor closes anything.
+    const headings = [...panel().querySelectorAll("h3")].filter((h) =>
+      LESSONS.some((l) => h.textContent?.trim() === l.title),
+    );
+    expect(headings).toHaveLength(4);
+    expect(panel().querySelector("h3 button")).toBeNull();
+    expect(panel().querySelector("[aria-expanded]")).toBeNull();
+    // The old detail panel and its "Video summary" are gone.
+    expect(panel().querySelector("#explore-lesson-detail")).toBeNull();
+    expect(panel().textContent).not.toContain("Video summary");
+    for (const gone of ["Watch", "Try in Build", "Import", "video coming", "Live now", "Browse"]) {
       expect(panel().textContent).not.toContain(gone);
     }
+    // Like a Strategy row, without its Risk / difficulty / venue line.
+    expect(panel().textContent).not.toContain("Risk:");
+    expect(panel().textContent).not.toContain("Improve this");
   });
 
-  it("opens one lesson's video and summary under the box, and closes it on a second click", async () => {
+  it("opens one lesson video in a dialog, and closes it on Escape", async () => {
     renderAt("/explore");
     await flush();
-    // Nothing is open on first load.
-    expect(panel().querySelector("#explore-lesson-detail")).toBeNull();
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
 
-    const titles = () => [...panel().querySelectorAll("h3 button")] as HTMLButtonElement[];
-    await click(titles()[1]);
-    const detail = panel().querySelector("#explore-lesson-detail") as HTMLElement;
-    expect(detail).toBeTruthy();
-    expect(detail.textContent).toContain(LESSONS[1].title);
-    expect(detail.textContent).toContain(LESSONS[1].videoSummary);
-    expect(detail.textContent).toContain("Sample video");
-    expect(detail.textContent).toContain("Sample data");
-    expect(titles()[1].getAttribute("aria-expanded")).toBe("true");
+    const playButtons = () => [...panel().querySelectorAll("button")];
+    const first = playButtons()[0];
+    expect(first.getAttribute("aria-label")).toContain("Play the");
+    await click(first);
 
-    // One at a time.
-    await click(titles()[3]);
-    expect(panel().querySelector("#explore-lesson-detail")?.textContent).toContain(LESSONS[3].videoSummary);
+    const dialogs = () => container.querySelectorAll('[role="dialog"]');
+    expect(dialogs()).toHaveLength(1);
+    expect(dialogs()[0].getAttribute("aria-label")).toBe(LESSONS[0].title);
+    const frame = dialogs()[0].querySelector("iframe")!;
+    expect(frame.getAttribute("src")).toBe(
+      `https://www.youtube-nocookie.com/embed/${LESSONS[0].youtube}`,
+    );
+    expect(frame.getAttribute("src")).not.toContain("?");
+    expect(dialogs()[0].textContent).toContain("Sample data");
+    // Only the open lesson's id is mounted.
+    expect(container.querySelectorAll("iframe")).toHaveLength(1);
 
-    // The open title closes it.
-    await click(titles()[3]);
-    expect(panel().querySelector("#explore-lesson-detail")).toBeNull();
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    });
+    await flush();
+    expect(dialogs()).toHaveLength(0);
+    expect(container.querySelector("iframe")).toBeNull();
+  });
+
+  it("keeps Strategies as it was, Risk line and its dead video button included", async () => {
+    renderAt("/explore?tab=strategies");
+    await flush();
+    expect(panel().textContent).toContain("Risk:");
+    expect(panel().textContent).toContain("Video coming");
+    // No dialog from a Strategies video box.
+    await click([...panel().querySelectorAll("button")].find((b) => b.getAttribute("aria-label")?.includes("video, coming soon"))!);
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
   });
 
   it("shows the source counts and filters the agent cards", async () => {

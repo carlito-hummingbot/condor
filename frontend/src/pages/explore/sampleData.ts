@@ -96,12 +96,15 @@ export interface LiveNowCard {
 /** The seven day labels the Live Bots cards' P&L bars share, ending 28 Nov. */
 export const PRICE_DAYS = ["22", "23", "24", "25", "26", "27", "28"] as const;
 
-/** One of the four Get Started lessons: a title, what it teaches, and its video's summary. */
+/** One of the four Get Started lessons: a title, what it teaches, and its video. */
 export interface Lesson {
   id: string;
   title: string;
   description: string;
+  /** Kept for the write-up; the page does not render it. */
   videoSummary: string;
+  /** The YouTube id its video box opens. Official Hummingbot channel. */
+  youtube: string;
 }
 
 export const DEFINITIONS: readonly Definition[] = [
@@ -788,6 +791,7 @@ export const LESSONS: readonly Lesson[] = [
       "Hummingbot is the open-source engine this app runs on. It connects to exchanges and keeps a bot working from the rules and limits you set.",
     videoSummary:
       "Condor is the screen. Hummingbot is the engine underneath. You pick a bot, and Hummingbot runs it on an exchange.",
+    youtube: "Xau4MeN6foM",
   },
   {
     id: "lesson-bot-types",
@@ -796,6 +800,7 @@ export const LESSONS: readonly Lesson[] = [
       "A bot is one trading job. Its type is Strategy, which follows rules you write, or Agent, which decides inside limits you set. Trading style is what it does, such as market making or arbitrage, and both types share those styles.",
     videoSummary:
       "Strategy follows your rules. An agent decides inside limits you set. Trading style is separate, and both types can use market making, arbitrage, and the rest.",
+    youtube: "jmq9TkoXN_o",
   },
   {
     id: "lesson-design",
@@ -804,6 +809,7 @@ export const LESSONS: readonly Lesson[] = [
       "Design starts with a short guide: type, trading style, exchange, and pair. You can answer it yourself or with the assistant, and the draft carries into a backtest.",
     videoSummary:
       "Open Build, answer the Design guide, and leave with a draft you can test. The assistant can fill the same answers with you.",
+    youtube: "t3Su_F_SY_0",
   },
   {
     id: "lesson-improve",
@@ -812,6 +818,7 @@ export const LESSONS: readonly Lesson[] = [
       "Improve starts from a bot that is already running. Change one thing, check it in a backtest and a dry run, then send that version live.",
     videoSummary:
       "From a live bot, open Improve, change one setting, and walk it through backtest, dry run, and deploy before it goes live.",
+    youtube: "AU7h7tQpbaM",
   },
 ];
 

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { MiniPriceChart } from "@/pages/dashboard/charts";
 
 import {
@@ -23,6 +23,7 @@ import {
   PRICE_DAYS,
   STRATEGIES,
   type Agent,
+  type Lesson,
   type LiveNowCard,
   type NewsItem,
   type SourceKind,
@@ -175,12 +176,26 @@ function VideoThumb({
   sample,
   label = "How it works",
   className = "",
+  onPlay,
 }: {
   badge?: ReactNode;
   sample?: boolean;
   label?: string;
   className?: string;
+  /** Set where the box has a video to play: it becomes a button, and the
+   *  corner stops saying "Video coming". Unset (Strategies) keeps the dead
+   *  button and the label exactly as they were. */
+  onPlay?: () => void;
 }) {
+  const corner = onPlay ? (
+    <span className="absolute bottom-2 left-2 rounded-[5px] bg-black/55 px-1.5 py-0.5 text-[11.5px] font-semibold text-white">
+      Play video
+    </span>
+  ) : (
+    <span className="absolute bottom-2 left-2 rounded-[5px] bg-black/55 px-1.5 py-0.5 text-[11.5px] font-semibold text-white">
+      Video coming
+    </span>
+  );
   return (
     <div
       className={`relative aspect-video overflow-hidden rounded-lg border border-[var(--color-border)] bg-[linear-gradient(160deg,hsl(0_0%_14%),hsl(0_0%_6%))] ${className}`}
@@ -204,20 +219,26 @@ function VideoThumb({
         />
       </svg>
       {badge && <span className="absolute left-2 top-2 flex flex-wrap gap-1">{badge}</span>}
-      {sample && <span className="absolute right-2 top-2"><SampleBadge /></span>}
+      {/* On a short row box the top-right corner collides with the play button,
+          so the sample badge sits bottom-right there; card-sized boxes keep it
+          top-right exactly as before. */}
+      {sample && (
+        <span className={`absolute ${onPlay ? "bottom-2 right-2" : "top-2 right-2"}`}>
+          <SampleBadge />
+        </span>
+      )}
       <span className="absolute inset-0 flex items-center justify-center">
         <button
           type="button"
-          title="Video coming"
-          aria-label={`${label} video, coming soon`}
+          title={onPlay ? "Play the video" : "Video coming"}
+          aria-label={onPlay ? `Play the ${label} video` : `${label} video, coming soon`}
+          onClick={onPlay}
           className="flex h-11 w-11 items-center justify-center rounded-full bg-white/90 shadow-[0_8px_22px_rgba(0,0,0,0.5)]"
         >
           <Play aria-hidden="true" className="ml-0.5 h-4 w-4 fill-[#111]" />
         </button>
       </span>
-      <span className="absolute bottom-2 left-2 rounded-[5px] bg-black/55 px-1.5 py-0.5 text-[11.5px] font-semibold text-white">
-        Video coming
-      </span>
+      {corner}
     </div>
   );
 }
@@ -284,45 +305,36 @@ function AgentCard({ agent }: { agent: Agent }) {
 }
 
 function OverviewPanel() {
-  const [open, setOpen] = useState<string | null>(null);
-  const lesson = LESSONS.find((row) => row.id === open) ?? null;
+  const [playing, setPlaying] = useState<Lesson | null>(null);
   const when = LIVESTREAM.when.replace("Sample date: ", "");
   const [date, time] = when.split(", ");
 
   return (
     <div className="pt-1">
-      <SectionHead title="Get started" hint="Four short lessons. Open one to watch the sample video." />
+      <SectionHead title="Get started" hint="Four short lessons. Play the video on a row." />
       <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[1.55fr_1fr]">
         <ul className={`${CARD} m-0 list-none p-0`}>
-          {LESSONS.map((row, i) => {
-            const isOpen = row.id === open;
-            return (
-              <li
-                key={row.id}
-                className="flex min-w-0 gap-3 border-t border-[var(--color-border)] px-4 py-3 first:border-t-0"
-              >
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[var(--color-primary)]/60 text-[12.5px] font-bold text-[var(--color-primary)]">
-                  {i + 1}
-                </span>
-                <div className="min-w-0">
-                  <h3 className="text-[15.5px] font-bold leading-snug">
-                    <button
-                      type="button"
-                      onClick={() => setOpen(isOpen ? null : row.id)}
-                      aria-expanded={isOpen}
-                      aria-controls={isOpen ? "explore-lesson-detail" : undefined}
-                      className="text-left underline decoration-[var(--color-primary)]/60 decoration-1 underline-offset-4 hover:decoration-[var(--color-primary)]"
-                    >
-                      {row.title}
-                    </button>
-                  </h3>
-                  <p className="mt-1 text-[13.5px] leading-snug text-[var(--color-text-muted)]">
-                    {row.description}
-                  </p>
-                </div>
-              </li>
-            );
-          })}
+          {LESSONS.map((lesson) => (
+            <li
+              key={lesson.id}
+              className="flex flex-col gap-3 border-t border-[var(--color-border)] p-3 first:border-t-0 sm:flex-row sm:items-start"
+            >
+              <VideoThumb
+                label={lesson.title}
+                sample
+                onPlay={() => setPlaying(lesson)}
+                className="w-full shrink-0 sm:w-[150px]"
+              />
+              <div className="min-w-0 flex-1">
+                {/* A plain title: the row reads like a Strategy row, and only
+                    the video box does anything. */}
+                <h3 className="text-[16px] font-bold leading-snug tracking-tight">{lesson.title}</h3>
+                <p className="mt-1 text-[13.5px] leading-snug text-[var(--color-text-muted)]">
+                  {lesson.description}
+                </p>
+              </div>
+            </li>
+          ))}
         </ul>
 
         <article className="flex min-w-0 flex-col rounded-xl border border-[var(--color-primary)]/45 bg-[linear-gradient(160deg,color-mix(in_srgb,var(--color-primary)_9%,transparent),transparent)] px-4 py-3.5">
@@ -354,36 +366,72 @@ function OverviewPanel() {
         </article>
       </div>
 
-      {lesson && (
-        <div
-          id="explore-lesson-detail"
-          className={`mt-3.5 grid grid-cols-1 gap-3.5 p-3.5 sm:grid-cols-2 ${CARD}`}
-        >
-          {/* A sample frame: nothing is embedded and no video id exists yet. */}
-          <div className="relative aspect-video overflow-hidden rounded-lg border border-[var(--color-border)] bg-[linear-gradient(160deg,hsl(0_0%_14%),hsl(0_0%_6%))]">
-            <span className="absolute right-2 top-2">
-              <SampleBadge />
-            </span>
-            <span className="absolute inset-0 flex items-center justify-center">
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-[0_8px_22px_rgba(0,0,0,0.5)]">
-                <Play aria-hidden="true" className="ml-0.5 h-4 w-4 fill-[#111]" />
-              </span>
-            </span>
-            <span className="absolute bottom-2 left-2 rounded-[5px] bg-black/55 px-1.5 py-0.5 text-[11.5px] font-semibold text-white">
-              Sample video
-            </span>
-          </div>
+      {playing && <VideoDialog lesson={playing} onClose={() => setPlaying(null)} />}
+    </div>
+  );
+}
+
+/**
+ * One lesson's video, in a plain dialog: centred, 16:9, the lesson title and a
+ * Sample data badge. The iframe exists only while the dialog does, and closes
+ * on the close control, Escape, or a click on the backdrop. The embed address
+ * is youtube-nocookie with the video id alone — no extra query, so there is no
+ * related-video trail at the end.
+ */
+function VideoDialog({ lesson, onClose }: { lesson: Lesson; onClose: () => void }) {
+  useEffect(() => {
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+      onClick={onClose}
+      data-testid="lesson-video-backdrop"
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={lesson.title}
+        onClick={(event) => event.stopPropagation()}
+        className="w-full max-w-3xl overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl"
+      >
+        <div className="flex items-start gap-3 px-4 py-3">
           <div className="min-w-0">
             <p className="text-[10.5px] font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
-              Video summary
+              Sample video
             </p>
-            <h3 className="mt-1 text-[16px] font-bold leading-snug tracking-tight">{lesson.title}</h3>
-            <p className="mt-2 text-[13.5px] leading-relaxed text-[var(--color-text-muted)]">
-              {lesson.videoSummary}
-            </p>
+            <h2 className="mt-0.5 text-[15.5px] font-bold leading-snug">{lesson.title}</h2>
           </div>
+          <span className="ml-auto flex shrink-0 items-center gap-2">
+            <SampleBadge />
+            <button
+              type="button"
+              aria-label="Close the video"
+              onClick={onClose}
+              className="rounded p-1 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]"
+            >
+              <X aria-hidden="true" className="h-4 w-4" />
+            </button>
+          </span>
         </div>
-      )}
+        <div className="aspect-video w-full bg-black">
+          <iframe
+            src={`https://www.youtube-nocookie.com/embed/${lesson.youtube}`}
+            title={lesson.title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            className="h-full w-full"
+          />
+        </div>
+      </div>
     </div>
   );
 }
