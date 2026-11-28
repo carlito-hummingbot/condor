@@ -1,7 +1,7 @@
 import {
   Brain,
   Bug,
-  Compass,
+  GraduationCap,
   Download,
   Hammer,
   KeyRound,
@@ -49,14 +49,18 @@ import {
  * card at the foot of the rail.
  *
  * The top bar is a left icon rail now. Three doors in the main group:
- * Dashboard, Explore and Build. Dashboard is `/` (the chat home until the stats
- * page lands). Explore is `/explore`, the catalogue of strategies and agents;
- * it used to be Agents at `/hub`, and `/hub` now redirects here. The showcase
- * is the only branch with that page: in the rail PRs the door keeps `/hub`
- * until the catalogue lands. Build is `/build`, the five stages one bot goes
- * through (Design, Backtest, Dry Run, Deploy, Improve); it was Labs, a
- * placeholder, and the rail PRs still say Labs until the rename is approved.
- * `/labs` and `/strategies` redirect to it. The Settings gear sits at the foot of the rail, above the avatar, and
+ * Dashboard, Learn and Build. Dashboard is `/` (the chat home until the stats
+ * page lands). Learn is `/explore`, the catalogue of strategies and agents,
+ * with the four lessons that teach them and the live bots; it used to be Agents
+ * at `/hub`, and `/hub` now redirects here. The showcase is the only branch
+ * with that page: in the rail PRs the door keeps `/hub` until the catalogue
+ * lands. Its door wears a graduation cap, because learning is what the section
+ * is for now — the compass it wore as Explore named browsing instead.
+ *
+ * Build is `/build`, the five stages one bot goes through (Design, Backtest,
+ * Dry Run, Deploy, Improve); it was Labs, a placeholder, and the rail PRs still
+ * say Labs until the rename is approved. `/labs` and `/strategies` redirect to
+ * it. The Settings gear sits at the foot of the rail, above the avatar, and
  * opens a panel beside the rail with every Settings tab people reach for, in
  * three groups, and Report an Issue. Portfolio, Trade, DEX, Routines and Bots
  * have no door in the nav for now; their routes still work by address.
@@ -71,7 +75,7 @@ export interface NavEntry {
 /** Rail, top group. The logo is not an entry: it is the brand, and it never lights. */
 export const RAIL_TOP: readonly NavEntry[] = [
   { id: "dashboard", to: "/", icon: LayoutDashboard, label: "Dashboard" },
-  { id: "explore", to: "/explore", icon: Compass, label: "Learn" },
+  { id: "explore", to: "/explore", icon: GraduationCap, label: "Learn" },
   { id: "build", to: "/build", icon: Hammer, label: "Build" },
 ];
 

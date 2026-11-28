@@ -110,6 +110,24 @@ afterEach(() => {
 });
 
 describe("SideRail", () => {
+  it("wears a learning icon on the Learn door, and the others keep theirs", async () => {
+    renderAt("/explore");
+    await flush();
+    const nav = container.querySelector('nav[aria-label="Primary"]')!;
+    const iconOf = (href: string) => nav.querySelector(`a[href="${href}"] svg`)?.getAttribute("class") ?? "";
+
+    // Lucide puts its name on the svg; the cap is the learning mark.
+    expect(iconOf("/explore")).toContain("lucide-graduation-cap");
+    expect(iconOf("/explore")).not.toContain("lucide-compass");
+    // The neighbours keep their own icons.
+    expect(iconOf("/")).toContain("lucide-layout-dashboard");
+    expect(iconOf("/build")).toContain("lucide-hammer");
+    // Same size and stroke as the rest of the rail.
+    const sizes = [...nav.querySelectorAll("a svg")].map((svg) => svg.getAttribute("class"));
+    expect(sizes.every((cls) => cls?.includes("h-5") && cls.includes("w-5"))).toBe(true);
+    expect(nav.querySelector('a[href="/explore"] svg')?.getAttribute("stroke-width") ?? "2").toBe("2");
+  });
+
   it("names the second door Learn, still pointing at /explore", async () => {
     renderAt("/explore");
     await flush();
