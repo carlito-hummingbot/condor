@@ -95,6 +95,16 @@ export const CHAT_DRAFT_KEY_PREFIX = "condor.chat.draft:";
  * reach them; the tab closing does.
  */
 export const BUILD_DRAFT_KEY = "condor.build.draft.v1";
+
+/**
+ * The Bots tab's demo switch: "signed in to Botcamp", remembered so the
+ * walkthrough survives a reload. There is no real Botcamp session check yet
+ * (`lib/botcampSignIn` explains), so this stands in for one.
+ *
+ * CLEARED, like the Build draft: it says what this person turned on, not how
+ * the device is set up.
+ */
+export const BOTCAMP_SIGNED_IN_KEY = "botcampSignedIn";
 export const BUILD_DRAFTS_KEY = "condor.build.drafts.v1";
 export const BUILD_ORIGIN_KEY = "condor.build.origin.v1";
 

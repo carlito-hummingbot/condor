@@ -93,6 +93,67 @@ export interface LiveNowCard {
   pnlSeries: readonly number[];
 }
 
+/**
+ * The Botcamp site. `condor/hub.py` points its API at `https://www.botcamp.xyz/api`
+ * and its approval page at `/connect`, and the Settings › Agents link signs in
+ * there; the repo has no separate login or sign-up path, so both links in the
+ * Bots panel go to the site itself.
+ */
+export const BOTCAMP_URL = "https://www.botcamp.xyz";
+
+/** One agent a signed-in user can run: the four in the Bots tab's Agents column. */
+export interface AvailableAgent {
+  id: string;
+  name: string;
+  /** What it does, in one line. Sample text: these four are not in the pack. */
+  oneLine: string;
+  /** The tags the Agents tab showed: kind and trading style. */
+  kind: string;
+  category: string;
+  /** True: the text is written for the showcase, as these four have no record. */
+  sample: boolean;
+}
+
+/**
+ * The four agents the Bots tab offers as ready to use. None of them is in the
+ * Botcamp pack, so all four carry sample text and the Sample data badge; the
+ * pack's own 14 sit greyed under "Hackathon Agents" until Botcamp is signed in.
+ */
+export const AVAILABLE_AGENTS: readonly AvailableAgent[] = [
+  {
+    id: "agent-directional-trader",
+    name: "Directional Trader",
+    oneLine: "Takes one side while the trend is clear, and stands aside when it is not.",
+    kind: "Condor Agent",
+    category: "Directional",
+    sample: true,
+  },
+  {
+    id: "agent-fundamental-analyst",
+    name: "Fundamental Analyst",
+    oneLine: "Reads news and on-chain data, then argues the case before anything is sent.",
+    kind: "Condor Agent",
+    category: "Research",
+    sample: true,
+  },
+  {
+    id: "agent-market-making-expert",
+    name: "Market Making Expert",
+    oneLine: "Quotes both sides, sizes to the book, and widens when volatility rises.",
+    kind: "Condor Agent",
+    category: "Market making",
+    sample: true,
+  },
+  {
+    id: "agent-solana-dex-lp-expert",
+    name: "Solana DEX LP Expert",
+    oneLine: "Picks a Solana pool, sets a range, and rebalances when the price leaves it.",
+    kind: "Condor Agent",
+    category: "Liquidity provision",
+    sample: true,
+  },
+];
+
 /** The seven day labels the Live Bots cards' P&L bars share, ending 28 Nov. */
 export const PRICE_DAYS = ["22", "23", "24", "25", "26", "27", "28"] as const;
 
@@ -609,6 +670,9 @@ export const AGENTS: readonly Agent[] = [
     "real": false
   }
 ];
+
+/** The 14 Botcamp Agent Builders Cup agents: the pack's hackathon entries. */
+export const HACKATHON_AGENTS: readonly Agent[] = AGENTS.filter((agent) => agent.sourceKind === "botcamp");
 
 export const NEWS: readonly NewsItem[] = [
   {
