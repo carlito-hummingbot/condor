@@ -20,6 +20,7 @@ import { CreateExecutor } from "@/pages/CreateExecutor";
 import { DesignSystem } from "@/pages/DesignSystem";
 import { Dex } from "@/pages/Dex";
 import { DexPool } from "@/pages/DexPool";
+import { Explore, HubRedirect } from "@/pages/Explore";
 import { Login } from "@/pages/Login";
 import { NotFound } from "@/pages/NotFound";
 import { Portfolio } from "@/pages/Portfolio";
@@ -175,9 +176,11 @@ export default function App() {
                   path="/agents/:slug/strategies/:sslug"
                   element={<AgentStrategyRedirect />}
                 />
-                {/* The Hub opens inside the Agents workspace, in the conversation's
-                    column, so the rail and the dock stay where they were. */}
-                <Route path="/hub" element={<Agents />} />
+                {/* Showcase only: the old Agent Hub at `/hub` is unreachable
+                    (the second rail door is Explore now). The Explore page is
+                    an ordinary padded, scrolling page. */}
+                <Route path="/explore" element={<Explore />} />
+                <Route path="/hub" element={<HubRedirect />} />
                 <Route path="/settings" element={<Settings />} />
                 {/* First-run setup, and "Run setup again". The wizard itself
                     is mounted by the shell; this address only forces it. */}

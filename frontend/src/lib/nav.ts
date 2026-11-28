@@ -1,7 +1,7 @@
 import {
-  Bot,
   Brain,
   Bug,
+  Compass,
   Download,
   FlaskConical,
   KeyRound,
@@ -49,15 +49,16 @@ import {
  * at the foot of the Agents rail.
  *
  * The top bar is a left icon rail now. Three doors in the main group:
- * Dashboard, Agents and Labs. Dashboard is `/` (the chat home until the stats
- * page lands). Agents is `/hub`, the Agents workspace, and stays lit on an
- * agent's own page. Labs is `/labs`, a placeholder page for now (Design,
- * Backtest, Test Run and Diagnose come later); `/strategies` redirects to it.
- * The Settings gear sits at the foot of the rail, above the avatar, and opens
- * a panel beside the rail with every Settings tab people reach for, in three
- * groups, and Report an Issue. Portfolio, Trade, DEX, Routines and Bots have
- * no door in the nav for now; their routes still work by address.
-
+ * Dashboard, Explore and Labs. Dashboard is `/` (the chat home until the stats
+ * page lands). Explore is `/explore`, the catalogue of strategies and agents;
+ * it used to be Agents at `/hub`, and `/hub` now redirects here in the
+ * showcase (showcase-only rename: the rail PRs still say Agents). Labs is
+ * `/labs`, a placeholder page for now (Design, Backtest, Test Run and Diagnose
+ * come later); `/strategies` redirects to it. The Settings gear sits at the
+ * foot of the rail, above the avatar, and opens a panel beside the rail with
+ * every Settings tab people reach for, in three groups, and Report an Issue.
+ * Portfolio, Trade, DEX, Routines and Bots have no door in the nav for now;
+ * their routes still work by address.
  */
 export interface NavEntry {
   id: string;
@@ -69,7 +70,7 @@ export interface NavEntry {
 /** Rail, top group. The logo is not an entry: it is the brand, and it never lights. */
 export const RAIL_TOP: readonly NavEntry[] = [
   { id: "dashboard", to: "/", icon: LayoutDashboard, label: "Dashboard" },
-  { id: "agents", to: "/hub", icon: Bot, label: "Agents" },
+  { id: "explore", to: "/explore", icon: Compass, label: "Explore" },
   { id: "labs", to: "/labs", icon: FlaskConical, label: "Labs" },
 ];
 
@@ -136,14 +137,14 @@ export type RailOverlayId = "settings" | "account";
 /** The gear at the foot of the rail. It opens the Settings panel; it is not a link. */
 export const SETTINGS_ICON = Settings;
 
-/** The chat home only. The Hub and an agent's page belong to Agents now. */
+/** The chat home only. Explore and an agent's page are elsewhere. */
 export function isDashboardActive(pathname: string): boolean {
   return pathname === "/";
 }
 
-/** The Agents workspace: the Hub, and a single agent's page. */
-export function isAgentsActive(pathname: string): boolean {
-  return pathname === "/hub" || pathname === "/chat" || pathname.startsWith("/agents/");
+/** The Explore catalogue. The old Agent Hub address redirects here. */
+export function isExploreActive(pathname: string): boolean {
+  return pathname === "/explore";
 }
 
 export function isLabsActive(pathname: string): boolean {
@@ -177,8 +178,8 @@ export function isRailEntryActive(id: string, pathname: string, search: string):
   switch (id) {
     case "dashboard":
       return isDashboardActive(pathname);
-    case "agents":
-      return isAgentsActive(pathname);
+    case "explore":
+      return isExploreActive(pathname);
     case "labs":
       return isLabsActive(pathname);
     case "settings":
@@ -224,4 +225,4 @@ export function isRailItemLit(
  * route with a body any more (FEAT-116): a layout rule for it would be a rule
  * about a redirect. What it used to draw is `/bots`, which is on this list.
  */
-export const FULL_BLEED_ROUTES = ["/chat", "/hub", "/bots", "/routines"];
+export const FULL_BLEED_ROUTES = ["/chat", "/bots", "/routines"];

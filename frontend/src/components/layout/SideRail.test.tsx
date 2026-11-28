@@ -116,13 +116,13 @@ describe("SideRail", () => {
     expect(currentLabels()).toEqual(["Dashboard"]);
   });
 
-  it("lights Agents on the Hub and on an agent workspace, not on Dashboard", async () => {
-    renderAt("/agents/alpha");
+  it("lights Explore on /explore, not on Dashboard", async () => {
+    renderAt("/explore");
     await flush();
-    expect(currentLabels()).toEqual(["Agents"]);
-    rerenderAt("/hub");
+    expect(currentLabels()).toEqual(["Explore"]);
+    rerenderAt("/labs");
     await flush();
-    expect(currentLabels()).toEqual(["Agents"]);
+    expect(currentLabels()).toEqual(["Labs"]);
   });
 
   it("lights Labs on /labs", async () => {
@@ -155,7 +155,7 @@ describe("SideRail", () => {
     await flush();
     const nav = container.querySelector('nav[aria-label="Primary"]')!;
     const labels = [...nav.querySelectorAll("a span, button span")].map((el) => el.textContent);
-    expect(labels).toEqual(["Dashboard", "Agents", "Labs", "Settings"]);
+    expect(labels).toEqual(["Dashboard", "Explore", "Labs", "Settings"]);
     expect(nav.textContent).not.toContain("More");
     expect(nav.querySelector('[aria-label*="otification"]')).toBeNull();
   });
@@ -167,7 +167,7 @@ describe("SideRail", () => {
     const order = [...nav.querySelectorAll("a, button")].map(
       (el) => el.getAttribute("aria-label") || el.textContent?.trim(),
     );
-    expect(order.slice(-5)).toEqual(["Dashboard", "Agents", "Labs", "Settings", "Algo Trader"]);
+    expect(order.slice(-5)).toEqual(["Dashboard", "Explore", "Labs", "Settings", "Algo Trader"]);
   });
 
   it("shows Algo Trader's initials and opens the account menu", async () => {

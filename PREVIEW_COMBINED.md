@@ -71,3 +71,25 @@ What it fixes, over the page mock:
 Not changed on this branch, as asked: no proposal pages, no "Run setup again" in the avatar Account popup, PR #23 and
 every PR branch untouched, sample Dashboard routing (`/` Dashboard, `/chat` chat) and the shared preference helpers
 (`profile.display_name`, `ui.dashboard_title`) as before.
+
+## Explore page (showcase only)
+
+The 2nd rail door is **Explore** (`/explore`) in this showcase build: a compass icon, the phone tab bar shows
+Dashboard · Explore · Labs · Account, and `/hub` redirects to `/explore`, so the old Agent Hub page is unreachable
+here. Showcase only: the rail PRs (#3, #6, #25) and the other proposal pages still say Agents until the user approves
+the rename. The page is an ordinary padded, scrolling page, so the chat still lives at `/chat`.
+
+- **One sample-data module**, `pages/explore/sampleData.ts`, typed from the content pack: the 14 real Botcamp Agent
+  Builders Cup agents, the 10 strategy names verified against the Hummingbot docs, the 3 verified channel links, and
+  sample Live now cards, Start here picks and news. Videos are placeholders ("Video coming"); nothing is fetched.
+- **Four tabs in `?tab=`**: Overview (Start here, next livestream, six Live now cards in the Dashboard card style,
+  Browse teasers), Strategies (definition + 10 video-first cards with risk/difficulty and Try in Labs), Agents
+  (definition + All / Hummingbot / Botcamp Hackathon / Community filter with counts and video-first cards; the 14
+  Botcamp cards name the builder and "From Botcamp Agent Builders Cup"), and What's new (one timeline with a
+  Livestream / X / Discord filter and the 3 real Follow links). Sample blocks carry a "Sample data" badge.
+- Tabs are a `tablist` with arrow/Home/End keys; panels are labelled. At 390 px the tab row scrolls sideways and all
+  card grids are one column. Only the 3 channel links are real `href`s; internal actions (tabs, Try in Labs, Open the
+  Dashboard) are buttons, and news item links are `#` no-ops.
+- Existing tests changed: `AppShell.nav.test.ts`, `SideRail.test.tsx` and `MobileTabBar.test.tsx` now expect the
+  Explore door and `/explore` instead of Agents at `/hub`.
+

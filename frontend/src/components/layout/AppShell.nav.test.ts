@@ -19,7 +19,7 @@ import {
   REPORT_ISSUE,
   SETTINGS_ENTRIES,
   SETTINGS_GROUPS,
-  isAgentsActive,
+  isExploreActive,
   isDashboardActive,
   isLabsActive,
   isRailEntryActive,
@@ -38,9 +38,9 @@ describe("the nav", () => {
     expect(paths).not.toContain("/floor");
   });
 
-  it("has exactly Dashboard, Agents and Labs on the rail, and no More", () => {
-    expect(RAIL_TOP.map((item) => item.label)).toEqual(["Dashboard", "Agents", "Labs"]);
-    expect(RAIL_TOP.map((item) => item.to)).toEqual(["/", "/hub", "/labs"]);
+  it("has exactly Dashboard, Explore and Labs on the rail, and no More", () => {
+    expect(RAIL_TOP.map((item) => item.label)).toEqual(["Dashboard", "Explore", "Labs"]);
+    expect(RAIL_TOP.map((item) => item.to)).toEqual(["/", "/explore", "/labs"]);
   });
 
   it("has the Settings panel in three groups, in this order", () => {
@@ -74,8 +74,9 @@ describe("the nav", () => {
     expect(new Set(destinations.map((i) => i.to)).size).toBe(destinations.length);
     const all = [...RAIL_TOP, ...SETTINGS_GROUPS.flat()];
     expect(new Set(all.map((i) => i.id)).size).toBe(all.length);
-    // "Agents" is a rail door and a Settings tab: same word, two doors, two ids.
-    expect(all.filter((i) => i.label === "Agents")).toHaveLength(2);
+    // "Agents" is only a Settings tab now; the rail door is Explore.
+    expect(all.filter((i) => i.label === "Agents")).toHaveLength(1);
+    expect(all.filter((i) => i.label === "Explore")).toHaveLength(1);
   });
 });
 
@@ -87,12 +88,13 @@ describe("active state", () => {
     expect(isDashboardActive("/labs")).toBe(false);
   });
 
-  it("lights Agents on the Hub and on an agent workspace", () => {
-    expect(isAgentsActive("/hub")).toBe(true);
-    expect(isAgentsActive("/chat")).toBe(true);
-    expect(isAgentsActive("/agents/alpha")).toBe(true);
-    expect(isAgentsActive("/agents")).toBe(false);
-    expect(isAgentsActive("/bots")).toBe(false);
+  it("lights Explore on /explore, not on the old Hub or the chat", () => {
+    expect(isExploreActive("/explore")).toBe(true);
+    expect(isExploreActive("/hub")).toBe(false);
+    expect(isExploreActive("/chat")).toBe(false);
+    expect(isExploreActive("/agents/alpha")).toBe(false);
+    expect(isExploreActive("/agents")).toBe(false);
+    expect(isExploreActive("/bots")).toBe(false);
   });
 
   it("lights Labs on /labs and below it", () => {
@@ -159,11 +161,13 @@ describe("lit state with an overlay open", () => {
     expect(isRailItemLit("account", "account", "/", "")).toBe(true);
     expect(isRailItemLit("settings", "account", "/settings", "?tab=voice")).toBe(false);
     expect(isRailItemLit("agents", "account", "/hub", "")).toBe(false);
+    expect(isRailItemLit("explore", "account", "/explore", "")).toBe(false);
   });
 
   it("follows the route when nothing is open", () => {
     expect(isRailItemLit("dashboard", null, "/", "")).toBe(true);
-    expect(isRailItemLit("agents", null, "/hub", "")).toBe(true);
+    expect(isRailItemLit("agents", null, "/hub", "")).toBe(false);
+    expect(isRailItemLit("explore", null, "/explore", "")).toBe(true);
     expect(isRailItemLit("settings", null, "/settings", "?tab=keys")).toBe(true);
     expect(isRailItemLit("settings", null, "/settings", "?tab=privacy")).toBe(true);
   });
