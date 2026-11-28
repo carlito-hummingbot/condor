@@ -1,8 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "@/lib/auth";
 import { api } from "@/lib/api";
-import type { UserPreferences } from "@/lib/preferences";
+import {
+  buildPreferenceUpdates,
+  clampDashboardTitle,
+  type PreferencePatch,
+  type UserPreferences,
+} from "@/lib/preferences";
 import { preferencesQuery } from "@/lib/queryClient";
 
 /**
@@ -44,11 +49,11 @@ export function initialsFrom(name: string): string {
 
 /** `ui.dashboard_title`, or "Condor". The rail has no text title, so this is the logo's tooltip. */
 export function dashboardTitleFrom(prefs: UserPreferences | undefined): string {
-  const title = prefs?.ui?.dashboard_title?.trim();
+  const title = clampDashboardTitle(prefs?.ui?.dashboard_title ?? "");
   return title || DEFAULT_DASHBOARD_TITLE;
 }
 
-function usePreferences() {
+export function usePreferences() {
   const { token } = useAuth();
   return useQuery({
     ...preferencesQuery(),
@@ -68,4 +73,27 @@ export function useDisplayName(): string {
 export function useDashboardTitle(): string {
   const { data } = usePreferences();
   return dashboardTitleFrom(data);
+}
+
+/**
+ * PATCH `profile` / `ui` as whole top-level keys, the way the wizard does.
+ *
+ * Same name and argument shape as `usePatchPreferences` in the onboarding PR
+ * (`{ patch }`), so the Account dialog and the wizard write identical data. The
+ * cached map is read first (fetched if empty: writing from `{}` would replace
+ * a key the server already holds), and the response replaces the cache, so the
+ * avatar initial, the greeting and the Dashboard title update at once.
+ */
+export function usePatchPreferences() {
+  const qc = useQueryClient();
+  const key = preferencesQuery().queryKey;
+  return useMutation({
+    mutationFn: async (args: { patch: PreferencePatch }) => {
+      const current = qc.getQueryData<UserPreferences>(key) ?? (await api.getPreferences());
+      return api.updatePreferences(buildPreferenceUpdates(current, args.patch));
+    },
+    onSuccess: (next) => {
+      qc.setQueryData(key, next);
+    },
+  });
 }

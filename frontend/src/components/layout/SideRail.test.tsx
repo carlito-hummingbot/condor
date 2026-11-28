@@ -1,10 +1,11 @@
 /**
- * The rail's active item and the Settings panel.
+ * The rail's active item, the Settings panel and the account menu.
  *
  * Active-state rules live in `lib/nav` and are tested there. This checks that
  * the rail actually paints them, and that the Settings gear opens one panel
- * beside it with three groups of rows. There is no More. The avatar has no
- * menu yet: it is the initials and it goes to Settings.
+ * beside it with three groups of rows. There is no More. The avatar opens the
+ * account menu: the name, the role, Account (which opens the Your account
+ * dialog) and Logout, nothing else.
  *
  * @vitest-environment jsdom
  */
@@ -15,16 +16,29 @@ import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ServerContext } from "@/hooks/useServer";
+
+const { updatePreferences } = vi.hoisted(() => ({
+  updatePreferences: vi.fn(async (updates: Record<string, unknown>) => ({ ...updates })),
+}));
+
 vi.mock("@/lib/api", () => ({
   api: {
     getPreferences: async () => ({ profile: { display_name: "Algo Trader" } }),
+    updatePreferences,
+    getServers: async () => [
+      { name: "local", host: "h", port: 8000, online: true, permission: "owner", is_default: true },
+    ],
   },
 }));
+
+const { logout } = vi.hoisted(() => ({ logout: vi.fn() }));
 
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({
     token: "t",
     user: { id: 1, username: "local", first_name: "Local", role: "admin" },
+    logout,
   }),
 }));
 
@@ -48,9 +62,11 @@ function renderAt(path: string, onReport: () => void = () => {}) {
   act(() => {
     root.render(
       <QueryClientProvider client={client}>
-        <MemoryRouter initialEntries={[path]}>
-          <SideRail onReport={onReport} />
-        </MemoryRouter>
+        <ServerContext.Provider value={{ server: "local", setServer: () => {} }}>
+          <MemoryRouter initialEntries={[path]}>
+            <SideRail onReport={onReport} />
+          </MemoryRouter>
+        </ServerContext.Provider>
       </QueryClientProvider>,
     );
   });
@@ -80,6 +96,8 @@ async function click(el: Element) {
 }
 
 beforeEach(() => {
+  updatePreferences.mockClear();
+  logout.mockClear();
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   container = document.createElement("div");
   document.body.appendChild(container);
@@ -152,12 +170,145 @@ describe("SideRail", () => {
     expect(order.slice(-5)).toEqual(["Dashboard", "Explore", "Labs", "Settings", "Algo Trader"]);
   });
 
-  it("shows the initials and sends the avatar to Settings", async () => {
+  it("shows Algo Trader's initials and opens the account menu", async () => {
     renderAt("/");
     await flush();
-    const avatar = container.querySelector('a[aria-label="Algo Trader"]');
+    const avatar = container.querySelector('button[aria-label="Algo Trader"]') as HTMLButtonElement;
     expect(avatar?.textContent).toBe("AT");
-    expect(avatar?.getAttribute("href")).toBe("/settings");
+
+    await click(avatar);
+
+    const text = document.body.textContent || "";
+    expect(text).toContain("Algo Trader");
+    expect(text).toContain("Admin");
+    expect(text).toContain("Logout");
+
+    // Only user functions: Account and Logout, and none of the old top-bar controls.
+    const items = [...document.body.querySelectorAll('[role="menuitem"]')].map((el) =>
+      el.textContent?.trim(),
+    );
+    expect(items).toEqual(["Account", "Logout"]);
+    for (const gone of [
+      "API Servers",
+      "Display Currency",
+      "USDT",
+      "Theme",
+      "Run setup again",
+      "Gateway",
+      "local",
+    ]) {
+      expect(text).not.toContain(gone);
+    }
+    expect(document.body.querySelector('a[href="/welcome"]')).toBeNull();
+    expect(document.body.querySelector('[aria-label="Theme"]')).toBeNull();
+
+    const logoutItem = [...document.body.querySelectorAll('[role="menuitem"]')].find((el) =>
+      el.textContent?.includes("Logout"),
+    ) as HTMLButtonElement;
+    await click(logoutItem);
+    expect(logout).toHaveBeenCalledTimes(1);
+  });
+
+  describe("the account menu", () => {
+    const avatar = () =>
+      container.querySelector('button[aria-label="Algo Trader"]') as HTMLButtonElement;
+    const panel = () => document.body.querySelector("aside");
+    const accountMenu = () =>
+      [...document.body.querySelectorAll('[role="menu"]')].find((m) => !m.closest("aside"));
+    const dialog = () => document.body.querySelector('[role="dialog"]') as HTMLElement | null;
+    const accountRow = () =>
+      [...document.body.querySelectorAll('[role="menuitem"]')].find(
+        (el) => el.textContent?.trim() === "Account",
+      ) as HTMLElement;
+
+    it("never has both open: each one closes the other", async () => {
+      renderAt("/");
+      await flush();
+      await click(button("Settings"));
+      expect(panel()).not.toBeNull();
+
+      await click(avatar());
+      expect(panel()).toBeNull();
+      expect(accountMenu()?.textContent).toContain("Logout");
+      expect(avatar().getAttribute("aria-expanded")).toBe("true");
+
+      await click(button("Settings"));
+      expect(accountMenu()).toBeUndefined();
+      expect(panel()?.querySelector("h2")?.textContent).toBe("Settings");
+      expect(avatar().getAttribute("aria-expanded")).toBe("false");
+    });
+
+    it("closes the account menu on Escape and on a click outside", async () => {
+      renderAt("/");
+      await flush();
+      await click(avatar());
+      expect(accountMenu()).toBeDefined();
+      await act(async () => {
+        document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+      });
+      await flush();
+      expect(accountMenu()).toBeUndefined();
+
+      await click(avatar());
+      expect(accountMenu()).toBeDefined();
+      await act(async () => {
+        document.body.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+      });
+      await flush();
+      expect(accountMenu()).toBeUndefined();
+    });
+
+    it("has the name, the role, Account and Logout and no panel content", async () => {
+      renderAt("/");
+      await flush();
+      await click(avatar());
+      expect(panel()).toBeNull();
+      expect(accountMenu()?.textContent ?? "").toBe("Algo TraderAdminAccountLogout");
+    });
+
+    it("opens the Your account dialog from the Account row and closes the menu", async () => {
+      renderAt("/");
+      await flush();
+      await click(avatar());
+      expect(dialog()).toBeNull();
+
+      await click(accountRow());
+      expect(accountMenu()).toBeUndefined();
+      expect(avatar().getAttribute("aria-expanded")).toBe("false");
+      expect(avatar().className).not.toContain("ring-2");
+      expect(dialog()).not.toBeNull();
+      expect(dialog()?.textContent).toContain("Your account");
+      // Prefilled with the name the rail shows.
+      const nameField = dialog()!.querySelector("input") as HTMLInputElement;
+      expect(nameField.value).toBe("Algo Trader");
+      expect(accountRow()).toBeUndefined();
+    });
+
+    it("closes the dialog on Escape first and puts focus back on the avatar", async () => {
+      renderAt("/");
+      await flush();
+      await click(avatar());
+      await click(accountRow());
+      expect(dialog()).not.toBeNull();
+
+      await act(async () => {
+        window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+      });
+      await flush();
+      expect(dialog()).toBeNull();
+      expect(updatePreferences).not.toHaveBeenCalled();
+      expect(document.activeElement).toBe(avatar());
+      expect(avatar().getAttribute("aria-expanded")).toBe("false");
+    });
+
+    it("keeps the dialog open when the Settings panel is opened behind it", async () => {
+      renderAt("/");
+      await flush();
+      await click(avatar());
+      await click(accountRow());
+      await click(button("Settings"));
+      expect(dialog()).not.toBeNull();
+    });
   });
 
   describe("the Settings panel", () => {
@@ -363,6 +514,47 @@ describe("SideRail", () => {
       expect(currentLabels()).toEqual(["Keys and Wallets"]);
       expect(button("Settings").getAttribute("aria-current")).toBeNull();
       expect(lit()).toEqual(["Settings"]);
+    });
+
+    it("lights only the avatar while the account popup is open, not the page behind it", async () => {
+      renderAt("/");
+      await flush();
+      const avatar = container.querySelector('button[aria-label="Algo Trader"]') as HTMLButtonElement;
+      // Closed: the route's item is lit and the avatar is plain.
+      expect(lit()).toEqual(["Dashboard"]);
+      expect(avatar.className).not.toContain("ring-2");
+
+      await click(avatar);
+      expect(lit()).toEqual([]);
+      expect(avatar.className).toContain("ring-2");
+      expect(avatar.getAttribute("aria-expanded")).toBe("true");
+      expect(avatar.getAttribute("aria-current")).toBeNull();
+      expect(currentLabels()).toEqual([]);
+
+      // Opening the Settings panel moves the lit state to the gear and clears the avatar.
+      await click(button("Settings"));
+      expect(lit()).toEqual(["Settings"]);
+      expect(avatar.className).not.toContain("ring-2");
+
+      // Closing the popup brings the route's item back.
+      await click(avatar);
+      expect(avatar.className).toContain("ring-2");
+      await click(avatar);
+      expect(lit()).toEqual(["Dashboard"]);
+      expect(avatar.className).not.toContain("ring-2");
+    });
+
+    it("clears the avatar's lit state after Logout", async () => {
+      renderAt("/labs");
+      await flush();
+      const avatar = container.querySelector('button[aria-label="Algo Trader"]') as HTMLButtonElement;
+      await click(avatar);
+      const logoutItem = [...document.body.querySelectorAll('[role="menuitem"]')].find((el) =>
+        el.textContent?.includes("Logout"),
+      ) as HTMLElement;
+      await click(logoutItem);
+      expect(avatar.className).not.toContain("ring-2");
+      expect(lit()).toEqual(["Labs"]);
     });
   });
 });

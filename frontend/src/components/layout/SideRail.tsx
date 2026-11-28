@@ -10,6 +10,9 @@ import {
   type NavEntry,
   type RailOverlayId,
 } from "@/lib/nav";
+import { useServerRoster } from "@/hooks/useServerRoster";
+import { AccountDialog } from "./AccountDialog";
+import { AccountMenu } from "./AccountMenu";
 import { RailPanel } from "./RailPanel";
 
 /**
@@ -17,8 +20,11 @@ import { RailPanel } from "./RailPanel";
  *
  * Every door shows its name under the icon (10px, like the panel rail on the
  * right), so nothing depends on a hover. The logo and the avatar are the two
- * items without a text label and keep a tooltip. The avatar has no menu yet:
- * it goes to Settings, and the account menu lands in the next change.
+ * items without a text label and keep a tooltip. The avatar opens the account
+ * menu (name, role, Account, Logout); a red dot on it means the selected server
+ * is offline. The account menu is the second overlay: it and the Settings panel
+ * are never open together, and while it is open only the avatar is lit. Its
+ * Account row opens `AccountDialog`, a modal above the rail.
  *
  * Dashboard, Explore and Labs on top. The Settings gear and the avatar sit at
  * the foot. The gear opens one panel beside the rail (`RailPanel`) with the
@@ -55,6 +61,14 @@ export function SideRail({ onReport }: { onReport: () => void }) {
   // opener is lit.
   const [overlay, setOverlay] = useState<RailOverlayId | null>(null);
   const panelOpen = overlay === "settings";
+  const [accountAnchor, setAccountAnchor] = useState<HTMLElement | null>(null);
+  const accountOpen = overlay === "account";
+  // The dialog is a modal above the rail, not an overlay of it: it never
+  // touches `overlay`, and the menu that opens it has closed already.
+  const [accountDialog, setAccountDialog] = useState(false);
+  // Also keeps a deleted server from staying selected while the menu is closed.
+  const { current } = useServerRoster();
+  const serverOffline = !!current && !current.online;
   const panelId = useId();
   const settingsRef = useRef<HTMLButtonElement>(null);
   const toggle = (id: RailOverlayId) => setOverlay((open) => (open === id ? null : id));
@@ -99,16 +113,39 @@ export function SideRail({ onReport }: { onReport: () => void }) {
       </Tooltip>
 
       <Tooltip label={name}>
-        <Link
-          to="/settings"
+        <button
+          ref={setAccountAnchor}
+          type="button"
           aria-label={name}
-          className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-primary-fill)] text-[11px] font-bold text-[var(--on-primary)]"
+          aria-expanded={accountOpen}
+          aria-haspopup="menu"
+          onClick={() => toggle("account")}
+          className={`relative mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-primary-fill)] text-[11px] font-bold text-[var(--on-primary)] ${
+            accountOpen ? "ring-2 ring-[var(--color-primary)] ring-offset-2 ring-offset-[var(--color-surface)]" : ""
+          }`}
         >
           {initialsFrom(name)}
-        </Link>
+          {serverOffline && (
+            <span
+              className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border border-[var(--color-surface)] bg-[var(--color-red)]"
+              aria-label="Server offline"
+            />
+          )}
+        </button>
       </Tooltip>
 
       <RailPanel open={panelOpen} id={panelId} button={settingsRef} onClose={close} onReport={onReport} />
+      <AccountMenu
+        anchor={accountAnchor}
+        open={accountOpen}
+        onClose={() => setOverlay(null)}
+        onAccount={() => setAccountDialog(true)}
+      />
+      <AccountDialog
+        open={accountDialog}
+        onOpenChange={setAccountDialog}
+        returnFocusTo={accountAnchor}
+      />
     </nav>
   );
 }

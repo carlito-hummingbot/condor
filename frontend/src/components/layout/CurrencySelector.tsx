@@ -9,8 +9,41 @@ import {
   type DisplayCurrency,
 } from "@/hooks/useDisplayCurrency";
 
-export function CurrencySelector() {
+export function CurrencyChoices({ onPicked }: { onPicked?: () => void }) {
   const { currency, setCurrency } = useDisplayCurrency();
+
+  return (
+    <div role="group" aria-label="Display currency">
+      <div className="px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider text-[var(--color-text-muted)]">
+        Display Currency
+      </div>
+      {CURRENCY_OPTIONS.map((c: DisplayCurrency) => (
+        <button
+          key={c}
+          type="button"
+          onClick={() => {
+            setCurrency(c);
+            onPicked?.();
+          }}
+          className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-sm transition-colors hover:bg-[var(--color-surface-hover)] ${
+            c === currency ? "bg-[var(--color-primary-fill)]/10 text-[var(--color-primary)]" : ""
+          }`}
+        >
+          <span className="w-5 text-center text-xs text-[var(--color-text-muted)]">
+            {CURRENCY_SYMBOLS[c]}
+          </span>
+          <span>{c}</span>
+          {c === currency && (
+            <span className="ml-auto text-[10px] font-medium text-[var(--color-primary)]">✓</span>
+          )}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function CurrencySelector() {
+  const { currency } = useDisplayCurrency();
   const [open, setOpen] = useState(false);
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const close = useCallback(() => setOpen(false), []);
@@ -39,33 +72,7 @@ export function CurrencySelector() {
         align="right"
         className="min-w-[140px] py-1"
       >
-        <div className="px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider text-[var(--color-text-muted)]">
-          Display Currency
-        </div>
-        {CURRENCY_OPTIONS.map((c: DisplayCurrency) => (
-          <button
-            key={c}
-            onClick={() => {
-              setCurrency(c);
-              setOpen(false);
-            }}
-            className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-sm transition-colors hover:bg-[var(--color-surface-hover)] ${
-              c === currency
-                ? "bg-[var(--color-primary-fill)]/10 text-[var(--color-primary)]"
-                : ""
-            }`}
-          >
-            <span className="w-5 text-center text-xs text-[var(--color-text-muted)]">
-              {CURRENCY_SYMBOLS[c]}
-            </span>
-            <span>{c}</span>
-            {c === currency && (
-              <span className="ml-auto text-[10px] font-medium text-[var(--color-primary)]">
-                ✓
-              </span>
-            )}
-          </button>
-        ))}
+        <CurrencyChoices onPicked={close} />
       </AnchoredMenu>
     </>
   );
