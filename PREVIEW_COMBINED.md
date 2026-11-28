@@ -13,6 +13,7 @@ Merged heads, in order:
 6. feat/model-readiness-state (#24) d38d8939 (backend)
 7. ui/panel-rail-v2 (#25) ad8e9ffd: contains the rail stack #3 b5a1bd0d, #4 5728adcf, #6 d617fd5e, #7 0b81a167 (More removed; Settings panel with three groups; avatar Account dialog; four-tab phone bar; Labs page)
 8. ui/onboarding-model-connect (#23) a35c6f81: contains #2, #9, #11, #12, #14, #21, #22
+9. showcase/onboarding-walkthrough 59f2599b: the Designer's wizard fixes (one throwaway branch, no PR)
 
 Conflicts: AppShell.tsx (rail shell + wizard/keys banner/telemetry gate in `main`), lib/api.ts (login
 fix dropped the unused getAuthMode). Duplicate preference plumbing: lib/preferences.ts removed,
@@ -47,5 +48,24 @@ the real Dashboard is a later proposal.
 
 Showcase-only difference: `pages/Dashboard.tsx` shows the saved dashboard title (set in the Account dialog or the
 wizard) as its heading, and "Condor Dashboard" when none is saved. Nothing else in the stack was changed.
-The wizard bug (saving an exchange key in Connect ends the wizard early) and the `RECOMMENDED_MODEL_KEY` rename
-are still not fixed on this branch.
+## Onboarding walkthrough fixes (showcase/onboarding-walkthrough 59f2599b)
+
+Merged with `git merge` (merge commit 4f04bc67). One conflict, comment-only: in `lib/onboarding.ts` both sides
+already named the model constant `RECOMMENDED_MODEL_ID`, so only the doc comment differed; the Designer's fuller
+comment was kept and there is ONE definition.
+
+What it fixes, over the page mock:
+
+- **Saving a key no longer ends setup.** A wizard that is on screen now outranks `completed`/`hasKeys` in
+  `shouldShowWizard`, and `shouldAutoComplete` stays quiet while it is up. The run closes only when its own Finish or
+  Skip writes a newer `completed_at` than the one it opened with (`finishedThisRun`). Saving a demo exchange key at
+  Connect keeps the wizard open through Look & units and You're set.
+- **Forced re-runs start at step 1.** `/welcome`, `/?onboarding=1` and Settings > Appearance > Run setup again start
+  clean: the saved `last_step` and an older run's skips do not carry over, and the saved name and Dashboard title are
+  prefilled. Finish and Skip hand back to `setupReturnPath` — the page that asked (Settings) or the Dashboard.
+- **The AI model step appears only when no model is ready** (`planStepIds`).
+- `RECOMMENDED_MODEL_KEY` is `RECOMMENDED_MODEL_ID` (`lib/onboarding.ts`).
+
+Not changed on this branch, as asked: no proposal pages, no "Run setup again" in the avatar Account popup, PR #23 and
+every PR branch untouched, sample Dashboard routing (`/` Dashboard, `/chat` chat) and the shared preference helpers
+(`profile.display_name`, `ui.dashboard_title`) as before.
