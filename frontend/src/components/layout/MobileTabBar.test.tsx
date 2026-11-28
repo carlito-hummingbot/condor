@@ -137,7 +137,7 @@ describe("MobileTabBar", () => {
     ]);
     expect(links).toEqual([
       ["Dashboard", "/"],
-      ["Agents", "/hub"],
+      ["Explore", "/hub"],
       ["Labs", "/labs"],
     ]);
     const buttons = Array.from(container.querySelectorAll("nav button")).map((b) =>
@@ -150,10 +150,10 @@ describe("MobileTabBar", () => {
     expect(container.textContent).not.toContain("Bots");
   });
 
-  it("lights Agents on the hub and on an agent, Dashboard only on the home", async () => {
+  it("lights Explore on the hub and on an agent, Dashboard only on the home", async () => {
     for (const [path, label] of [
-      ["/hub", "Agents"],
-      ["/agents/alpha", "Agents"],
+      ["/hub", "Explore"],
+      ["/agents/alpha", "Explore"],
       ["/", "Dashboard"],
     ] as const) {
       renderAt(path);
