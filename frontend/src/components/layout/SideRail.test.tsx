@@ -110,6 +110,20 @@ afterEach(() => {
 });
 
 describe("SideRail", () => {
+  it("wears the Hummingbot mark at the top, still linking home", async () => {
+    renderAt("/");
+    await flush();
+    const brand = container.querySelector('nav[aria-label="Primary"] > div a, nav[aria-label="Primary"] a[href="/"]');
+    expect(brand?.getAttribute("href")).toBe("/");
+    const mark = brand?.querySelector("img");
+    expect(mark?.getAttribute("src")).toBe("/hummingbot-logo.png");
+    // No circle: the bird's beak and tail must not be clipped.
+    expect(mark?.getAttribute("class")).not.toContain("rounded-full");
+    expect(mark?.getAttribute("alt")).toBe("");
+    // The old Condor circle is gone from the rail.
+    expect(container.querySelector('img[src="/condor_old.jpeg"]')).toBeNull();
+  });
+
   it("lights Dashboard on the home only", async () => {
     renderAt("/");
     await flush();

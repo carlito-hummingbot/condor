@@ -85,8 +85,11 @@ export function SideRail({ onReport }: { onReport: () => void }) {
       className="hidden w-16 shrink-0 flex-col items-center gap-1 border-r border-[var(--color-border)] bg-[var(--color-surface)] py-2 md:flex"
     >
       <Tooltip label={title}>
+        {/* The Hummingbot mark: the bird, transparent background, no circle so
+            the beak and the tail are never clipped. The link keeps its 40px
+            hit area; the image fills most of it so the bird stays readable. */}
         <Link to="/" aria-label={title} className="mb-1 flex h-10 w-10 items-center justify-center rounded-md">
-          <img src="/condor_old.jpeg" alt="" className="h-7 w-7 rounded-full" />
+          <img src="/hummingbot-logo.png" alt="" className="h-9 w-9 object-contain" />
         </Link>
       </Tooltip>
 
