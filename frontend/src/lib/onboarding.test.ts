@@ -33,6 +33,8 @@ import {
   restartedOnboarding,
   resumeIndex,
   retreat,
+  finishedThisRun,
+  setupReturnPath,
   shouldAutoComplete,
   shouldShowKeysBanner,
   shouldShowWizard,
@@ -48,6 +50,7 @@ function signals(over: Partial<OnboardingSignals> = {}): OnboardingSignals {
     prefsReady: true,
     prefsError: false,
     completed: false,
+    completedAt: null,
     force: false,
     keysReady: true,
     keysError: false,
@@ -55,6 +58,7 @@ function signals(over: Partial<OnboardingSignals> = {}): OnboardingSignals {
     activityReady: true,
     hasActivity: false,
     wizardEngaged: false,
+    engagedCompletedAt: null,
     ...over,
   };
 }
@@ -115,8 +119,60 @@ describe("who sees the wizard", () => {
   it("keeps an open wizard up while the server just picked is probed, including an upstream error", () => {
     expect(shouldShowWizard(signals({ wizardEngaged: true, keysReady: false }))).toBe(true);
     expect(shouldShowWizard(signals({ wizardEngaged: true, keysError: true, keysReady: true }))).toBe(true);
-    expect(shouldShowWizard(signals({ wizardEngaged: true, hasKeys: true }))).toBe(false);
-    expect(shouldShowWizard(signals({ wizardEngaged: true, completed: true }))).toBe(false);
+  });
+
+  it("keeps an open wizard up after a key is saved in the Connect step", () => {
+    // The walkthrough killer: `hasKeys` used to be checked before the run that
+    // is already on screen, so connecting an exchange ended setup on the spot.
+    const savedKey = signals({
+      wizardEngaged: true,
+      hasKeys: true,
+      completedAt: null,
+      engagedCompletedAt: null,
+    });
+    expect(shouldShowWizard(savedKey)).toBe(true);
+    expect(finishedThisRun(savedKey)).toBe(false);
+    // Nor does it close a run that was opened again on a finished install.
+    expect(
+      shouldShowWizard({
+        ...savedKey,
+        completed: true,
+        completedAt: "2026-01-01T00:00:00.000Z",
+        engagedCompletedAt: "2026-01-01T00:00:00.000Z",
+      }),
+    ).toBe(true);
+  });
+
+  it("closes only when the run itself finishes or is skipped", () => {
+    const at = "2026-01-01T00:00:00.000Z";
+    const later = "2026-02-02T00:00:00.000Z";
+    // Finish or Skip setup wrote a newer completed_at.
+    expect(
+      shouldShowWizard(
+        signals({ wizardEngaged: true, completed: true, completedAt: later, engagedCompletedAt: at }),
+      ),
+    ).toBe(false);
+    expect(finishedThisRun({ wizardEngaged: true, completedAt: later, engagedCompletedAt: at })).toBe(
+      true,
+    );
+    // A completion that predates the run is the one it started with.
+    expect(finishedThisRun({ wizardEngaged: true, completedAt: at, engagedCompletedAt: at })).toBe(
+      false,
+    );
+    // Nothing is "this run" until the wizard is actually up.
+    expect(finishedThisRun({ wizardEngaged: false, completedAt: later, engagedCompletedAt: at })).toBe(
+      false,
+    );
+    expect(
+      shouldShowWizard(signals({ wizardEngaged: false, completed: true, hasKeys: true })),
+    ).toBe(false);
+  });
+
+  it("never auto-completes an install under an open wizard", () => {
+    expect(shouldAutoComplete(signals({ wizardEngaged: true, hasKeys: true }))).toBe(false);
+    expect(shouldAutoComplete(signals({ wizardEngaged: true, hasActivity: true }))).toBe(false);
+    // The same install with no wizard up is still marked complete quietly.
+    expect(shouldAutoComplete(signals({ hasKeys: true }))).toBe(true);
   });
 
   it("does not open the wizard when preferences cannot be read", () => {
@@ -124,6 +180,65 @@ describe("who sees the wizard", () => {
     expect(shouldShowWizard(outage)).toBe(false);
     expect(shouldAutoComplete(outage)).toBe(false);
     expect(onboardingPending(outage)).toBe(false);
+  });
+});
+
+describe("run setup again", () => {
+  const fullPlan = ["check", "profile", "model", "connect", "look", "done"];
+
+  it("starts at step 1 whatever the stored last step or skip list was", () => {
+    // A run that was asked for by hand passes no last_step and no skips, so an
+    // install that finished on "done" opens again on the first step.
+    const forced = startFlow(stepsForPlan(fullPlan), undefined, []);
+    expect(forced.index).toBe(0);
+    expect(forced.furthest).toBe(0);
+    expect(forced.skipped).toEqual([]);
+    // Opening it again reads the record; it does not rewrite it.
+    expect(resumeIndex(stepsForPlan(fullPlan), "done")).toBe(5);
+  });
+
+  it("hands back to the page that opened it, and to the dashboard otherwise", () => {
+    expect(setupReturnPath({ from: "/settings?tab=appearance" }, "?onboarding=1")).toBe(
+      "/settings?tab=appearance",
+    );
+    expect(setupReturnPath(null, "?onboarding=1&from=%2Fportfolio")).toBe("/portfolio");
+    expect(setupReturnPath(null, "?onboarding=1")).toBe("/");
+    expect(setupReturnPath(undefined, "")).toBe("/");
+    // Not an open redirect, and never straight back into the wizard.
+    expect(setupReturnPath(null, "?from=https%3A%2F%2Fevil.example")).toBe("/");
+    expect(setupReturnPath({ from: "//evil.example" }, "")).toBe("/");
+    expect(setupReturnPath({ from: "/welcome" }, "?onboarding=1")).toBe("/");
+    expect(setupReturnPath({ from: "/?onboarding=1" }, "")).toBe("/");
+  });
+
+  it("counts its steps from the install, so the dots match both cases", () => {
+    const ready: Readiness = {
+      server: { name: "local", online: true },
+      model: { key: "claude-acp:sonnet", label: "Claude Sonnet", ready: true },
+      modelStatus: "loaded",
+      keys: "some",
+      gateway: "off",
+    };
+    const steps = (r: Readiness) => stepsForPlan(planStepIds(r)).map((step) => step.id);
+    // Nothing to connect: the model step stays out, and so does Connect.
+    expect(steps(ready)).toEqual(["check", "profile", "look", "done"]);
+    // A ready model with no key yet: 5.
+    expect(steps({ ...ready, keys: "none" })).toEqual([
+      "check",
+      "profile",
+      "connect",
+      "look",
+      "done",
+    ]);
+    // No model on the install: the model step is back, 5, or 6 with no key.
+    expect(steps({ ...ready, model: null })).toEqual([
+      "check",
+      "profile",
+      "model",
+      "look",
+      "done",
+    ]);
+    expect(steps({ ...ready, model: null, keys: "none" })).toEqual(fullPlan);
   });
 });
 

@@ -38,6 +38,7 @@ export function useOnboarding() {
 
   const prefsReady = prefsQuery.isFetched && !prefsQuery.isError;
   const completed = isOnboardingComplete(prefsQuery.data);
+  const completedAt = prefsQuery.data?.onboarding?.completed_at ?? null;
   const force = forceOnboarding(search);
   const keysReady = !keysLoading;
   const needActivity =
@@ -75,6 +76,7 @@ export function useOnboarding() {
     prefsReady,
     prefsError: prefsQuery.isError,
     completed,
+    completedAt,
     force,
     keysReady,
     keysError,
@@ -83,14 +85,26 @@ export function useOnboarding() {
     hasActivity,
   };
 
-  // Once setup is on screen, selecting a server starts a credentials probe.
-  // An offline API fails that probe; the outage rule still applies to a wizard
-  // that has not opened, and must not close one that has. Adjusted during
-  // render so the next pass keeps the same answer without an effect.
+  // Once setup is on screen, selecting a server starts a credentials probe and
+  // the Connect step can save a key. Both say "this install is past first run",
+  // and neither may close a wizard that is already up: the outage and existing
+  // user rules still apply to one that has not opened. The completion the run
+  // started with is remembered, so the wizard closes only when its own Finish or
+  // Skip writes a newer one. Adjusted during render so the next pass keeps the
+  // same answer without an effect.
   const [engaged, setEngaged] = useState(false);
-  const showWizard = shouldShowWizard({ ...signals, wizardEngaged: engaged });
-  if (showWizard && !engaged) setEngaged(true);
-  else if (!showWizard && engaged && (completed || hasKeys)) setEngaged(false);
+  const [engagedAt, setEngagedAt] = useState<string | null>(null);
+  const showWizard = shouldShowWizard({
+    ...signals,
+    wizardEngaged: engaged,
+    engagedCompletedAt: engagedAt,
+  });
+  if (showWizard && !engaged) {
+    setEngaged(true);
+    setEngagedAt(completedAt);
+  } else if (!showWizard && engaged) {
+    setEngaged(false);
+  }
 
   const pending = onboardingPending(signals);
   const showKeysBanner = shouldShowKeysBanner({
@@ -103,7 +117,7 @@ export function useOnboarding() {
     trading: isTradingSurface(pathname),
   });
 
-  const auto = shouldAutoComplete(signals);
+  const auto = shouldAutoComplete({ ...signals, wizardEngaged: engaged });
   const sent = useRef(false);
   useEffect(() => {
     if (!auto || sent.current) return;
